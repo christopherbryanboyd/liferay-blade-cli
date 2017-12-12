@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
-
-import com.liferay.blade.cli.ConvertCommand.ConvertOptions;
+package com.liferay.blade.cli.commands;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -30,6 +28,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.Workspace;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.ConvertCommand.ConvertOptions;
+import com.liferay.blade.cli.commands.arguments.ConvertArgs;
+
 /**
  * @author David Truong
  */
@@ -38,7 +42,7 @@ public class ConvertThemeCommand {
 	public static final String DESCRIPTION =
 		"Migrate a plugins sdk theme to new workspace theme project";
 
-	public ConvertThemeCommand(blade blade, ConvertOptions options)
+	public ConvertThemeCommand(blade blade, ConvertArgs options)
 		throws Exception {
 
 		_blade = blade;
@@ -77,9 +81,8 @@ public class ConvertThemeCommand {
 	}
 
 	public void execute() throws Exception {
-		final List<String> args = _options._arguments();
 
-		final String themeName = args.size() > 0 ? args.get(0) : null;
+		final String themeName = _options.getName();
 
 		if (!Util.isWorkspace(_blade)) {
 			_blade.error("Please execute this in a Liferay Workspace Project");
@@ -92,7 +95,7 @@ public class ConvertThemeCommand {
 
 			for (File file : _pluginsSDKThemesDir.listFiles()) {
 				if (file.isDirectory()) {
-					if (_options.all()) {
+					if (_options.isAll()) {
 						importTheme(file.getCanonicalPath());
 					}
 					else {
@@ -101,7 +104,7 @@ public class ConvertThemeCommand {
 				}
 			}
 
-			if (!_options.all()) {
+			if (!_options.isAll()) {
 				if (themes.size() > 0) {
 					String exampleTheme = themes.get(0);
 
@@ -177,7 +180,7 @@ public class ConvertThemeCommand {
 	private blade _blade;
 	private final Pattern
 		_compassImport = Pattern.compile("@import\\s*['\"]compass['\"];");
-	private ConvertOptions _options;
+	private ConvertArgs _options;
 	private File _pluginsSDKThemesDir;
 	private File _themesDir;
 

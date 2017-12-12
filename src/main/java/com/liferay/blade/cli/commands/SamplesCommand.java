@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
 import aQute.lib.getopt.Arguments;
 import aQute.lib.getopt.Description;
@@ -32,6 +32,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.SamplesArgs;
+
 /**
  * @author David Truong
  */
@@ -39,7 +43,7 @@ public class SamplesCommand {
 
 	public static final String DESCRIPTION = "Generate a sample project";
 
-	public SamplesCommand(blade blade, SamplesOptions options)
+	public SamplesCommand(blade blade, SamplesArgs options)
 		throws Exception {
 
 		_blade = blade;
@@ -47,9 +51,8 @@ public class SamplesCommand {
 	}
 
 	public void execute() throws Exception {
-		final List<String> args = _options._arguments();
 
-		final String sampleName = args.size() > 0 ? args.get(0) : null;
+		final String sampleName = _options.getSampleName();
 
 		if (downloadBladeRepoIfNeeded()) {
 			extractBladeRepo();
@@ -73,7 +76,7 @@ public class SamplesCommand {
 	}
 
 	private void copySample(String sampleName) throws Exception {
-		File workDir = _options.dir();
+		File workDir = _options.getDir();
 
 		if (workDir == null) {
 			workDir = _blade.getBase();
@@ -271,6 +274,6 @@ public class SamplesCommand {
 	private static final long _FILE_EXPIRATION_TIME = 604800000;
 
 	private final blade _blade;
-	private final SamplesOptions _options;
+	private final SamplesArgs _options;
 
 }

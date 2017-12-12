@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
 import aQute.bnd.header.Parameters;
 import aQute.bnd.osgi.Jar;
 import aQute.lib.getopt.Description;
 import aQute.lib.getopt.Options;
 
+import com.liferay.blade.cli.FileWatcher;
+import com.liferay.blade.cli.GogoTelnetClient;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.FileWatcher.Consumer;
+import com.liferay.blade.cli.commands.arguments.DeployArgs;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
@@ -46,7 +51,7 @@ public class DeployCommand {
 	public static final String DESCRIPTION =
 		"Builds and deploys bundles to the Liferay module framework.";
 
-	public DeployCommand(blade blade, DeployOptions options) throws Exception {
+	public DeployCommand(blade blade, DeployArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
 		_host = /*options.host() != null ? options.host() : */"localhost";
@@ -121,29 +126,12 @@ public class DeployCommand {
 		Set<File> outputFiles = GradleTooling.getOutputFiles(
 			_blade.getCacheDir(), _blade.getBase());
 
-		if (_options.watch()) {
+		if (_options.isWatch()) {
 			deployWatch(gradleExec, outputFiles);
 		}
 		else {
 			deploy(gradleExec, outputFiles);
 		}
-	}
-
-	@Description(DESCRIPTION)
-	public interface DeployOptions extends Options {
-
-		//@Description("The host to use to connect to gogo shell")
-		//public String host();
-
-		//@Description("The port to use to connect to gogo shell")
-		//public int port();
-
-		@Description(
-			"Watches the deployed file for changes and will automatically " +
-				"redeploy"
-		)
-		public boolean watch();
-
 	}
 
 
@@ -313,7 +301,7 @@ public class DeployCommand {
 
 	private final blade _blade;
 	private final String _host;
-	private final DeployOptions _options;
+	private final DeployArgs _options;
 	private final int _port;
 
 }

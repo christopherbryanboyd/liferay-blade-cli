@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
 import aQute.lib.getopt.Arguments;
 import aQute.lib.getopt.Description;
@@ -22,6 +22,9 @@ import aQute.lib.getopt.Options;
 import aQute.lib.io.IO;
 
 import com.liferay.blade.cli.gradle.GradleExec;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.InitArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
@@ -53,15 +56,14 @@ public class InitCommand {
 	public static final String DESCRIPTION =
 		"Initializes a new Liferay workspace";
 
-	public InitCommand(blade blade, InitOptions options) throws Exception {
+	public InitCommand(blade blade, InitArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
 	}
 
 	public void execute() throws Exception {
-		final List<String> args = _options._arguments();
 
-		String name = args.size() > 0 ? args.get(0) : null;
+		String name = _options.getName();
 
 		File destDir = name != null ? new File(
 			_blade.getBase(), name) : _blade.getBase();
@@ -80,7 +82,7 @@ public class InitCommand {
 		if (destDir.exists()) {
 			if (isPluginsSDK) {
 				if (!isPluginsSDK70(destDir)) {
-					if (_options.upgrade()) {
+					if (_options.isUpgrade()) {
 						trace(
 							"Found plugins-sdk 6.2, upgraded to 7.0, moving contents to new subdirectory " +
 								"and initing workspace.");
@@ -108,7 +110,7 @@ public class InitCommand {
 				_moveContentsToDirectory(destDir, temp);
 			}
 			else if (destDir.list().length > 0) {
-				if (_options.force()) {
+				if (_options.isForce()) {
 					trace("Files found, initing anyways.");
 				}
 				else {
@@ -132,7 +134,7 @@ public class InitCommand {
 
 		projectTemplatesArgs.setDestinationDir(destParentDir);
 
-		if (_options.force() || _options.upgrade()) {
+		if (_options.isForce() || _options.isUpgrade()) {
 			projectTemplatesArgs.setForce(true);
 		}
 
@@ -142,7 +144,7 @@ public class InitCommand {
 		new ProjectTemplates(projectTemplatesArgs);
 
 		if (isPluginsSDK) {
-			if (_options.upgrade()) {
+			if (_options.isUpgrade()) {
 				GradleExec gradleExec = new GradleExec(_blade);
 
 				gradleExec.executeGradleCommand("upgradePluginsSDK");
@@ -288,15 +290,14 @@ public class InitCommand {
 
 					return FileVisitResult.CONTINUE;
 				}
-
-			});
-	}
+			});		
+	} 
 
 	private void trace(String msg) {
 		_blade.trace("%s: %s", "init", msg);
 	}
 
 	private final blade _blade;
-	private final InitOptions _options;
+	private final InitArgs _options;
 
 }

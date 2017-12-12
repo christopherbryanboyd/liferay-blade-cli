@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.Workspace;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.CreateArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
@@ -44,7 +44,7 @@ public class CreateCommand {
 			"templates.";
 
 
-	public CreateCommand(blade blade, CreateOptions options) {
+	public CreateCommand(blade blade, CreateArgs options) {
 		_blade = blade;
 		_options = options;
 	}
@@ -55,21 +55,20 @@ public class CreateCommand {
 	}
 
 	public void execute() throws Exception {
-		if (_options.listtemplates()) {
+		if (_options.isListtemplates()) {
 			printTemplates();
 			return;
 		}
 
-		List<String> args = _options._arguments();
 
-		String name = args.size() > 0 ? args.get(0) : null;
+		String name = _options.getName();
 
-		if (name == null) {
+		if (name == null||name.isEmpty()) {
 			addError("Create", "SYNOPSIS\n\t create [options] <[name]>");
 			return;
 		}
 
-		String template = _options.template();
+		String template = _options.getTemplate();
 
 		if (template == null) {
 			template = "mvc-portlet";
@@ -82,8 +81,8 @@ public class CreateCommand {
 
 		File dir;
 
-		if(_options.dir() != null) {
-			dir = new File(_options.dir().getAbsolutePath());
+		if(_options.getDir() != null) {
+			dir = new File(_options.getDir().getAbsolutePath());
 		}
 		else if (template.equals("theme") || template.equals("layout-template")
 				|| template.equals("spring-mvc-portlet")) {
@@ -104,17 +103,17 @@ public class CreateCommand {
 
 		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
 
-		projectTemplatesArgs.setClassName(_options.classname());
-		projectTemplatesArgs.setContributorType(_options.contributorType());
+		projectTemplatesArgs.setClassName(_options.getClassname());
+		projectTemplatesArgs.setContributorType(_options.getContributorType());
 		projectTemplatesArgs.setDestinationDir(dir);
-		projectTemplatesArgs.setHostBundleSymbolicName(_options.hostbundlebsn());
-		projectTemplatesArgs.setHostBundleVersion(_options.hostbundleversion());
+		projectTemplatesArgs.setHostBundleSymbolicName(_options.getHostbundlebsn());
+		projectTemplatesArgs.setHostBundleVersion(_options.getHostbundleversion());
 		projectTemplatesArgs.setName(name);
-		projectTemplatesArgs.setPackageName(_options.packagename());
-		projectTemplatesArgs.setService(_options.service());
+		projectTemplatesArgs.setPackageName(_options.getPackagename());
+		projectTemplatesArgs.setService(_options.getService());
 		projectTemplatesArgs.setTemplate(template);
 
-		boolean mavenBuild = "maven".equals(_options.build());
+		boolean mavenBuild = "maven".equals(_options.getBuild());
 
 		projectTemplatesArgs.setGradle(!mavenBuild);
 		projectTemplatesArgs.setMaven(mavenBuild);
@@ -137,62 +136,6 @@ public class CreateCommand {
 		if(gradlew.exists()) {
 			gradlew.setExecutable(true);
 		}
-	}
-
-	@Arguments(arg = {"[name]"})
-	@Description(DESCRIPTION)
-	public interface CreateOptions extends Options {
-
-		@Description(
-			"Specify the build type of the project. " +
-				"Available options are gradle, maven. (gradle is default)")
-	    public String build();
-
-		@Description(
-			"If a class is generated in the project, provide the name of the " +
-				"class to be generated. If not provided defaults to Project " +
-					"name."
-		)
-		public String classname();
-
-		@Description(
-			"Used to identify your module as a Theme Contributor. Also, used " +
-			"to add the Liferay-Theme-Contributor-Type and Web-ContextPath " +
-			"bundle headers.")
-		public String contributorType();
-
-		@Description("The directory where to create the new project.")
-		public File dir();
-
-		@Description(
-			"If a new jsp hook fragment needs to be created, provide the name" +
-				" of the host bundle symbolic name."
-		)
-		public String hostbundlebsn();
-
-		@Description(
-			"If a new jsp hook fragment needs to be created, provide the name" +
-				" of the host bundle version."
-		)
-		public String hostbundleversion();
-
-		@Description("Prints a list of available project templates")
-		public boolean listtemplates();
-
-		public String packagename();
-
-		@Description(
-			"If a new DS component needs to be created, provide the name of " +
-				"the service to be implemented."
-		)
-		public String service();
-
-		@Description(
-			"The project template to use when creating the project. To " +
-				"see the list of templates available use blade create <-l | " +
-					"--listtemplates>"
-		)
-		public String template();
 	}
 
 	private void addError(String prefix, String msg) {
@@ -276,13 +219,13 @@ public class CreateCommand {
 		return containsDir(baseDir, warsDir) ? baseDir : warsDir;
 	}
 
-	private String[] getTemplateNames() throws Exception {
+	public static String[] getTemplateNames() throws Exception {
 		Map<String, String> templates = ProjectTemplates.getTemplates();
 
 		return templates.keySet().toArray(new String[0]);
 	}
 
-	private boolean isExistingTemplate(String templateName) throws Exception {
+	public static boolean isExistingTemplate(String templateName) throws Exception {
 		String[] templates = getTemplateNames();
 
 		for (String template : templates) {
@@ -316,6 +259,6 @@ public class CreateCommand {
 	}
 
 	private final blade _blade;
-	private final CreateOptions _options;
+	private final CreateArgs _options;
 
 }

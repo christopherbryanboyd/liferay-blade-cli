@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import com.liferay.blade.cli.ConvertCommand.ConvertOptions;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.Workspace;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.ConvertCommand.ConvertOptions;
+import com.liferay.blade.cli.commands.arguments.ConvertArgs;
 import com.liferay.blade.cli.util.Constants;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
@@ -42,7 +46,7 @@ public class ConvertServiceBuilderCommand {
 
 	public static final String DESCRIPTION = "Convert a service builder project to new Liferay Workspace projects";
 
-	public ConvertServiceBuilderCommand(blade blade, ConvertOptions options) throws Exception {
+	public ConvertServiceBuilderCommand(blade blade, ConvertArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
 
@@ -76,9 +80,8 @@ public class ConvertServiceBuilderCommand {
 	}
 
 	public void execute() throws Exception {
-	final List<String> args = _options._arguments();
 
-		final String projectName = !args.isEmpty() ? args.get(0) : null;
+		final String projectName = _options.getName();
 
 		if (!Util.isWorkspace(_blade)) {
 			_blade.error("Please execute command in a Liferay Workspace project");
@@ -86,7 +89,7 @@ public class ConvertServiceBuilderCommand {
 			return;
 		}
 
-		if (args.isEmpty()) {
+		if (_options.getName() == null) {
 			_blade.error("Please specify a plugin name");
 
 			return;
@@ -108,7 +111,7 @@ public class ConvertServiceBuilderCommand {
 			return;
 		}
 
-		String sbProjectName = !args.isEmpty() && args.size() >= 2 ? args.get(1) : null;
+		String sbProjectName = _options.getName();
 
 		if (sbProjectName == null) {
 			if (projectName.endsWith("-portlet")) {
@@ -264,7 +267,7 @@ public class ConvertServiceBuilderCommand {
 		return dirName.equals("exception") || dirName.equals("model") || dirName.equals("service") || dirName.equals("persistence");
 	}
 
-	private class ServiceBuilder {
+	private static class ServiceBuilder {
 		public static final String META_INF = "META-INF/";
 		public static final String API_62 = "WEB-INF/service/";
 		public static final String PORTLET_MODEL_HINTS_XML = "portlet-model-hints.xml";
@@ -297,6 +300,6 @@ public class ConvertServiceBuilderCommand {
 	private blade _blade;
 	private final File _warsDir;
 	private final File _moduleDir;
-	private ConvertOptions _options;
+	private ConvertArgs _options;
 
 }

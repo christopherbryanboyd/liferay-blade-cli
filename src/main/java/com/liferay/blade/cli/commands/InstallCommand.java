@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
 import aQute.lib.getopt.Arguments;
 import aQute.lib.getopt.Description;
@@ -24,6 +24,11 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+import com.liferay.blade.cli.GogoTelnetClient;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.InstallArgs;
+
 /**
  * @author Gregory Amerson
  */
@@ -32,11 +37,11 @@ public class InstallCommand {
 	public static final String DESCRIPTION =
 		"Installs a bundle into Liferay module framework.";
 
-	public InstallCommand(blade blade, InstallOptions options) throws Exception {
+	public InstallCommand(blade blade, InstallArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
-		_host = options.host() != null ? options.host() : "localhost";
-		_port = options.port() != 0 ? options.port() : 11311;
+		_host = options.getHost() != null ? options.getHost() : "localhost";
+		_port = options.getPort() > 0  && options.getPort() < 65535 ? options.getPort() : 11311;
 	}
 
 	public void execute() throws Exception {
@@ -46,14 +51,12 @@ public class InstallCommand {
 			return;
 		}
 
-		final List<String> args = _options._arguments();
 
-		if (args.size() == 0) {
+		final String bundleFileName =  _options.getBundleFileName();
+		if (bundleFileName == null) {
 			addError("Must specify bundle file to install.");
 			return;
 		}
-
-		final String bundleFileName = args.get(0);
 
 		final File bundleFile = new File(_blade.getBase(), bundleFileName);
 
@@ -91,7 +94,7 @@ public class InstallCommand {
 
 	private final blade _blade;
 	private final String _host;
-	private final InstallOptions _options;
+	private final InstallArgs _options;
 	private final int _port;
 
 }

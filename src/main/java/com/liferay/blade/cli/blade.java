@@ -16,31 +16,50 @@
 
 package com.liferay.blade.cli;
 
-import aQute.lib.consoleapp.AbstractConsoleApp;
 import aQute.lib.getopt.Description;
 import aQute.lib.getopt.Options;
 import aQute.lib.io.IO;
 
-import com.liferay.blade.cli.ConvertCommand.ConvertOptions;
-import com.liferay.blade.cli.CreateCommand.CreateOptions;
-import com.liferay.blade.cli.DeployCommand.DeployOptions;
-import com.liferay.blade.cli.GradleCommand.GradleOptions;
-import com.liferay.blade.cli.InitCommand.InitOptions;
-import com.liferay.blade.cli.InstallCommand.InstallOptions;
-import com.liferay.blade.cli.OpenCommand.OpenOptions;
-import com.liferay.blade.cli.SamplesCommand.SamplesOptions;
-import com.liferay.blade.cli.ServerCommand.ServerOptions;
-import com.liferay.blade.cli.ShellCommand.ShellOptions;
-import com.liferay.blade.cli.UpgradePropsCommand.UpgradePropsOptions;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.JCommander.Builder;
+import com.liferay.blade.cli.commands.ConvertCommand;
+import com.liferay.blade.cli.commands.CreateCommand;
+import com.liferay.blade.cli.commands.DeployCommand;
+import com.liferay.blade.cli.commands.GradleCommand;
+import com.liferay.blade.cli.commands.InitCommand;
+import com.liferay.blade.cli.commands.InstallCommand;
+import com.liferay.blade.cli.commands.OpenCommand;
+import com.liferay.blade.cli.commands.OutputsCommand;
+import com.liferay.blade.cli.commands.SamplesCommand;
+import com.liferay.blade.cli.commands.ServerStartCommand;
+import com.liferay.blade.cli.commands.ServerStopCommand;
+import com.liferay.blade.cli.commands.ShellCommand;
+import com.liferay.blade.cli.commands.UpdateCommand;
+import com.liferay.blade.cli.commands.UpgradePropsCommand;
+import com.liferay.blade.cli.commands.arguments.ConvertArgs;
+import com.liferay.blade.cli.commands.arguments.CreateArgs;
+import com.liferay.blade.cli.commands.arguments.DeployArgs;
+import com.liferay.blade.cli.commands.arguments.GradleArgs;
+import com.liferay.blade.cli.commands.arguments.InitArgs;
+import com.liferay.blade.cli.commands.arguments.InstallArgs;
+import com.liferay.blade.cli.commands.arguments.OpenArgs;
+import com.liferay.blade.cli.commands.arguments.OutputsArgs;
+import com.liferay.blade.cli.commands.arguments.SamplesArgs;
+import com.liferay.blade.cli.commands.arguments.ServerStartArgs;
+import com.liferay.blade.cli.commands.arguments.ServerStopArgs;
+import com.liferay.blade.cli.commands.arguments.ShellArgs;
+import com.liferay.blade.cli.commands.arguments.UpdateArgs;
+import com.liferay.blade.cli.commands.arguments.UpgradePropsArgs;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Formatter;
-import java.util.Map;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -50,90 +69,122 @@ import org.osgi.framework.Constants;
  * @author Gregory Amerson
  * @author David Truong
  */
-public class blade extends AbstractConsoleApp implements Runnable {
+
+public class blade implements Runnable {
 
 	public static void main(String[] args) throws Exception {
-		new blade().run(args);
-	}
 
-	public blade() throws UnsupportedEncodingException {
 	}
-
-	public blade(Object target) throws UnsupportedEncodingException {
-		super(target);
+	public void run(String[] args) {
+		BladeArgs bladeArgs  = new BladeArgs();
+		List<Object> argsList = Arrays.asList(
+				new CreateArgs(),
+				new ConvertArgs(),
+				new DeployArgs(), 
+				new GradleArgs(),
+				new InitArgs(),
+				new InstallArgs(),
+				new OpenArgs(),
+				new OutputsArgs(),
+				new SamplesArgs(),
+				new ServerStartArgs(),
+				new ServerStopArgs(),
+				new ShellArgs(),
+				new UpdateArgs(),
+				new UpgradePropsArgs());
+		Builder builder=
+				JCommander.newBuilder();
+		 	for (Object o : argsList) {
+		 		builder.addCommand(o);
+		 	}
+		 JCommander commander =	builder
+		  .addObject(bladeArgs)
+		  .build();
+		 commander
+		  .parse(args);
+		 	
+		 String command = commander.getParsedCommand();
+		 Object commandArgs = commander.getCommands().get(command).getObjects().get(0);
+		 
+		_bladeArgs = bladeArgs;
+		_command = command;
+		_commandArgs = commandArgs;
+		
+		run();
 	}
-
-	@Description(CreateCommand.DESCRIPTION)
-	public void _create(CreateOptions options) throws Exception {
+	
+	public void _create(CreateArgs options) throws Exception {
 		new CreateCommand(this, options).execute();
 	}
 
-	@Description(DeployCommand.DESCRIPTION)
-	public void _deploy(DeployOptions options) throws Exception {
+	public void _deploy(DeployArgs options) throws Exception {
 		new DeployCommand(this, options).execute();
 	}
 
-	@Description(GradleCommand.DESCRIPTION)
-	public void _gw(GradleOptions options) throws Exception {
+	public void _gw(GradleArgs options) throws Exception {
 		new GradleCommand(this, options).execute();
 	}
-
-	@Description("Get help on a specific command")
+	
+	public void error(String error) {
+		// TODO: Implement this
+	}
+	
+	public void addErrors(String prefix, Collection<String> data) {
+		// TODO: Implement this.
+	}
+	
+	public File getBase() {
+		return new File(_bladeArgs.getBase());
+	}
+	
 	public void _help(Options options) throws Exception {
 		options._help();
 	}
 
-	@Description(InitCommand.DESCRIPTION)
-	public void _init(InitOptions options) throws Exception {
+	public void _init(InitArgs options) throws Exception {
 		new InitCommand(this, options).execute();
 	}
 
-	@Description(InstallCommand.DESCRIPTION)
-	public void _install(InstallOptions options) throws Exception {
+	public void _install(InstallArgs options) throws Exception {
 		new InstallCommand(this, options).execute();
 	}
 
-	@Description(OpenCommand.DESCRIPTION)
-	public void _open(OpenOptions options) throws Exception {
+	public void _open(OpenArgs options) throws Exception {
 		new OpenCommand(this, options).execute();
 	}
 
-	public void _outputs(Options options) throws Exception {
+	public BladeArgs getBladeArgs() {
+		return _bladeArgs;
+	}
+	public void _outputs(OutputsArgs options) throws Exception {
 		new OutputsCommand(this, options).execute();
 	}
 
-	@Description(SamplesCommand.DESCRIPTION)
-	public void _samples(SamplesOptions options) throws Exception {
+	public void _samples(SamplesArgs options) throws Exception {
 		new SamplesCommand(this, options).execute();
 	}
 
-	@Description(ServerCommand.DESCRIPTION)
-	public void _server(ServerOptions options) throws Exception {
-		ServerCommand serverCommand = new ServerCommand(this, options);
-		String help = options._command().subCmd(options, serverCommand);
-
-		if (help != null) {
-			out.println(help);
-		}
+	public void _serverStart(ServerStartArgs options) throws Exception {
+		new ServerStartCommand(this, options).execute();
+	}
+	
+	public void _serverStop(ServerStopArgs options) throws Exception {
+		new ServerStopCommand(this, options).execute();	
 	}
 
-	@Description(ShellCommand.DESCRIPTION)
-	public void _sh(ShellOptions options) throws Exception {
+	public void _sh(ShellArgs options) throws Exception {
 		new ShellCommand(this, options).execute();
 	}
 
-	@Description(UpdateCommand.DESCRIPTION)
-	public void _update(Options options) throws Exception {
+	public void _update(UpdateArgs options) throws Exception {
 		new UpdateCommand(this, options).execute();
 	}
 
-	@Description(UpgradePropsCommand.DESCRIPTION)
-	public void _upgradeProps(UpgradePropsOptions options) throws Exception {
+	public void _upgradeProps(UpgradePropsArgs options) throws Exception {
 		new UpgradePropsCommand(this, options);
 	}
 
-	@Description(ConvertCommand.DESCRIPTION)
-	public void _convert(ConvertOptions options) throws Exception {
+	public void _convert(ConvertArgs options) throws Exception {
 		new ConvertCommand(this, options).execute();
 	}
 
@@ -158,10 +209,6 @@ public class blade extends AbstractConsoleApp implements Runnable {
 		error("Could not locate version");
 	}
 
-	public void args(Object object, Map<String, Object> map) {
-		args = (String[])map.get("launcher.arguments");
-	}
-
 	public PrintStream err() {
 		return err;
 	}
@@ -184,23 +231,116 @@ public class blade extends AbstractConsoleApp implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			new blade().run(args);
+		try
+		{
+		 switch (_command) {
+		 case "create":
+		 {
+			 _create((CreateArgs)_commandArgs);
+		 }
+		 break;
+		 case "convert":
+		 {
+			 _convert((ConvertArgs)_commandArgs);
+		 }
+		 break;
+		 case "deploy":
+		 {
+			 _deploy((DeployArgs)_commandArgs);
+		 }
+		 break;
+		 case "gw":
+		 {
+			 _gw((GradleArgs)_commandArgs);
+		 }
+		 break;
+		 case "help":
+		 {
+			 // TODO: Print help here?
+		 }
+		 break;
+		 case "init":
+		 {
+			 _init((InitArgs)_commandArgs);
+		 }
+		 break;
+		 case "install":
+		 {
+			 _install((InstallArgs)_commandArgs);
+		 }
+		 case "open":
+		 {
+			 _open((OpenArgs)_commandArgs);
+		 }
+		 break;
+		 case "outputs":
+		 {
+			 _outputs((OutputsArgs)_commandArgs);
+		 }
+		 break;
+		 case "samples":
+		 {
+			 _samples((SamplesArgs)_commandArgs);
+		 }
+		 break;
+		 case "server start":
+		 {
+			 _serverStart((ServerStartArgs)_commandArgs);
+			 
+		 }
+		 break;
+		 case "server stop":
+		 {
+			 _serverStop((ServerStopArgs)_commandArgs);
+		 }
+		 break;
+		 case "sh":
+		 {
+			 _sh((ShellArgs)_commandArgs);
+		 }
+		 break;
+		 case "update":
+		 {
+			 _update((UpdateArgs)_commandArgs);
+		 }
+		 break;
+		 case "upgradeProps":
+		 {
+			 _upgradeProps((UpgradePropsArgs)_commandArgs);
+		 }
+		 break;
+		 case "version":
+		 {
+			 // TODO: What is this supposed to do?
+		 }
+		 break;
+		 default:
+		 {
+			 // TODO: Print help here?
+		 }
+		 break;
+	 }
 		}
-		catch (Exception e) {
+		catch (Exception e)
+		{
 			e.printStackTrace();
 		}
 	}
 
-	@Override
 	public void trace(String s, Object... args) {
-		if (isTrace() && (tracer != null)) {
+		if (_bladeArgs.isTrace() && (tracer != null)) {
 			tracer.format("# " + s + "%n", args);
 			tracer.flush();
 		}
 	}
-
-	private String[] args;
+	private String _command;
+	private BladeArgs _bladeArgs;
+	private Object _commandArgs;
 	private final Formatter tracer = new Formatter(System.out);
-
+	public void error(String string, String name, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+	private PrintStream out = System.out;
+	private PrintStream err = System.err;
 }

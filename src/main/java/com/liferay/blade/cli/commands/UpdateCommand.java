@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Options;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.UpdateArgs;
 
 /**
  * @author Gregory Amerson
@@ -25,7 +27,7 @@ public class UpdateCommand {
 
 	public static final String DESCRIPTION = "Update blade to latest version";
 
-	public UpdateCommand(blade blade, Options options) throws Exception {
+	public UpdateCommand(blade blade, UpdateArgs options) throws Exception {
 		_blade = blade;
 	}
 

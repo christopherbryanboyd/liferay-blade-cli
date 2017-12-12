@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
+import com.beust.jcommander.Parameters;
+import com.liferay.blade.cli.CopyDirVisitor;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.Workspace;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.ConvertArgs;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
 import java.io.File;
@@ -59,7 +65,7 @@ public class ConvertCommand {
 	public static final String DESCRIPTION =
 		"Converts a plugins-sdk plugin project to a gradle WAR project in Liferay workspace";
 
-	public ConvertCommand(blade blade, ConvertOptions options)
+	public ConvertCommand(blade blade, ConvertArgs options)
 		throws Exception {
 
 		_blade = blade;
@@ -109,9 +115,8 @@ public class ConvertCommand {
 	}
 
 	public void execute() throws Exception {
-		final List<String> args = _options._arguments();
 
-		final String pluginName = args.size() > 0 ? args.get(0) : null;
+		final String pluginName = _options.getName();
 
 		if (!Util.isWorkspace(_blade)) {
 			_blade.error("Please execute this in a Liferay Workspace project");
@@ -119,7 +124,7 @@ public class ConvertCommand {
 			return;
 		}
 
-		if (args.size() == 0 && (!_options.all() && !_options.list())) {
+		if (_options.getName() == null && (!_options.isAll() && !_options.isList())) {
 			_blade.error("Please specify a plugin name, list the projects with [-l] or specify all using option [-a]");
 
 			return;
@@ -155,21 +160,21 @@ public class ConvertCommand {
 		List<File> webPlugins = Arrays.asList(webFiles != null ? webFiles : new File[0]);
 		List<File> themePlugins = Arrays.asList(themeFiles != null ? themeFiles : new File[0]);
 
-		if (_options.all()) {
+		if (_options.isAll()) {
 			serviceBuilderPlugins.stream().forEach(this::convertToServiceBuilderWarProject);
 			portletPlugins.stream().forEach(this::convertToWarProject);
 			hookPlugins.stream().forEach(this::convertToWarProject);
 			webPlugins.stream().forEach(this::convertToWarProject);
 			layoutPlugins.stream().forEach(this::convertToLayoutWarProject);
 
-			if (_options.themeBuilder()) {
+			if (_options.isThemeBuilder()) {
 				themePlugins.stream().forEach(this::convertToThemeBuilderWarProject);
 			}
 			else {
 				themePlugins.stream().forEach(this::convertToThemeProject);
 			}
 		}
-		else if (_options.list()) {
+		else if (_options.isList()) {
 			_blade.out().println("The following is a list of projects available to convert:\n");
 
 			Stream<File> plugins = concat(serviceBuilderPlugins.stream(), concat(portletPlugins.stream(), concat(hookPlugins.stream(), concat(webPlugins.stream(), concat(layoutPlugins.stream(), themePlugins.stream())))));
@@ -204,7 +209,7 @@ public class ConvertCommand {
 				convertToLayoutWarProject(pluginDir);
 			}
 			else if(pluginPath.startsWith(_themesDir.toPath())) {
-				if (_options.themeBuilder()) {
+				if (_options.isThemeBuilder()) {
 					convertToThemeBuilderWarProject(pluginDir);
 				}
 				else {
@@ -232,7 +237,7 @@ public class ConvertCommand {
 			convertToWarProject(pluginDir);
 
 			final List<String> arguments; {
-				if (_options.all()) {
+				if (_options.isAll()) {
 					arguments = new ArrayList<>();
 
 					String pluginName = pluginDir.getName();
@@ -244,13 +249,13 @@ public class ConvertCommand {
 					}
 				}
 				else {
-					arguments = _options._arguments();
+					arguments = Arrays.asList(_options.getName());
 				}
 			}
 
-			ConvertOptions options = new CommandLine(_blade).getOptions(ConvertOptions.class, arguments);
+			//ConvertOptions options = new CommandLine(_blade).getOptions(ConvertOptions.class, arguments);
 
-			new ConvertServiceBuilderCommand(_blade, options).execute();
+			new ConvertServiceBuilderCommand(_blade, _options).execute();
 		}
 		catch (Exception e) {
 			_blade.error("Error upgrading project %s\n%s", pluginDir.getName(), e.getMessage());
@@ -505,7 +510,7 @@ public class ConvertCommand {
 	}
 
 	private final blade _blade;
-	private final ConvertOptions _options;
+	private final ConvertArgs _options;
 	private final File _hooksDir;
 	private final File _layouttplDir;
 	private final File _pluginsSdkDir;

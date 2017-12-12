@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
-
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
+package com.liferay.blade.cli.commands;
 
 import java.util.Collections;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.liferay.blade.cli.GogoTelnetClient;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.ShellArgs;
 
 /**
  * @author Gregory Amerson
@@ -32,11 +33,11 @@ public class ShellCommand {
 	public static final String DESCRIPTION =
 		"Connects to Liferay and executes gogo command and returns output.";
 
-	public ShellCommand(blade blade, ShellOptions options) throws Exception {
+	public ShellCommand(blade blade, ShellArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
-		_host = options.host() != null ? options.host() : "localhost";
-		_port = options.port() != 0 ? options.port() : 11311;
+		_host = options.getHost() != null ? options.getHost() : "localhost";
+		_port = options.getPort() > 0 ? options.getPort() : 11311;
 	}
 
 	public void execute() throws Exception {
@@ -48,21 +49,9 @@ public class ShellCommand {
 			return;
 		}
 
-		String gogoCommand = StringUtils.join(_options._arguments(), " ");
+		String gogoCommand = StringUtils.join(_options.getArgs(), " ");
 
 		executeCommand(gogoCommand);
-	}
-
-	@Arguments(arg = {"gogo-command", "args..."})
-	@Description(DESCRIPTION)
-	public interface ShellOptions extends Options {
-
-		@Description("")
-		public String host();
-
-		@Description("The port to use to connect to gogo shell")
-		public int port();
-
 	}
 
 	private void addError(String prefix, String msg) {
@@ -82,7 +71,7 @@ public class ShellCommand {
 
 	private final blade _blade;
 	private final String _host;
-	private final ShellOptions _options;
+	private final ShellArgs _options;
 	private final int _port;
 
 }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Options;
-
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.OutputsArgs;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public class OutputsCommand {
 
-	public OutputsCommand(blade blade, Options options)
+	public OutputsCommand(blade blade, OutputsArgs options)
 		throws Exception {
 
 		_blade = blade;
