@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import aQute.lib.io.IO;
-
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
@@ -34,11 +34,9 @@ import org.gradle.testkit.runner.TaskOutcome;
  */
 public class GradleRunnerUtil {
 
-	public static BuildTask executeGradleRunner (String projectPath, String... taskPath) {
-		File projectDir = new File(projectPath);
-
+	public static BuildTask executeGradleRunner (Path projectPath, String... taskPath) {
 		BuildResult buildResult = GradleRunner.create()
-									.withProjectDir(projectDir)
+									.withProjectDir(projectPath.toFile())
 									.withArguments(taskPath)
 									.build();
 
@@ -60,10 +58,10 @@ public class GradleRunnerUtil {
 		assertEquals(TaskOutcome.SUCCESS, buildtask.getOutcome());
 	}
 
-	public static void verifyBuildOutput (String projectPath, String fileName) {
-		File file = IO.getFile(projectPath + "/build/libs/" + fileName);
+	public static void verifyBuildOutput (Path projectPath, String fileName) {
+		Path file = projectPath.resolve(Paths.get("build","libs",fileName));
 
-		assertTrue(file.exists());
+		assertTrue(Files.exists(file));
 	}
 
 }

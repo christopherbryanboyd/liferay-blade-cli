@@ -21,6 +21,9 @@ import aQute.lib.getopt.Description;
 import aQute.lib.getopt.Options;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,15 +61,15 @@ public class InstallCommand {
 			return;
 		}
 
-		final File bundleFile = new File(_blade.getBase(), bundleFileName);
+		final Path bundleFile = Paths.get(_blade.getBase().toString(), bundleFileName);
 
-		if (!bundleFile.exists()) {
+		if (Files.notExists(bundleFile)) {
 			addError(bundleFile + "doesn't exist.");
 			return;
 		}
 
 		try (GogoTelnetClient client = new GogoTelnetClient(_host, _port)) {
-			String response = client.send("install " + bundleFile.toURI());
+			String response = client.send("install " + bundleFile);
 
 			_blade.out().println(response);
 		}

@@ -23,7 +23,10 @@ import com.liferay.blade.cli.commands.arguments.CreateArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -79,10 +82,10 @@ public class CreateCommand {
 				return;
 		}
 
-		File dir;
+		Path dir;
 
 		if(_options.getDir() != null) {
-			dir = new File(_options.getDir().getAbsolutePath());
+			dir = _options.getDir().toPath().toAbsolutePath();
 		}
 		else if (template.equals("theme") || template.equals("layout-template")
 				|| template.equals("spring-mvc-portlet")) {
@@ -92,7 +95,7 @@ public class CreateCommand {
 			dir = getDefaultModulesDir();
 		}
 
-		final File checkDir = new File(dir, name);
+		final Path checkDir = dir.resolve(name);
 
 		if(!checkDir(checkDir)) {
 			addError(
@@ -105,7 +108,7 @@ public class CreateCommand {
 
 		projectTemplatesArgs.setClassName(_options.getClassname());
 		projectTemplatesArgs.setContributorType(_options.getContributorType());
-		projectTemplatesArgs.setDestinationDir(dir);
+		projectTemplatesArgs.setDestinationDir(dir.toFile());
 		projectTemplatesArgs.setHostBundleSymbolicName(_options.getHostbundlebsn());
 		projectTemplatesArgs.setHostBundleVersion(_options.getHostbundleversion());
 		projectTemplatesArgs.setName(name);
@@ -122,19 +125,19 @@ public class CreateCommand {
 
 		_blade.out().println(
 			"Successfully created project " + projectTemplatesArgs.getName() + 
-				" in " + dir.getAbsolutePath());
+				" in " + dir.toAbsolutePath());
 	}
 
 	void execute(ProjectTemplatesArgs projectTemplatesArgs) throws Exception {
-		File dir = projectTemplatesArgs.getDestinationDir();
+		Path dir = projectTemplatesArgs.getDestinationDir().toPath();
 		String name = projectTemplatesArgs.getName();
 
 		new ProjectTemplates(projectTemplatesArgs);
 
-		File gradlew = new File(dir, name+"/gradlew");
+		Path gradlew = dir.resolve(Paths.get(name, "gradlew"));
 
-		if(gradlew.exists()) {
-			gradlew.setExecutable(true);
+		if(Files.exists(gradlew)) {
+			gradlew.toFile().setExecutable(true);
 		}
 	}
 
@@ -142,25 +145,21 @@ public class CreateCommand {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
-	private boolean containsDir(File currentDir, File parentDir)
+	private boolean containsDir(Path currentDir, Path parentDir)
 		throws Exception {
-
-		String currentPath = currentDir.getCanonicalPath();
-
-		String parentPath = parentDir.getCanonicalPath();
-
-		return currentPath.startsWith(parentPath);
+		return currentDir.toRealPath().startsWith(parentDir.toRealPath());
 	}
 
-	private boolean checkDir(File file) {
-		if(file.exists()) {
-			if(!file.isDirectory()) {
+	private boolean checkDir(Path file) {
+		if(Files.exists(file)) {
+			if(!Files.isDirectory(file)) {
 				return false;
 			}
 			else {
-				File[] children = file.listFiles();
-
-				if(children != null && children.length > 0) {
+				try {
+					return !Files.list(file).findAny().isPresent();
+				} catch (IOException e) {
+					_blade.error(e.getMessage());
 					return false;
 				}
 			}
@@ -169,8 +168,8 @@ public class CreateCommand {
 		return true;
 	}
 
-	private File getDefaultModulesDir() throws Exception {
-		File baseDir = _blade.getBase();
+	private Path getDefaultModulesDir() throws Exception {
+		Path baseDir = _blade.getBase();
 
 		if (!Util.isWorkspace(baseDir)) {
 			return baseDir;
@@ -185,15 +184,15 @@ public class CreateCommand {
 			modulesDirValue = Workspace.DEFAULT_MODULES_DIR;
 		}
 
-		File projectDir = Util.getWorkspaceDir(_blade);
+		Path projectDir = Util.getWorkspaceDir(_blade);
 
-		File modulesDir = new File(projectDir, modulesDirValue);
+		Path modulesDir = projectDir.resolve( modulesDirValue);
 
 		return containsDir(baseDir, modulesDir) ? baseDir : modulesDir;
 	}
 
-	private File getDefaultWarsDir() throws Exception {
-		File baseDir = _blade.getBase();
+	private Path getDefaultWarsDir() throws Exception {
+		Path baseDir = _blade.getBase();
 
 		if (!Util.isWorkspace(baseDir)) {
 			return baseDir;
@@ -212,9 +211,9 @@ public class CreateCommand {
 			warsDirValue = warsDirValue.split(",")[0];
 		}
 
-		File projectDir = Util.getWorkspaceDir(_blade);
+		Path projectDir = Util.getWorkspaceDir(_blade);
 
-		File warsDir = new File(projectDir, warsDirValue);
+		Path warsDir = projectDir.resolve(warsDirValue);
 
 		return containsDir(baseDir, warsDir) ? baseDir : warsDir;
 	}

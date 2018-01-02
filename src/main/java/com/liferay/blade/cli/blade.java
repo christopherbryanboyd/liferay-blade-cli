@@ -18,8 +18,6 @@ package com.liferay.blade.cli;
 
 import aQute.lib.getopt.Description;
 import aQute.lib.getopt.Options;
-import aQute.lib.io.IO;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
 import com.liferay.blade.cli.commands.ConvertCommand;
@@ -51,10 +49,11 @@ import com.liferay.blade.cli.commands.arguments.ShellArgs;
 import com.liferay.blade.cli.commands.arguments.UpdateArgs;
 import com.liferay.blade.cli.commands.arguments.UpgradePropsArgs;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -72,11 +71,8 @@ import org.osgi.framework.Constants;
 
 public class blade implements Runnable {
 
-	public static void main(String[] args) throws Exception {
-
-	}
 	public void run(String[] args) {
-		BladeArgs bladeArgs  = new BladeArgs();
+		_bladeArgs = new BladeArgs();
 		List<Object> argsList = Arrays.asList(
 				new CreateArgs(),
 				new ConvertArgs(),
@@ -98,7 +94,7 @@ public class blade implements Runnable {
 		 		builder.addCommand(o);
 		 	}
 		 JCommander commander =	builder
-		  .addObject(bladeArgs)
+		  .addObject(_bladeArgs)
 		  .build();
 		 commander
 		  .parse(args);
@@ -106,7 +102,6 @@ public class blade implements Runnable {
 		 String command = commander.getParsedCommand();
 		 Object commandArgs = commander.getCommands().get(command).getObjects().get(0);
 		 
-		_bladeArgs = bladeArgs;
 		_command = command;
 		_commandArgs = commandArgs;
 		
@@ -133,8 +128,8 @@ public class blade implements Runnable {
 		// TODO: Implement this.
 	}
 	
-	public File getBase() {
-		return new File(_bladeArgs.getBase());
+	public Path getBase() {
+		return Paths.get(_bladeArgs.getBase());
 	}
 	
 	public void _help(Options options) throws Exception {
@@ -213,16 +208,16 @@ public class blade implements Runnable {
 		return err;
 	}
 
-	public File getBundleDir() {
+	public Path getBundleDir() {
 		String userHome = System.getProperty("user.home");
 
-		return IO.getFile(userHome + "/.liferay/bundles");
+		return Paths.get(userHome, ".liferay", "bundles");
 	}
 
-	public File getCacheDir() {
+	public Path getCacheDir() {
 		String userHome = System.getProperty("user.home");
 
-		return IO.getFile(userHome + "/.blade/cache");
+		return Paths.get(userHome, ".blade", "cache");
 	}
 
 	public PrintStream out() {

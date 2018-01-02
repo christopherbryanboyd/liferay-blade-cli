@@ -29,6 +29,7 @@ public class bladenofail extends blade {
 	}
 
 	public bladenofail(PrintStream out) throws UnsupportedEncodingException {
+		super();
 		_out = out;
 		_err = out;
 	}

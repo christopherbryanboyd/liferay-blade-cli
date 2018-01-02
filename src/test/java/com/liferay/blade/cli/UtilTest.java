@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
@@ -45,19 +47,19 @@ public class UtilTest {
 
 	@Test
 	public void testAppServerProperties() throws Exception {
-		File dir = new File("build/test");
+		Path dir = Paths.get("build", "test");
 
-		dir.mkdirs();
+		Files.createDirectories(dir);
 
-		File appServerProperty1 = new File(
-			dir,
+		Path appServerProperty1 = 
+			dir.resolve(
 			"app.server." + System.getProperty("user.name") + ".properties");
 
-		appServerProperty1.createNewFile();
+		Files.createFile(appServerProperty1);
 
-		File appServerProperty2 = new File(dir, "app.server.properties");
+		Path appServerProperty2 = dir.resolve("app.server.properties");
 
-		appServerProperty2.createNewFile();
+		Files.createFile(appServerProperty2);
 
 		List<Properties> propertiesList = Util.getAppServerProperties(dir);
 
@@ -66,49 +68,49 @@ public class UtilTest {
 
 	@Test
 	public void testIsWorkspace1() throws Exception {
-		File workspace = new File("build/test/workspace");
+		Path workspace = Paths.get("build", "test", "workspace");
 
-		workspace.mkdirs();
+		Files.createDirectories(workspace);
 
-		File gradleFile = new File(workspace, "settings.gradle");
+		Path gradleFile = workspace.resolve("settings.gradle");
 
 		String plugin = "apply plugin: \"com.liferay.workspace\"";
 
-		Files.write(gradleFile.toPath(), plugin.getBytes());
+		Files.write(gradleFile, plugin.getBytes());
 
 		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	@Test
 	public void testIsWorkspace2() throws Exception {
-		File workspace = new File("build/test/workspace");
+		Path workspace = Paths.get("build", "test", "workspace");
 
-		workspace.mkdirs();
+		Files.createDirectories(workspace);
 
-		File gradleFile = new File(workspace, "settings.gradle");
+		Path gradleFile = workspace.resolve("settings.gradle");
 
 		String plugin = "apply plugin: 'com.liferay.workspace'";
 
-		Files.write(gradleFile.toPath(), plugin.getBytes());
+		Files.write(gradleFile, plugin.getBytes());
 
 		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	@Test
 	public void testIsWorkspace3() throws Exception {
-		File workspace = new File("build/test/workspace");
+		Path workspace = Paths.get("build", "test", "workspace");
 
-		workspace.mkdirs();
+		Files.createDirectories(workspace);
 
-		File buildFile = new File(workspace, "build.gradle");
+		Path buildFile = workspace.resolve("build.gradle");
 
-		File settingsFile = new File(workspace, "settings.gradle");
+		Path settingsFile = workspace.resolve("settings.gradle");
 
-		settingsFile.createNewFile();
+		Files.createFile(settingsFile);
 
 		String plugin = "\napply   plugin:   \n\"com.liferay.workspace\"";
 
-		Files.write(buildFile.toPath(), plugin.getBytes());
+		Files.write(buildFile, plugin.getBytes());
 
 		assertTrue(Util.isWorkspace(workspace));
 	}

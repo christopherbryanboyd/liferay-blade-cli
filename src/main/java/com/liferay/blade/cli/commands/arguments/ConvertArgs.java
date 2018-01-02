@@ -1,5 +1,9 @@
 package com.liferay.blade.cli.commands.arguments;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.liferay.blade.cli.commands.ConvertCommand;
@@ -41,12 +45,12 @@ public class ConvertArgs {
 	
 	
 
-	public String getName() {
+	public List<String> getName() {
 		return name;
 	}
 
 	@Parameter(
 		description ="[name]")
-	private String name;
+	private List<String> name = new ArrayList<>();
 	
 }

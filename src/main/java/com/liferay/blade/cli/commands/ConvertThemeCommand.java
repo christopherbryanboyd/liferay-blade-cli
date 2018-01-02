@@ -16,14 +16,15 @@
 
 package com.liferay.blade.cli.commands;
 
-import java.io.File;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -31,7 +32,6 @@ import org.apache.commons.lang3.text.WordUtils;
 import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.Workspace;
 import com.liferay.blade.cli.blade;
-import com.liferay.blade.cli.commands.ConvertCommand.ConvertOptions;
 import com.liferay.blade.cli.commands.arguments.ConvertArgs;
 
 /**
@@ -48,7 +48,7 @@ public class ConvertThemeCommand {
 		_blade = blade;
 		_options = options;
 
-		File projectDir = Util.getWorkspaceDir(_blade);
+		Path projectDir = Util.getWorkspaceDir(_blade);
 
 		Properties gradleProperties = Util.getGradleProperties(projectDir);
 
@@ -63,8 +63,8 @@ public class ConvertThemeCommand {
 			pluginsSDKDirPath = Workspace.DEFAULT_PLUGINS_SDK_DIR;
 		}
 
-		_pluginsSDKThemesDir = new File(
-			projectDir, pluginsSDKDirPath + "/themes");
+		_pluginsSDKThemesDir = 
+			projectDir.resolve(Paths.get(pluginsSDKDirPath, "themes"));
 
 		String themesDirPath = null;
 
@@ -77,13 +77,13 @@ public class ConvertThemeCommand {
 			themesDirPath = Workspace.DEFAULT_THEMES_DIR;
 		}
 
-		_themesDir = new File(projectDir, themesDirPath);
+		_themesDir = projectDir.resolve(themesDirPath);
 	}
 
 	public void execute() throws Exception {
 
-		final String themeName = _options.getName();
-
+		final String themeName = _options.getName().isEmpty() ? null : _options.getName().iterator().next();
+		
 		if (!Util.isWorkspace(_blade)) {
 			_blade.error("Please execute this in a Liferay Workspace Project");
 
@@ -92,18 +92,15 @@ public class ConvertThemeCommand {
 
 		if (themeName == null) {
 			List<String> themes = new ArrayList<>();
-
-			for (File file : _pluginsSDKThemesDir.listFiles()) {
-				if (file.isDirectory()) {
-					if (_options.isAll()) {
-						importTheme(file.getCanonicalPath());
+			try (DirectoryStream<Path> stream = Files.newDirectoryStream(_pluginsSDKThemesDir, f -> Files.isDirectory(f))) {
+				if (_options.isAll()) {
+					for (Path file : (Iterable<Path>)stream::iterator) {
+						importTheme(file.toRealPath());
 					}
-					else {
-						themes.add(file.getName());
-					}
+				} else {
+					stream.forEach(file -> themes.add(file.getFileName().toString()));
 				}
 			}
-
 			if (!_options.isAll()) {
 				if (themes.size() > 0) {
 					String exampleTheme = themes.get(0);
@@ -124,10 +121,10 @@ public class ConvertThemeCommand {
 			}
 		}
 		else {
-			File themeDir = new File(_pluginsSDKThemesDir, themeName);
+			Path themeDir = _pluginsSDKThemesDir.resolve(themeName);
 
-			if (themeDir.exists()) {
-				importTheme(themeDir.getCanonicalPath());
+			if (Files.exists(themeDir)) {
+				importTheme(themeDir.toRealPath());
 			}
 			else {
 				_blade.error("Theme does not exist");
@@ -135,7 +132,7 @@ public class ConvertThemeCommand {
 		}
 	}
 
-	public void importTheme(String themePath) throws Exception {
+	public void importTheme(Path themePath) throws Exception {
 		Process process = Util.startProcess(
 			_blade,
 			"yo liferay-theme:import -p \"" + themePath + "\" -c " +
@@ -148,29 +145,26 @@ public class ConvertThemeCommand {
 			_blade.out().println(
 				"Theme " + themePath + " migrated successfully");
 
-			File theme = new File(themePath);
-
-			FileUtils.deleteDirectory(theme);
+			FileUtils.deleteDirectory(themePath.toFile());
 		}
 		else {
 			_blade.error("blade exited with code: " + errCode);
 		}
 	}
 
-	private boolean compassSupport(String themePath) throws Exception {
-		File themeDir = new File(themePath);
+	private boolean compassSupport(Path themePath) throws Exception {
 
-		File customCss = new File(themeDir, "docroot/_diffs/css/custom.css");
+		Path customCss = themePath.resolve(Paths.get("docroot", "_diffs", "css", "custom.css"));
 
-		if (!customCss.exists()) {
-			customCss = new File(themeDir, "docroot/_diffs/css/_custom.scss");
+		if (Files.notExists(customCss)) {
+			customCss = themePath.resolve(Paths.get("docroot", "_diffs", "css", "_custom.scss"));
 		}
 
-		if (!customCss.exists()) {
+		if (Files.notExists(customCss)) {
 			return false;
 		}
 
-		String css = new String(Files.readAllBytes(customCss.toPath()));
+		String css = new String(Files.readAllBytes(customCss));
 
 		Matcher matcher = _compassImport.matcher(css);
 
@@ -181,7 +175,7 @@ public class ConvertThemeCommand {
 	private final Pattern
 		_compassImport = Pattern.compile("@import\\s*['\"]compass['\"];");
 	private ConvertArgs _options;
-	private File _pluginsSDKThemesDir;
-	private File _themesDir;
+	private Path _pluginsSDKThemesDir;
+	private Path _themesDir;
 
 }

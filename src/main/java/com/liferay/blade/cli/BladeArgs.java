@@ -27,7 +27,7 @@ public class BladeArgs {
 		@Parameter(
 			names = {"-b", "--base"},
 			description ="Specify a new base directory (default working directory).")
-		private String base;
+		private String base = ".";
 
 		@Parameter(
 			names = {"-f", "--failok"},

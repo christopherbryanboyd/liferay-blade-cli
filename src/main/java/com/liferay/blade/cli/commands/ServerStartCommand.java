@@ -16,12 +16,14 @@
 
 package com.liferay.blade.cli.commands;
 
-import java.io.File;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.Workspace;
@@ -41,20 +43,20 @@ public class ServerStartCommand {
 	}
 
 	private void commandServer(
-			File dir, String serverType)
+			Path dir, String serverType)
 		throws Exception {
 
-		if (!dir.exists() || dir.listFiles() == null) {
+		if (Files.notExists(dir) || !Files.list(dir).findAny().isPresent()) {
 			_blade.error(
 				" bundles folder does not exist in Liferay Workspace, execute 'gradlew initBundle' in order to create it.");
 
 			return;
 		}
 
-		for (File file : dir.listFiles()) {
-			String fileName = file.getName();
+		for (Path file : Files.list(dir).collect(Collectors.toList())) {
+			Path fileName = file.getFileName();
 
-			if (fileName.startsWith(serverType) && file.isDirectory()) {
+			if (fileName.startsWith(serverType) && Files.isDirectory(file)) {
 				if (serverType.equals("tomcat")) {
 					commmandTomcat(file);
 
@@ -74,7 +76,7 @@ public class ServerStartCommand {
 	}
 
 	private void commmandJBossWildfly(
-			File dir)
+			Path dir)
 		throws Exception {
 
 		Map<String, String> enviroment = new HashMap<>();
@@ -93,13 +95,13 @@ public class ServerStartCommand {
 		}
 
 		Process process = Util.startProcess(
-			_blade, executable + debug, new File(dir, "bin"), enviroment);
+			_blade, executable + debug, dir.resolve("bin"), enviroment);
 
 		process.waitFor();
 
 	}
 
-	private void commmandTomcat(File dir)
+	private void commmandTomcat(Path dir)
 		throws Exception {
 
 		Map<String, String> enviroment = new HashMap<>();
@@ -121,14 +123,14 @@ public class ServerStartCommand {
 			startCommand = " jpda " + startCommand;
 		}
 
-		File logs = new File(dir, "logs");
-		logs.mkdirs();
+		Path logs = dir.resolve("logs");
+		Files.createDirectory(logs);
 
-		File catalinaOut = new File(logs, "catalina.out");
-		catalinaOut.createNewFile();
+		Path catalinaOut = logs.resolve("catalina.out");
+		Files.createFile(catalinaOut);
 
 		final Process process = Util.startProcess(
-			_blade, executable + startCommand, new File(dir, "bin"),
+			_blade, executable + startCommand, dir.resolve("bin"),
 			enviroment);
 
 		Runtime runtime = Runtime.getRuntime();
@@ -156,9 +158,9 @@ public class ServerStartCommand {
 	public void execute()
 		throws Exception {
 
-		File gradleWrapper = Util.getGradleWrapper(_blade.getBase());
+		Path gradleWrapper = Util.getGradleWrapper(_blade.getBase());
 
-		File rootDir = gradleWrapper.getParentFile();
+		Path rootDir = gradleWrapper.getParent();
 
 		String serverType = null;
 
@@ -189,15 +191,15 @@ public class ServerStartCommand {
 				serverType = "tomcat";
 			}
 
-			File tempLiferayHome = new File(liferayHomePath);
-			File liferayHomeDir = null;
+			Path tempLiferayHome = Paths.get(liferayHomePath);
+			Path liferayHomeDir = null;
 
 			if (tempLiferayHome.isAbsolute()) {
-				liferayHomeDir = tempLiferayHome.getCanonicalFile();
+				liferayHomeDir = tempLiferayHome.normalize();
 			}
 			else {
-				File tempFile = new File(rootDir, liferayHomePath);
-				liferayHomeDir = tempFile.getCanonicalFile();
+				Path tempFile = rootDir.resolve(liferayHomePath);
+				liferayHomeDir = tempFile.normalize();
 			}
 
 			commandServer(liferayHomeDir, serverType);
@@ -220,7 +222,7 @@ public class ServerStartCommand {
 							appServerParentDirTemp =
 								appServerParentDirTemp.replace(
 									"${project.dir}",
-									rootDir.getCanonicalPath());
+									rootDir.toRealPath().toString());
 
 							appServerParentDir = appServerParentDirTemp;
 						}
@@ -242,11 +244,11 @@ public class ServerStartCommand {
 					appServerParentDir.contains(":")) {
 
 					commandServer(
-						new File(appServerParentDir), serverType);
+						Paths.get(appServerParentDir), serverType);
 				}
 				else {
 					commandServer(
-						new File(rootDir, appServerParentDir), serverType);
+						rootDir.resolve(appServerParentDir), serverType);
 				}
 			}
 			catch (Exception e) {

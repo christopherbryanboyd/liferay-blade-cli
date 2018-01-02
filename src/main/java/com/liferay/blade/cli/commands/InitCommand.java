@@ -19,22 +19,20 @@ package com.liferay.blade.cli.commands;
 import aQute.lib.getopt.Arguments;
 import aQute.lib.getopt.Description;
 import aQute.lib.getopt.Options;
-import aQute.lib.io.IO;
-
 import com.liferay.blade.cli.gradle.GradleExec;
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.commands.arguments.InitArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
@@ -65,74 +63,75 @@ public class InitCommand {
 
 		String name = _options.getName();
 
-		File destDir = name != null ? new File(
-			_blade.getBase(), name) : _blade.getBase();
+		Path destDir = name != null ? Paths.get(
+			_blade.getBase().toString(), name) : Paths.get(_blade.getBase().toString());
 
-		File temp = null;
+		Path temp = null;
 
 		boolean isPluginsSDK = isPluginsSDK(destDir);
 
 		trace("Using destDir " + destDir);
 
-		if (destDir.exists() && !destDir.isDirectory()) {
-			addError(destDir.getAbsolutePath() + " is not a directory.");
-			return;
-		}
+		if (Files.exists(destDir)) {
+			if (!Files.isDirectory(destDir)) {
+				addError(destDir.toAbsolutePath() + " is not a directory.");
+				return;				
+			}
+			else
+			{
+				if (isPluginsSDK) {
+					if (!isPluginsSDK70(destDir)) {
+						if (_options.isUpgrade()) {
+							trace(
+								"Found plugins-sdk 6.2, upgraded to 7.0, moving contents to new subdirectory " +
+									"and initing workspace.");
 
-		if (destDir.exists()) {
-			if (isPluginsSDK) {
-				if (!isPluginsSDK70(destDir)) {
-					if (_options.isUpgrade()) {
-						trace(
-							"Found plugins-sdk 6.2, upgraded to 7.0, moving contents to new subdirectory " +
-								"and initing workspace.");
+							for (String fileName : _SDK_6_GA5_FILES) {
+								Path file = destDir.resolve(fileName);
 
-						for (String fileName : _SDK_6_GA5_FILES) {
-							File file = new File(destDir, fileName);
-
-							if (file.exists()) {
-								file.delete();
+								Files.deleteIfExists(file);
 							}
 						}
+						else {
+							addError("Unable to run blade init in plugins sdk 6.2, please add -u (--upgrade)"
+								+ " if you want to upgrade to 7.0");
+							return;
+						}
+					}
+
+					trace("Found plugins-sdk, moving contents to new subdirectory " +
+						"and initing workspace.");
+
+					temp = Files.createTempDirectory("orignal-sdk");
+
+					_moveContentsToDirectory(destDir, temp);
+				}
+				else if (Files.list(destDir).findAny().isPresent()) {
+					if (_options.isForce()) {
+						trace("Files found, initing anyways.");
 					}
 					else {
-						addError("Unable to run blade init in plugins sdk 6.2, please add -u (--upgrade)"
-							+ " if you want to upgrade to 7.0");
+						addError(
+							destDir.toAbsolutePath() +
+							" contains files, please move them before continuing " +
+								"or use -f (--force) option to init workspace " +
+									"anyways.");
 						return;
 					}
 				}
-
-				trace("Found plugins-sdk, moving contents to new subdirectory " +
-					"and initing workspace.");
-
-				temp = Files.createTempDirectory("orignal-sdk").toFile();
-
-				_moveContentsToDirectory(destDir, temp);
-			}
-			else if (destDir.list().length > 0) {
-				if (_options.isForce()) {
-					trace("Files found, initing anyways.");
-				}
-				else {
-					addError(
-						destDir.getAbsolutePath() +
-						" contains files, please move them before continuing " +
-							"or use -f (--force) option to init workspace " +
-								"anyways.");
-					return;
-				}
 			}
 		}
+
 
 		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
 
 		if (name == null) {
-			name = destDir.getName();
+			name = destDir.getFileName().toString();
 		}
 
-		File destParentDir = destDir.getParentFile();
+		Path destParentDir = destDir.getParent();
 
-		projectTemplatesArgs.setDestinationDir(destParentDir);
+		projectTemplatesArgs.setDestinationDir(destParentDir.toFile());
 
 		if (_options.isForce() || _options.isUpgrade()) {
 			projectTemplatesArgs.setForce(true);
@@ -150,21 +149,22 @@ public class InitCommand {
 				gradleExec.executeGradleCommand("upgradePluginsSDK");
 			}
 
-			File gitFile = new File(temp, ".git");
+			Path gitFile = temp.resolve(".git");
 
-			if (gitFile.exists()) {
-				File destGitFile = new File(destDir, ".git");
+			if (Files.exists(gitFile)) {
+				Path destGitFile = destDir.resolve(".git");
 
 				_moveContentsToDirectory(gitFile, destGitFile);
 
-				IO.deleteWithException(gitFile);
+				FilesUtil.deleteWithException(gitFile);
+
 			}
 
-			File pluginsSdkDir = new File(destDir, "plugins-sdk");
+			Path pluginsSdkDir = destDir.resolve("plugins-sdk");
 
 			_moveContentsToDirectory(temp, pluginsSdkDir);
 
-			IO.deleteWithException(temp);
+			FilesUtil.deleteWithException(temp);
 		}
 	}
 
@@ -187,37 +187,34 @@ public class InitCommand {
 		_blade.addErrors("init", Collections.singleton(msg));
 	}
 
-	private boolean isPluginsSDK(File dir) {
-		if ((dir == null) || !dir.exists() || !dir.isDirectory()) {
+	private boolean isPluginsSDK(Path dir) throws IOException {
+		if ((dir == null) || Files.notExists(dir) || !Files.isDirectory(dir)) {
 			return false;
 		}
 
-		List<String> names = Arrays.asList(dir.list());
+		List<String> names = Arrays.asList("portlets", 
+				"hooks",
+				"layouttpl",
+				"themes",
+				"build.properties",
+				"build.xml",
+				"build-common.xml",
+				"build-common-plugin.xml");
+		return Files.list(dir).map(x -> x.getFileName().toString()).anyMatch(names::contains);
 
-		return names != null &&
-			names.contains("portlets") &&
-			names.contains("hooks") &&
-			names.contains("layouttpl") &&
-			names.contains("themes") &&
-			names.contains("build.properties") &&
-			names.contains("build.xml") &&
-			names.contains("build-common.xml") &&
-			names.contains("build-common-plugin.xml");
 	}
 
-	private boolean isPluginsSDK70(File dir) {
-		if ((dir == null) || !dir.exists() || !dir.isDirectory()) {
+	private boolean isPluginsSDK70( Path dir) {
+		if ((dir == null) || !Files.exists(dir) || !Files.isDirectory(dir)) {
 			return false;
 		}
 
-		File buildProperties = new File(dir, "build.properties");
+		Path buildProperties = dir.resolve("build.properties");
 		Properties properties = new Properties();
 
-		InputStream in = null;
-
-		try {
-			in = new FileInputStream(buildProperties);
-
+		
+		try (InputStream in = Files.newInputStream(buildProperties)) {
+		
 			properties.load(in);
 
 			String sdkVersionValue = (String) properties.get("lp.version");
@@ -225,34 +222,22 @@ public class InitCommand {
 			if (sdkVersionValue.equals("7.0.0")) {
 				return true;
 			}
+		} catch (IOException e) {
 		}
-		catch (Exception e) {
-		}
-		finally {
-			if (in != null) {
-				try {
-					in.close();
-				}
-				catch (Exception e) {
-				}
-			}
-		}
-
 		return false;
 	}
 
-	private void _moveContentsToDirectory(File src, File dest) throws IOException {
-		Path source = src.toPath().toAbsolutePath();
-		Path target = dest.toPath().toAbsolutePath();
+	private void _moveContentsToDirectory(Path src, Path dest) throws IOException {
+		Path source = src.toAbsolutePath();
+		Path target = dest.toAbsolutePath();
 
 		Files.walkFileTree(source,
 			new SimpleFileVisitor<Path>() {
 
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					String dirName = dir.toFile().getName();
 
-					if (!dirName.equals(src.getName())) {
+					if (!dir.endsWith(src.getFileName())) {
 						Files.delete(dir);
 					}
 

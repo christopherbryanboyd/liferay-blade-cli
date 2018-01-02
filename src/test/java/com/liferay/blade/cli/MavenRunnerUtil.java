@@ -25,6 +25,9 @@ import aQute.lib.io.IO;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.codehaus.plexus.util.FileUtils;
 
@@ -33,7 +36,7 @@ import org.codehaus.plexus.util.FileUtils;
  */
 public class MavenRunnerUtil
 {
-    public static void executeMavenPackage (String projectPath , String[] phases) {
+    public static void executeMavenPackage (Path projectPath , String[] phases) {
 		assertNotNull(phases);
 		assertTrue(phases.length > 0);
 
@@ -63,7 +66,7 @@ public class MavenRunnerUtil
 
 			Process process = runTime.exec(
 				(isWindows ? ".\\mvnw.cmd" : "./mvnw") + " " + commandBuilder.toString(),
-				null, new File(projectPath));
+				null, projectPath.toFile());
 
 			BufferedReader input = new BufferedReader(
 				new InputStreamReader(process.getInputStream()));
@@ -85,9 +88,9 @@ public class MavenRunnerUtil
 		assertTrue(isBuildSuccess);
     }
 
-    public static void verifyBuildOutput (String projectPath, String fileName) {
-		File file = IO.getFile(projectPath + "/target/" + fileName);
+    public static void verifyBuildOutput (Path projectPath, String fileName) {
+		Path path = projectPath.resolve(Paths.get("target", fileName));
 
-		assertTrue(file.exists());
+		assertTrue(Files.exists(path));
 	}
 }
