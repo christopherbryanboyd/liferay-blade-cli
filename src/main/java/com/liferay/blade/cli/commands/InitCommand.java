@@ -38,6 +38,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -219,7 +220,7 @@ public class InitCommand {
 
 			String sdkVersionValue = (String) properties.get("lp.version");
 
-			if (sdkVersionValue.equals("7.0.0")) {
+			if (Objects.equals(sdkVersionValue, "7.0.0")) {
 				return true;
 			}
 		} catch (IOException e) {
