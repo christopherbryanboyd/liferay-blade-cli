@@ -42,7 +42,8 @@ public class GradleToolingTest {
 	public static void setUpClass() throws Exception {
 		FilesUtil.copy(Paths.get("deps.zip"), Paths.get("build","classes","java","test","deps.zip"));
 		Path testws = Paths.get("build","testws1");
-		FileUtil.deleteDir(testws);
+		if (Files.exists(testws))
+			FileUtil.deleteDir(testws);
 		Files.createDirectories(testws);
 		FilesUtil.copy(
 			Paths.get("test-resources","projects","testws1"), testws);

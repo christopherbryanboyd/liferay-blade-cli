@@ -19,6 +19,7 @@ package com.liferay.blade.cli;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +35,8 @@ import org.junit.Test;
 
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
+
+import aQute.lib.io.IO;
 
 /**
  * @author David Truong
@@ -149,7 +152,7 @@ public class SamplesCommandTest {
 
 	@Test
 	public void testGetSampleWithDependencies() throws Exception {
-		String[] args = {"samples", "-d", testDir.resolve("test").toString(), "blade.rest"};
+		/*String[] args = {"samples", "-d", testDir.resolve("test").toString(), "blade.rest"};
 
 		new bladenofail().run(args);
 
@@ -163,7 +166,24 @@ public class SamplesCommandTest {
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.rest-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.rest-1.0.0.jar");*/
+		
+		String[] args = {"samples", "-d", testDir.toString() + "/test", "blade.rest"};
+
+		new bladenofail().run(args);
+
+		File projectDir = new File(testDir.toFile(), "test/blade.rest");
+
+		assertTrue(projectDir.exists());
+
+		File buildFile = IO.getFile(projectDir, "build.gradle");
+
+		assertTrue(buildFile.exists());
+
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir.toPath(), "build");
+		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
+		GradleRunnerUtil.verifyBuildOutput(projectDir.toPath(), "blade.rest-1.0.0.jar");
+
 	}
 
 	@Test

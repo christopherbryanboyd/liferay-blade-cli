@@ -17,6 +17,7 @@
 package com.liferay.blade.cli;
 
 import aQute.bnd.osgi.Jar;
+import aQute.bnd.osgi.Processor;
 import aQute.bnd.osgi.Resource;
 import aQute.lib.getopt.Options;
 import aQute.lib.io.IO;
@@ -125,7 +126,7 @@ public class Util {
 	}
 
 	public static void copy(InputStream in, Path outputDir) throws Exception {
-		try (Jar jar = new Jar("dot", in)) {
+		/*try (Jar jar = new Jar("dot", in)) {
 			for (Entry<String, Resource> e : jar.getResources().entrySet()) {
 				String path = e.getKey();
 
@@ -150,13 +151,34 @@ public class Util {
 					Files.copy(r.openInputStream(), dest);
 				}
 			}
+		}*/
+		try (Jar jar = new Jar("dot", in)) {
+			for (Entry<String, Resource> e : jar.getResources().entrySet()) {
+				String path = e.getKey();
+
+				Resource r = e.getValue();
+
+				File dest = Processor.getFile(outputDir.toFile(), path);
+
+				if ((dest.lastModified() < r.lastModified()) ||
+					(r.lastModified() <= 0)) {
+
+					File dp = dest.getParentFile();
+
+					if (!dp.exists() && !dp.mkdirs()) {
+						throw new Exception("Could not create directory " + dp);
+					}
+
+					IO.copy(r.openInputStream(), dest);
+				}
+			}
 		}
 	}
 
 	public static Path findParentFile(
 		Path dir, String[] fileNames, boolean checkParents) {
 
-		if (dir == null) {
+		/*if (dir == null) {
 			return null;
 		}
 
@@ -172,11 +194,29 @@ public class Util {
 			return findParentFile(dir.getParent(), fileNames, checkParents);
 		}
 
+		return null;*/
+
+		if (dir == null) {
+			return null;
+		}
+
+		for (String fileName : fileNames) {
+			File file = new File(dir.toFile(), fileName);
+
+			if (file.exists()) {
+				return dir;
+			}
+		}
+
+		if (checkParents) {
+			return findParentFile(dir.getParent(), fileNames, checkParents);
+		}
+
 		return null;
 	}
 
 	public static List<Properties> getAppServerProperties(Path dir) {
-		Path projectRoot = findParentFile(
+		/*Path projectRoot = findParentFile(
 			dir, _APP_SERVER_PROPERTIES_FILE_NAMES, true);
 
 		List<Properties> properties = new ArrayList<>();
@@ -189,20 +229,45 @@ public class Util {
 			}
 		}
 
-		return properties;
+		return properties;*/
+		File projectRoot = findParentFile(
+				dir, _APP_SERVER_PROPERTIES_FILE_NAMES, true).toFile();
+
+			List<Properties> properties = new ArrayList<>();
+
+			for (String fileName : _APP_SERVER_PROPERTIES_FILE_NAMES) {
+				File file = new File(projectRoot, fileName);
+
+				if (file.exists()) {
+					properties.add(getProperties(file.toPath()));
+				}
+			}
+
+			return properties;
+
 	}
 
 	public static Properties getGradleProperties(Path dir) {
-		Path file = getGradlePropertiesFile(dir);
+		/*Path file = getGradlePropertiesFile(dir);
 
-		return getProperties(file);
+		return getProperties(file);*/
+
+		File file = getGradlePropertiesFile(dir).toFile();
+
+		return getProperties(file.toPath());
+
 	}
 
 	public static Path getGradlePropertiesFile(Path dir) {
-		Path gradlePropertiesFile = 
+		/*Path gradlePropertiesFile = 
 			getWorkspaceDir(dir).resolve(_GRADLE_PROPERTIES_FILE_NAME);
 
-		return gradlePropertiesFile;
+		return gradlePropertiesFile;*/
+
+		File gradlePropertiesFile = new File(
+			getWorkspaceDir(dir).toFile(), _GRADLE_PROPERTIES_FILE_NAME);
+
+		return gradlePropertiesFile.toPath();
 	}
 
 	public static Path getGradleWrapper(Path dir) {
@@ -275,7 +340,7 @@ public class Util {
 	}
 
 	public static boolean isWorkspace(Path dir) {
-		Path workspaceDir = getWorkspaceDir(dir);
+		/*Path workspaceDir = getWorkspaceDir(dir);
 
 		Path gradleFile = workspaceDir.resolve(_SETTINGS_GRADLE_FILE_NAME);
 
@@ -298,6 +363,39 @@ public class Util {
 				gradleFile = workspaceDir.resolve(_BUILD_GRADLE_FILE_NAME);
 
 				script = read(gradleFile);
+
+				matcher = Workspace.PATTERN_WORKSPACE_PLUGIN.matcher(script);
+
+				return matcher.find();
+			}
+		}
+		catch (Exception e) {
+			return false;
+		}*/
+		
+		File workspaceDir = getWorkspaceDir(dir).toFile();
+
+		File gradleFile = new File(workspaceDir, _SETTINGS_GRADLE_FILE_NAME);
+
+		if (!gradleFile.exists()) {
+			return false;
+		}
+
+		try {
+			String script = read(gradleFile.toPath());
+
+			Matcher matcher = Workspace.PATTERN_WORKSPACE_PLUGIN.matcher(
+				script);
+
+			if (matcher.find()) {
+				return true;
+			}
+			else {
+				//For workspace plugin < 1.0.5
+
+				gradleFile = new File(workspaceDir, _BUILD_GRADLE_FILE_NAME);
+
+				script = read(gradleFile.toPath());
 
 				matcher = Workspace.PATTERN_WORKSPACE_PLUGIN.matcher(script);
 

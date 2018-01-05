@@ -24,7 +24,6 @@ import com.liferay.blade.cli.commands.arguments.ConvertArgs;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,51 +60,8 @@ public class ConvertCommand {
 
 	public ConvertCommand(blade blade, ConvertArgs options)
 		throws Exception {
+		
 		_blade = blade;
-		_options = options;
-
-		File projectDir = Util.getWorkspaceDir(_blade).toFile();
-
-		Properties gradleProperties = Util.getGradleProperties(projectDir.toPath());
-
-		String pluginsSdkDirPath = null;
-
-		if (gradleProperties != null) {
-			pluginsSdkDirPath = gradleProperties.getProperty(
-				Workspace.DEFAULT_PLUGINS_SDK_DIR_PROPERTY);
-		}
-
-		if (pluginsSdkDirPath == null) {
-			pluginsSdkDirPath = Workspace.DEFAULT_PLUGINS_SDK_DIR;
-		}
-
-		_pluginsSdkDir = new File(projectDir, pluginsSdkDirPath).toPath();
-		_hooksDir = new File(_pluginsSdkDir.toFile(), "hooks").toPath();
-		_layouttplDir = new File(_pluginsSdkDir.toFile(), "layouttpl").toPath();
-		_portletsDir = new File(_pluginsSdkDir.toFile(), "portlets").toPath();
-		_websDir = new File(_pluginsSdkDir.toFile(), "webs").toPath();
-		_themesDir = new File(_pluginsSdkDir.toFile(), "themes").toPath();
-
-		String warsDirPath = null;
-
-		if (gradleProperties != null) {
-			warsDirPath = gradleProperties.getProperty(
-				Workspace.DEFAULT_WARS_DIR_PROPERTY);
-		}
-
-		if (warsDirPath == null) {
-			warsDirPath = Workspace.DEFAULT_WARS_DIR;
-		}
-
-		_warsDir = new File(projectDir, warsDirPath).toPath();
-
-		if (!_pluginsSdkDir.toFile().exists()) {
-			_blade.error("Plugins SDK folder " + pluginsSdkDirPath + " doesn't exist.\n" +
-					"Please edit gradle.properties and set " + Workspace.DEFAULT_PLUGINS_SDK_DIR_PROPERTY);
-
-			return;
-		}
-		/*_blade = blade;
 		_options = options;
 
 		Path projectDir = Util.getWorkspaceDir(_blade);
@@ -148,7 +104,7 @@ public class ConvertCommand {
 					"Please edit gradle.properties and set " + Workspace.DEFAULT_PLUGINS_SDK_DIR_PROPERTY);
 
 			return;
-		}*/
+		}
 	}
 
 	public void execute() throws Exception {
@@ -167,7 +123,7 @@ public class ConvertCommand {
 			return;
 		}
 
-		/*final Predicate<Path> containsDocrootFilter = ((path) -> Files.isDirectory(path) && Files.exists(path.resolve("docroot")));
+		final Predicate<Path> containsDocrootFilter = ((path) -> Files.isDirectory(path) && Files.exists(path.resolve("docroot")));
 			
 		
 		final Predicate<Path> serviceBuilderPluginsFilter = ((path) -> containsDocrootFilter.test(path) && hasServiceXmlFile(path));
@@ -234,95 +190,6 @@ public class ConvertCommand {
 				}
 				else {
 					convertToThemeProject(pluginDir);
-				}
-			}
-		}*/
-
-		final FileFilter containsDocrootFilter = new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				return pathname.isDirectory() && new File(pathname, "docroot").exists();
-			}
-		};
-
-		final FileFilter serviceBuilderPluginsFilter = new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				return pathname.isDirectory() && new File(pathname, "docroot").exists() && hasServiceXmlFile(pathname.toPath());
-			}
-		};
-
-		File[] serviceBuilderList = _portletsDir.toFile().listFiles(serviceBuilderPluginsFilter);
-		File[] portletList = _portletsDir.toFile().listFiles(containsDocrootFilter);
-		File[] hookFiles = _hooksDir.toFile().listFiles(containsDocrootFilter);
-		File[] layoutFiles = _layouttplDir.toFile().listFiles(containsDocrootFilter);
-		File[] webFiles = _websDir.toFile().listFiles(containsDocrootFilter);
-		File[] themeFiles = _themesDir.toFile().listFiles(containsDocrootFilter);
-
-		List<File> serviceBuilderPlugins = Arrays.asList(serviceBuilderList != null ? serviceBuilderList : new File[0]);
-		List<File> portlets = Arrays.asList(portletList != null ? portletList : new File[0]);
-		List<File> portletPlugins = portlets.stream().filter(portletPlugin -> !serviceBuilderPlugins.contains(portletPlugin)).collect(Collectors.toList());
-
-		List<File> hookPlugins = Arrays.asList(hookFiles != null ? hookFiles : new File[0]);
-		List<File> layoutPlugins = Arrays.asList(layoutFiles != null ? layoutFiles : new File[0]);
-		List<File> webPlugins = Arrays.asList(webFiles != null ? webFiles : new File[0]);
-		List<File> themePlugins = Arrays.asList(themeFiles != null ? themeFiles : new File[0]);
-
-		if (_options.isAll()) {
-			serviceBuilderPlugins.stream().map(File::toPath).forEach(this::convertToServiceBuilderWarProject);
-			portletPlugins.stream().map(File::toPath).forEach(this::convertToWarProject);
-			hookPlugins.stream().map(File::toPath).forEach(this::convertToWarProject);
-			webPlugins.stream().map(File::toPath).forEach(this::convertToWarProject);
-			layoutPlugins.stream().map(File::toPath).forEach(this::convertToLayoutWarProject);
-
-			if (_options.isThemeBuilder()) {
-				themePlugins.stream().map(File::toPath).forEach(this::convertToThemeBuilderWarProject);
-			}
-			else {
-				themePlugins.stream().map(File::toPath).forEach(this::convertToThemeProject);
-			}
-		}
-		else if (_options.isList()) {
-			_blade.out().println("The following is a list of projects available to convert:\n");
-
-			Stream<File> plugins = concat(serviceBuilderPlugins.stream(), concat(portletPlugins.stream(), concat(hookPlugins.stream(), concat(webPlugins.stream(), concat(layoutPlugins.stream(), themePlugins.stream())))));
-
-			plugins.forEach(plugin -> _blade.out().println("\t" + plugin.getName()));
-		}
-		else {
-			Path pluginDirPath = findPluginDir(pluginName);
-			File pluginDir = pluginDirPath == null ? null : pluginDirPath.toFile();
-
-			if (pluginDir == null) {
-				_blade.error("Plugin does not exist.");
-
-				return;
-			}
-
-			Path pluginPath = pluginDir.toPath();
-
-			if (pluginPath.startsWith(_portletsDir)) {
-				if (isServiceBuilderPlugin(pluginDir.toPath())) {
-					convertToServiceBuilderWarProject(pluginDir.toPath());
-				}
-				else {
-					convertToWarProject(pluginDir.toPath());
-				}
-			}
-			if (pluginPath.startsWith(_hooksDir) ||
-				pluginPath.startsWith(_websDir)) {
-
-				convertToWarProject(pluginDir.toPath());
-			}
-			else if(pluginPath.startsWith(_layouttplDir)) {
-				convertToLayoutWarProject(pluginDir.toPath());
-			}
-			else if(pluginPath.startsWith(_themesDir)) {
-				if (_options.isThemeBuilder()) {
-					convertToThemeBuilderWarProject(pluginDir.toPath());
-				}
-				else {
-					convertToThemeProject(pluginDir.toPath());
 				}
 			}
 		}
