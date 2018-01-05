@@ -67,7 +67,7 @@ public class SamplesCommand {
 	}
 
 	private void copySample(String sampleName) throws Exception {
-		/*final Path workDir; 
+		final Path workDir; 
 		if (_options.getDir() == null) {
 			workDir = _blade.getBase();			
 		} else {
@@ -80,33 +80,7 @@ public class SamplesCommand {
 
 		Path gradleSamples = bladeRepo.resolve("gradle");
 
-		Files.find(gradleSamples, 999, (path, bfa) -> isCorrectSample.test(path)).forEach((path) -> copySampleFiles(workDir, path));*/
-		
-		File workDir = _options.getDir();
-
-		if (workDir == null) {
-			workDir = _blade.getBase().toFile();
-		}
-
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
-
-		File gradleSamples = new File(bladeRepo, "gradle");
-
-		for (File file : gradleSamples.listFiles()) {
-			String fileName = file.getName();
-
-			if (file.isDirectory() && fileName.equals(sampleName)) {
-				File dest = new File(workDir, fileName);
-
-				FileUtils.copyDirectory(file, dest);
-
-				updateBuildGradle(dest.toPath());
-
-				if (!Util.hasGradleWrapper(dest.toPath())) {
-					addGradleWrapper(dest.toPath());
-				}
-			}
-		}
+		Files.find(gradleSamples, 999, (path, bfa) -> isCorrectSample.test(path)).forEach((path) -> copySampleFiles(workDir, path));
 	}
 
 	private void copySampleFiles(final Path workDir, Path path) {
@@ -164,14 +138,14 @@ public class SamplesCommand {
 	}
 
 	private void listSamples() {
-		/*Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
+		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
 
 		Path gradleSamples = bladeRepo.resolve("gradle");
 
 		List<String> samples;
 		try {
 			samples = Files.find(gradleSamples, 999, (path, bfa) -> 
-				 (Files.isDirectory(path)) && path.getFileName().startsWith("blade.")).map(path -> path.getFileName().toString()).collect(Collectors.toList());
+				 (Files.isDirectory(path))).map(path -> path.getFileName().toString()).filter(string -> string.startsWith("blade.")).collect(Collectors.toList());
 			_blade.out().println(
 					"Please provide the sample project name to create, " +
 						"e.g. \"blade samples blade.rest\"\n");
@@ -180,28 +154,7 @@ public class SamplesCommand {
 					WordUtils.wrap(StringUtils.join(samples, ", "), 80));
 		} catch (IOException e) {
 			_blade.error(e.getMessage());
-		}*/
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
-
-		File gradleSamples = new File(bladeRepo, "gradle");
-
-		List<String> samples = new ArrayList<>();
-
-		for (File file : gradleSamples.listFiles()) {
-			String fileName = file.getName();
-
-			if (file.isDirectory() && fileName.startsWith("blade.")) {
-				samples.add(fileName);
-			}
 		}
-
-		_blade.out().println(
-			"Please provide the sample project name to create, " +
-				"e.g. \"blade samples blade.rest\"\n");
-		_blade.out().println("Currently available samples:");
-		_blade.out().println(
-			WordUtils.wrap(StringUtils.join(samples, ", "), 80));
-
 
 	}
 
@@ -278,22 +231,22 @@ public class SamplesCommand {
 	}
 
 	private void updateBuildGradle(Path dir) throws Exception {
-		
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
 
-		File sampleGradleFile = new File(dir.toFile(), "build.gradle");
+		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
 
-		String script = Util.read(sampleGradleFile.toPath());
+		Path sampleGradleFile = dir.resolve("build.gradle");
+
+		String script = Util.read(sampleGradleFile);
 
 		if (!Util.isWorkspace(dir)) {
-			File parentBuildGradleFile = new File(
-				bladeRepo, "gradle/build.gradle");
+			Path parentBuildGradleFile = 
+				bladeRepo.resolve(Paths.get("gradle", "build.gradle"));
 
 			String parentBuildScript = parseGradleScript(
-				Util.read(parentBuildGradleFile.toPath()), "buildscript", false);
+				Util.read(parentBuildGradleFile), "buildscript", false);
 
 			String parentSubprojectsScript = parseGradleScript(
-				Util.read(parentBuildGradleFile.toPath()), "subprojects", true);
+				Util.read(parentBuildGradleFile), "subprojects", true);
 
 			parentSubprojectsScript = removeGradleSection(
 				parentSubprojectsScript, "buildscript");
@@ -303,32 +256,7 @@ public class SamplesCommand {
 			script = parentBuildScript + parentSubprojectsScript + script;
 		}
 
-		Files.write(sampleGradleFile.toPath(), script.getBytes());
-//		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
-//
-//		Path sampleGradleFile = dir.resolve("build.gradle");
-//
-//		String script = Util.read(sampleGradleFile);
-//
-//		if (!Util.isWorkspace(dir)) {
-//			Path parentBuildGradleFile = 
-//				bladeRepo.resolve(Paths.get("gradle", "build.gradle"));
-//
-//			String parentBuildScript = parseGradleScript(
-//				Util.read(parentBuildGradleFile), "buildscript", false);
-//
-//			String parentSubprojectsScript = parseGradleScript(
-//				Util.read(parentBuildGradleFile), "subprojects", true);
-//
-//			parentSubprojectsScript = removeGradleSection(
-//				parentSubprojectsScript, "buildscript");
-//
-//			System.out.println(parentSubprojectsScript);
-//
-//			script = parentBuildScript + parentSubprojectsScript + script;
-//		}
-//
-//		Files.write(sampleGradleFile, script.getBytes());
+		Files.write(sampleGradleFile, script.getBytes());
 	}
 
 	private static final String _BLADE_REPO_ARCHIVE_NAME =

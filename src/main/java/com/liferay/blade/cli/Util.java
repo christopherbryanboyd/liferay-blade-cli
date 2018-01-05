@@ -372,8 +372,9 @@ public class Util {
 		catch (Exception e) {
 			return false;
 		}*/
+		Path workspacePath = getWorkspaceDir(dir);
 		
-		File workspaceDir = getWorkspaceDir(dir).toFile();
+		File workspaceDir = workspacePath == null ? null : workspacePath.toFile();
 
 		File gradleFile = new File(workspaceDir, _SETTINGS_GRADLE_FILE_NAME);
 
