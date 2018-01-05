@@ -96,7 +96,7 @@ public class ConvertServiceBuilderCommand {
 			return;
 		}
 
-		Path project = _warsDir.resolve(projectName);
+		/*Path project = _warsDir.resolve(projectName);
 
 		if (Files.notExists(project)) {
 			_blade.error("The project " + projectName + " doesn't exist in " + _warsDir.toAbsolutePath());
@@ -256,6 +256,170 @@ public class ConvertServiceBuilderCommand {
 		String updatedContent = gradleContent.replaceAll("dependencies \\{", sb.toString());
 
 		Files.write(gradleFile, updatedContent.getBytes());
+
+		System.out.println("Migrating files done, then you should fix breaking changes and re-run build-service task.");*/
+		
+		File project = new File(_warsDir.toFile(), projectName);
+
+		if (!project.exists()) {
+			_blade.error("The project " + projectName + " doesn't exist in " + _warsDir.toString());
+
+			return;
+		}
+
+		File serviceFile = new File(project, "src/main/webapp/WEB-INF/service.xml");
+
+		if (!serviceFile.exists()) {
+			_blade.error("There is no service.xml file in " + projectName);
+
+			return;
+		}
+
+		List<String> args = _options.getName();
+		String sbProjectName = !args.isEmpty() && args.size() >= 2 ? args.get(1) : null;
+
+		if (sbProjectName == null) {
+			if (projectName.endsWith("-portlet")) {
+				sbProjectName = projectName.replaceAll("-portlet$", "");
+			}
+			else {
+				sbProjectName = projectName;
+			}
+		}
+
+		File sbProject = new File(_moduleDir.toFile(), sbProjectName);
+
+		if (sbProject.exists()) {
+			_blade.error(
+				"The service builder module project " + sbProjectName + " exist now, please choose another name");
+
+			return;
+		}
+
+		ServiceBuilder oldServiceBuilderXml = new ServiceBuilder(serviceFile.toPath());
+
+		CreateCommand createCommand = new CreateCommand(_blade);
+
+		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
+
+		projectTemplatesArgs.setDestinationDir(_moduleDir.toFile());
+		projectTemplatesArgs.setName(sbProject.getName());
+		projectTemplatesArgs.setPackageName(oldServiceBuilderXml.getPackagePath());
+		projectTemplatesArgs.setTemplate("service-builder");
+
+		createCommand.execute(projectTemplatesArgs);
+
+		File sbServiceProject = new File(sbProject, sbProjectName + "-service");
+
+		File newServiceXml = new File(sbServiceProject, ServiceBuilder.SERVICE_XML);
+
+		Files.move(serviceFile.toPath(), newServiceXml.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+		ServiceBuilder serviceBuilderXml = new ServiceBuilder(newServiceXml.toPath());
+
+		String sbPackageName = serviceBuilderXml.getPackagePath();
+
+		String packageName = sbPackageName.replaceAll("\\.", "/");
+
+		File oldSBFolder = new File(project, Constants.DEFAULT_JAVA_SRC + packageName);
+
+		File newSBFolder = new File(sbServiceProject, Constants.DEFAULT_JAVA_SRC + packageName);
+
+		File oldServiceImplFolder = new File(oldSBFolder, "service");
+		File newServiceImplFolder = new File(newSBFolder, "service");
+
+		if (oldServiceImplFolder.exists()) {
+			newServiceImplFolder.mkdirs();
+
+			Files.move(oldServiceImplFolder.toPath(), newServiceImplFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		File oldModelImplFolder = new File(oldSBFolder, "model");
+		File newModelImplFolder = new File(newSBFolder, "model");
+
+		if (oldModelImplFolder.exists()) {
+			newModelImplFolder.mkdirs();
+
+			Files.move(oldModelImplFolder.toPath(), newModelImplFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		File oldMetaInfFolder = new File(project, Constants.DEFAULT_JAVA_SRC + ServiceBuilder.META_INF);
+		File newMetaInfFolder = new File(sbServiceProject, Constants.DEFAULT_RESOURCES_SRC + ServiceBuilder.META_INF);
+
+		if (oldMetaInfFolder.exists()) {
+			newMetaInfFolder.mkdirs();
+
+			Files.move(new File(oldMetaInfFolder, ServiceBuilder.PORTLET_MODEL_HINTS_XML).toPath(),
+				new File(newMetaInfFolder, ServiceBuilder.PORTLET_MODEL_HINTS_XML).toPath());
+		}
+
+		File oldSrcFolder = new File(project, Constants.DEFAULT_JAVA_SRC);
+		File newResourcesSrcFolder = new File(sbServiceProject, Constants.DEFAULT_RESOURCES_SRC);
+
+		if (oldSrcFolder.exists()) {
+			newResourcesSrcFolder.mkdirs();
+
+			Files.move(new File(oldSrcFolder, ServiceBuilder.SERVICE_PROPERTIES).toPath(),
+				new File(newResourcesSrcFolder, ServiceBuilder.SERVICE_PROPERTIES).toPath());
+		}
+
+		File sbApiProject = new File(sbProject, sbProjectName + "-api");
+		File oldApiFolder = new File(project, Constants.DEFAULT_WEBAPP_SRC + ServiceBuilder.API_62);
+
+		if (oldApiFolder.exists()) {
+			File newApiFolder = new File(sbApiProject, Constants.DEFAULT_JAVA_SRC);
+
+			newApiFolder.mkdirs();
+
+			for (File oldApiFile : oldApiFolder.listFiles()) {
+				Files.move(oldApiFile.toPath(), newApiFolder.toPath().resolve(oldApiFile.getName()));
+			}
+		}
+
+		oldApiFolder.delete();
+
+		// go through all api folders and make sure to add a packageinfo file
+
+		Stream<Path> srcPaths = Files.walk(sbApiProject.toPath().resolve(Constants.DEFAULT_JAVA_SRC));
+
+		srcPaths.map(
+			path -> path.toFile()
+		).filter(
+			file -> file.isFile() && file.getName().endsWith(".java") && isInExportedApiFolder(file)
+		).map(
+			file -> file.toPath().resolveSibling("packageinfo").toFile()
+		).filter(
+			file -> !file.exists()
+		).forEach(
+			file -> {
+				try {
+					Files.write(file.toPath(), new String("version 1.0.0").getBytes());
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		);
+
+		srcPaths.close();
+
+		// add dependency on -api to portlet project
+		File gradleFile = new File(project, "build.gradle");
+
+		String gradleContent = new String(Files.readAllBytes(gradleFile.toPath()));
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("dependencies {\n");
+		sb.append("\tcompileOnly project(\":modules:");
+		sb.append(sbProject.getName());
+		sb.append(":");
+		sb.append(sbApiProject.getName());
+		sb.append("\")\n");
+
+		String updatedContent = gradleContent.replaceAll("dependencies \\{", sb.toString());
+
+		Files.write(gradleFile.toPath(), updatedContent.getBytes());
 
 		System.out.println("Migrating files done, then you should fix breaking changes and re-run build-service task.");
 	}

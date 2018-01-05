@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
 
 /**
@@ -42,7 +43,7 @@ public class SamplesCommandTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		Files.copy(Paths.get("wrapper.zip"), Paths.get("build","classes","java","test","wrapper.zip"), StandardCopyOption.REPLACE_EXISTING);
+		FilesUtil.copy(Paths.get("wrapper.zip"), Paths.get("build","classes","java","test","wrapper.zip"));
 	}
 
 	@Before

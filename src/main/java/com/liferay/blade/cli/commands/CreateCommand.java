@@ -23,6 +23,7 @@ import com.liferay.blade.cli.commands.arguments.CreateArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,6 +59,76 @@ public class CreateCommand {
 	}
 
 	public void execute() throws Exception {
+		
+		if (_options.isListtemplates()) {
+			printTemplates();
+			return;
+		}
+
+		String name = _options.getName();
+
+		if (name == null||name.isEmpty()) {
+			addError("Create", "SYNOPSIS\n\t create [options] <[name]>");
+			return;
+		}
+
+		String template = _options.getTemplate();
+
+		if (template == null) {
+			template = "mvc-portlet";
+		}
+		else if (!isExistingTemplate(template)) {
+				addError(
+					"Create", "the template "+template+" is not in the list");
+				return;
+		}
+
+		File dir;
+
+		if(_options.getDir() != null) {
+			dir = new File(_options.getDir().getAbsolutePath());
+		}
+		else if (template.equals("theme") || template.equals("layout-template")
+				|| template.equals("spring-mvc-portlet")) {
+			dir = getDefaultWarsDir().toFile();
+		}
+		else {
+			dir = getDefaultModulesDir().toFile();
+		}
+
+		final File checkDir = new File(dir, name);
+
+		if(!checkDir(checkDir.toPath())) {
+			addError(
+				"Create", name + " is not empty or it is a file." +
+				" Please clean or delete it then run again");
+			return;
+		}
+
+		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
+
+		projectTemplatesArgs.setClassName(_options.getClassname());
+		projectTemplatesArgs.setContributorType(_options.getContributorType());
+		projectTemplatesArgs.setDestinationDir(dir);
+		projectTemplatesArgs.setHostBundleSymbolicName(_options.getHostbundlebsn());
+		projectTemplatesArgs.setHostBundleVersion(_options.getHostbundleversion());
+		projectTemplatesArgs.setName(name);
+		projectTemplatesArgs.setPackageName(_options.getPackagename());
+		projectTemplatesArgs.setService(_options.getService());
+		projectTemplatesArgs.setTemplate(template);
+
+		boolean mavenBuild = "maven".equals(_options.getBuild());
+
+		projectTemplatesArgs.setGradle(!mavenBuild);
+		projectTemplatesArgs.setMaven(mavenBuild);
+
+		execute(projectTemplatesArgs);
+
+		_blade.out().println(
+			"Successfully created project " + projectTemplatesArgs.getName() + 
+				" in " + dir.getAbsolutePath());
+		
+		/*
 		if (_options.isListtemplates()) {
 			printTemplates();
 			return;
@@ -125,11 +196,11 @@ public class CreateCommand {
 
 		_blade.out().println(
 			"Successfully created project " + projectTemplatesArgs.getName() + 
-				" in " + dir.toAbsolutePath());
+				" in " + dir.toAbsolutePath());*/
 	}
 
 	void execute(ProjectTemplatesArgs projectTemplatesArgs) throws Exception {
-		Path dir = projectTemplatesArgs.getDestinationDir().toPath();
+		/*Path dir = projectTemplatesArgs.getDestinationDir().toPath();
 		String name = projectTemplatesArgs.getName();
 
 		new ProjectTemplates(projectTemplatesArgs);
@@ -138,6 +209,17 @@ public class CreateCommand {
 
 		if(Files.exists(gradlew)) {
 			gradlew.toFile().setExecutable(true);
+		}*/
+		
+		File dir = projectTemplatesArgs.getDestinationDir();
+		String name = projectTemplatesArgs.getName();
+
+		new ProjectTemplates(projectTemplatesArgs);
+
+		File gradlew = new File(dir, name+"/gradlew");
+
+		if(gradlew.exists()) {
+			gradlew.setExecutable(true);
 		}
 	}
 

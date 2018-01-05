@@ -30,6 +30,7 @@ import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
 
 /**
@@ -39,12 +40,12 @@ public class GradleToolingTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		Files.copy(Paths.get("deps.zip"), Paths.get("build","classes","java","test","deps.zip"), StandardCopyOption.REPLACE_EXISTING);
+		FilesUtil.copy(Paths.get("deps.zip"), Paths.get("build","classes","java","test","deps.zip"));
 		Path testws = Paths.get("build","testws1");
 		FileUtil.deleteDir(testws);
 		Files.createDirectories(testws);
-		Files.copy(
-			Paths.get("test-resources","projects","testws1"), testws, StandardCopyOption.REPLACE_EXISTING);
+		FilesUtil.copy(
+			Paths.get("test-resources","projects","testws1"), testws);
 	}
 
 	@Test

@@ -12,6 +12,18 @@ import com.liferay.blade.cli.commands.ConvertCommand;
 commandDescription = ConvertCommand.DESCRIPTION)
 public class ConvertArgs {
 
+	public ConvertArgs() {
+		super();
+	}
+	
+	public ConvertArgs(boolean all, boolean list, boolean themeBuilder, List<String> name) {
+		super();
+		this.all = all;
+		this.list = list;
+		this.themeBuilder = themeBuilder;
+		this.name = name;
+	}
+
 
 	@Parameter(
 		names = {"-a", "--all"},

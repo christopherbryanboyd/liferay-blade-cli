@@ -72,7 +72,7 @@ import org.osgi.framework.Constants;
 public class blade implements Runnable {
 
 	public void run(String[] args) {
-		_bladeArgs = new BladeArgs();
+		
 		List<Object> argsList = Arrays.asList(
 				new CreateArgs(),
 				new ConvertArgs(),
@@ -329,7 +329,7 @@ public class blade implements Runnable {
 		}
 	}
 	private String _command;
-	private BladeArgs _bladeArgs;
+	private BladeArgs _bladeArgs = new BladeArgs();
 	private Object _commandArgs;
 	private final Formatter tracer = new Formatter(System.out);
 	public void error(String string, String name, String message) {
