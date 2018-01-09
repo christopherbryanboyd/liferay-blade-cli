@@ -16,10 +16,8 @@
 
 package com.liferay.blade.cli;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,7 +27,7 @@ import java.util.Properties;
 import org.junit.After;
 import org.junit.Test;
 
-import aQute.lib.io.IO;
+import com.liferay.blade.cli.util.FilesUtil;
 
 /**
  * @author David Truong
@@ -37,11 +35,11 @@ import aQute.lib.io.IO;
 public class UtilTest {
 	@After
 	public void cleanUp() throws Exception {
-		testdir = IO.getFile("build/test");
+		testdir = Paths.get("build/test");
 
-		if (testdir.exists()) {
-			IO.delete(testdir);
-			assertFalse(testdir.exists());
+		if (Files.exists(testdir)) {
+			FilesUtil.delete(testdir);
+			assertTrue(Files.notExists(testdir));
 		}
 	}
 
@@ -115,5 +113,5 @@ public class UtilTest {
 		assertTrue(Util.isWorkspace(workspace));
 	}
 
-	private File testdir;
+	private Path testdir;
 }

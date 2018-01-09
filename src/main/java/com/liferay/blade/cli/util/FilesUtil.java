@@ -4,55 +4,51 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import com.liferay.blade.cli.CopyDirVisitor;
+
 import java.nio.file.*;
-import java.nio.file.attribute.*;
 
 public class FilesUtil {
 
-	public static void deleteWithException(Path path) throws IOException {
-		for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
-				.collect(Collectors.toList())) {
-			Files.delete(p);
-		}
-	}
-
-	private static class CopyDir extends SimpleFileVisitor<Path> {
-		private Path sourceDir;
-		private Path targetDir;
-
-		public CopyDir(Path sourceDir, Path targetDir) {
-			this.sourceDir = sourceDir;
-			this.targetDir = targetDir;
-		}
-
-		@Override
-		public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-
-			try {
-				Path targetFile = targetDir.resolve(sourceDir.relativize(file));
-				Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException ex) {
-				System.err.println(ex);
+	public static void delete(Path path) throws IOException {
+		if (Files.exists(path))
+		{
+			if (Files.isDirectory(path))
+			{
+				for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
+						.collect(Collectors.toList())) {
+					Files.delete(p);
+				}
+				
 			}
-
-			return FileVisitResult.CONTINUE;
-		}
-
-		@Override
-		public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) {
-			try {
-				Path newDir = targetDir.resolve(sourceDir.relativize(dir));
-				Files.createDirectory(newDir);
-			} catch (IOException ex) {
-				System.err.println(ex);
+			else
+			{
+				Files.delete(path);
 			}
-
-			return FileVisitResult.CONTINUE;
 		}
-
 	}
 
 	public static void copy(Path sourceDir, Path targetDir) throws IOException {
-		Files.walkFileTree(sourceDir, new FilesUtil.CopyDir(sourceDir, targetDir));
+		Files.walkFileTree(sourceDir, new CopyDirVisitor(sourceDir, targetDir, StandardCopyOption.REPLACE_EXISTING));
 	}
+	
+	public static String convertStreamToString(java.io.InputStream is) {
+	   
+		final String returnValue;
+		try (java.util.Scanner s = new java.util.Scanner(is))
+	    {
+			s.useDelimiter("\\A");
+			returnValue = s.hasNext() ? s.next() : "";
+	    }
+	    finally {
+	    	try {
+	    		is.close();
+	    	}
+	    	catch (Exception e) {
+	    		e.printStackTrace();
+	    	}
+	    }
+		return returnValue;
+	}
+
 }

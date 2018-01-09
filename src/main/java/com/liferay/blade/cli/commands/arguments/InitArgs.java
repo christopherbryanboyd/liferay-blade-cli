@@ -8,32 +8,13 @@ import com.liferay.blade.cli.commands.InitCommand;
 commandDescription = InitCommand.DESCRIPTION)
 public class InitArgs {
 
-	@Parameter(
-			description =
-			"[name]")
-	private String name;
 	public String getName() {
 		return name;
 	}
 
-
-	@Parameter(
-			names = {"-f", "--force"},
-			description =
-			"create anyway if there are files located at target folder")
-	private boolean force;
-
-
-	@Parameter(
-		names = {"-r", "--refresh"},
-		description ="force to refresh workspace template")
-	private boolean refresh;
-
-
 	public boolean isForce() {
 		return force;
 	}
-
 
 	public boolean isRefresh() {
 		return refresh;
@@ -43,7 +24,20 @@ public class InitArgs {
 	public boolean isUpgrade() {
 		return upgrade;
 	}
+	
+	@Parameter(description = "[name]")
+	private String name;
 
+	@Parameter(
+		names = {"-f", "--force"},
+		description =
+		"create anyway if there are files located at target folder")
+	private boolean force;
+
+	@Parameter(
+		names = {"-r", "--refresh"},
+		description ="force to refresh workspace template")
+	private boolean refresh;
 
 	@Parameter(
 		names = {"-u", "--upgrade"},

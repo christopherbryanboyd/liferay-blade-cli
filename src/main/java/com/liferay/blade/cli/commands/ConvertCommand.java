@@ -21,6 +21,7 @@ import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.Workspace;
 import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.commands.arguments.ConvertArgs;
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
 import java.io.File;
@@ -31,7 +32,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -47,8 +47,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import aQute.lib.io.IO;
 
 /**
  * @author Gregory Amerson
@@ -307,7 +305,7 @@ public class ConvertCommand {
 				}
 			}
 
-			IO.delete(themePlugin);
+			FilesUtil.delete(themePlugin);
 		}
 		catch (Exception e) {
 			_blade.error("Error upgrading project %s\n%s", themePlugin.getFileName().toString(), e.getMessage());
@@ -353,93 +351,98 @@ public class ConvertCommand {
 
 	private void convertToWarProject(Path pluginDir) {
 		try {
-			Files.createDirectories(_warsDir);
-			
-			Path warDir = _warsDir.resolve(pluginDir.getFileName());
 
-			Files.move(pluginDir, warDir);
+				Files.createDirectories(_warsDir);
 
-			Path src = warDir.resolve(Paths.get("src", "main", "java"));
+				Path warDir = _warsDir.resolve(pluginDir.getFileName());
 
-			Files.createDirectories(src);
+				Files.move(pluginDir, warDir);
 
-			Path docrootSrc = warDir.resolve(Paths.get("docroot", "WEB-INF", "src"));
+				Path src = warDir.resolve(Paths.get("src", "main", "java"));
 
-			if (Files.exists(docrootSrc)) {
-				for (Path docrootSrcFile : Files.list(docrootSrc).collect(Collectors.toSet())) {
-					Files.move(docrootSrcFile, src.resolve(docrootSrcFile.getFileName()));
+				Files.createDirectories(src);
+
+				Path docrootSrc = warDir.resolve(Paths.get("docroot", "WEB-INF", "src"));
+
+				if (Files.exists(docrootSrc)) {
+					for (Path docrootSrcFile : Files.list(docrootSrc).collect(Collectors.toSet())) {
+						Files.move(docrootSrcFile, src.resolve(docrootSrcFile.getFileName()));
+					}
+
+					Files.delete(docrootSrc);
 				}
 
-				Files.delete(docrootSrc);
-			}
+				Path webapp = warDir.resolve(Paths.get("src", "main", "webapp"));
 
-			Path webapp = warDir.resolve(Paths.get("src", "main", "webapp"));
+				Files.createDirectories(webapp);
 
-			Files.createDirectories(webapp);
+				Path docroot = warDir.resolve("docroot");
 
-			Path docroot = warDir.resolve("docroot");
+				for (Path docrootFile : Files.list(docroot).collect(Collectors.toSet())) {
+					Files.move(docrootFile, webapp.resolve(docrootFile.getFileName()));
+				}
 
-			for (Path docrootFile : Files.list(docroot).collect(Collectors.toSet())) {
-				Files.move(docrootFile, webapp.resolve(docrootFile.getFileName()));
-			}
-			
-			Files.delete(docroot);
-			
-			for (Path path : (Iterable<Path>)Arrays.asList("build.xml", ".classpath", ".project", ".settings", "ivy.xml.MD5").stream().map(x -> warDir.resolve(x))::iterator)
-			{
-				Files.deleteIfExists(path);
-			}
+				FilesUtil.delete(docroot);
+				FilesUtil.delete(warDir.resolve("build.xml"));
+				FilesUtil.delete(warDir.resolve(".classpath"));
+				FilesUtil.delete(warDir.resolve(".project"));
+				FilesUtil.delete(warDir.resolve(".settings"));
+				FilesUtil.delete(warDir.resolve("ivy.xml.MD5"));
 
-			List<String> dependencies = new ArrayList<>();
-			dependencies.add("compileOnly group: \"com.liferay.portal\", name: \"com.liferay.portal.kernel\", version: \"2.0.0\"");
-			dependencies.add("compileOnly group: \"javax.portlet\", name: \"portlet-api\", version: \"2.0\"");
-			dependencies.add("compileOnly group: \"javax.servlet\", name: \"javax.servlet-api\", version: \"3.0.1\"");
+				List<String> dependencies = new ArrayList<>();
+				dependencies.add(
+						"compileOnly group: \"com.liferay.portal\", name: \"com.liferay.portal.kernel\", version: \"2.0.0\"");
+				dependencies.add("compileOnly group: \"javax.portlet\", name: \"portlet-api\", version: \"2.0\"");
+				dependencies
+						.add("compileOnly group: \"javax.servlet\", name: \"javax.servlet-api\", version: \"3.0.1\"");
 
-			Path ivyFile = warDir.resolve("ivy.xml");
+				Path ivyFile = warDir.resolve("ivy.xml");
 
-			if (Files.exists(ivyFile)) {
-				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-				Document doc = dBuilder.parse(ivyFile.toFile());
-				Element documentElement = doc.getDocumentElement();
-				documentElement.normalize();
+				if (Files.exists(ivyFile)) {
+					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+					Document doc = dBuilder.parse(ivyFile.toFile());
+					Element documentElement = doc.getDocumentElement();
+					documentElement.normalize();
 
-				NodeList depElements = documentElement.getElementsByTagName("dependency");
+					NodeList depElements = documentElement.getElementsByTagName("dependency");
 
-				if (depElements != null && depElements.getLength() > 0) {
-					for (int i = 0; i < depElements.getLength(); i++) {
-						Node depElement = depElements.item(i);
+					if (depElements != null && depElements.getLength() > 0) {
+						for (int i = 0; i < depElements.getLength(); i++) {
+							Node depElement = depElements.item(i);
 
-						String name = getAttr(depElement, "name");
-						String org = getAttr(depElement, "org");
-						String rev = getAttr(depElement, "rev");
+							String name = getAttr(depElement, "name");
+							String org = getAttr(depElement, "org");
+							String rev = getAttr(depElement, "rev");
 
-						if (name != null && org != null && rev != null) {
-							dependencies.add(MessageFormat.format("compile group: ''{0}'', name: ''{1}'', version: ''{2}''", org, name, rev));
+							if (name != null && org != null && rev != null) {
+								dependencies.add(MessageFormat.format(
+										"compile group: ''{0}'', name: ''{1}'', version: ''{2}''", org, name, rev));
+							}
 						}
 					}
+
+					Files.delete(ivyFile);
 				}
 
-				Files.delete(ivyFile);
-			}
+				StringBuilder depsContent = new StringBuilder();
 
-			StringBuilder depsContent = new StringBuilder();
+				depsContent.append("dependencies {\n");
 
-			depsContent.append("dependencies {\n");
+				for (String dep : dependencies) {
+					depsContent.append("\t" + dep + "\n");
+				}
 
-			for (String dep : dependencies) {
-				depsContent.append("\t" + dep + "\n");
-			}
+				depsContent.append("}");
 
-			depsContent.append("}");
+				Path gradleFile = warDir.resolve("build.gradle");
 
-			Path gradleFile = warDir.resolve("build.gradle");
-
-			Files.write(gradleFile, depsContent.toString().getBytes());
-		}
-		catch (Exception e) {
+				Files.write(gradleFile, depsContent.toString().getBytes());
+		} catch (Exception e) {
 			_blade.error("Error upgrading project %s\n%s", pluginDir.getFileName().toString(), e.getMessage());
 		}
+
+		
 	}
 
 	private String getAttr(Node item, String attrName) {

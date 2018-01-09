@@ -12,9 +12,9 @@ public class DeployArgs {
 		names = {"-w", "--watch"},
 		description =
 			"Watches the deployed file for changes and will automatically " +
-				"redeploy"
+			"redeploy"
 		)
-		private boolean watch;
+	private boolean watch;
 
 	public boolean isWatch() {
 		return watch;

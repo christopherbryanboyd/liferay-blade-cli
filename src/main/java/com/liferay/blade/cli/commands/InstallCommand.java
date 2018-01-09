@@ -16,17 +16,10 @@
 
 package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
-
 import com.liferay.blade.cli.GogoTelnetClient;
 import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.blade;
@@ -73,18 +66,6 @@ public class InstallCommand {
 
 			_blade.out().println(response);
 		}
-	}
-
-	@Arguments(arg = {"bundleFile"})
-	@Description(DESCRIPTION)
-	public interface InstallOptions extends Options {
-
-		@Description("The host to use to connect to gogo shell")
-		public String host();
-
-		@Description("The port to use to connect to gogo shell")
-		public int port();
-
 	}
 
 	private void addError(String msg) {

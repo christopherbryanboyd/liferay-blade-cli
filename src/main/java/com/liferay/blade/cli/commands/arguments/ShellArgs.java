@@ -11,11 +11,6 @@ import com.liferay.blade.cli.commands.ShellCommand;
 commandDescription = ShellCommand.DESCRIPTION)
 public class ShellArgs {
 
-	@Parameter(
-			names = {"-h", "--host"},
-			description ="The host to use to connect to gogo shell")
-	private String host;
-
 	public String getHost() {
 		return host;
 	}
@@ -23,16 +18,21 @@ public class ShellArgs {
 	public int getPort() {
 		return port;
 	}
-
-	@Parameter(
-			names = {"-p", "--port"},
-			description ="The port to use to connect to gogo shell")
-	private int port;
 	
-	  public List<String> getArgs() {
+	public List<String> getArgs() {
 		return args;
 	}
 
+	@Parameter(
+		names = {"-p", "--port"},
+		description ="The port to use to connect to gogo shell")
+	private int port;
+
+	@Parameter(
+		names = {"-h", "--host"},
+		description ="The host to use to connect to gogo shell")
+	private String host;
+	
 	@Parameter
-	  private List<String> args = new ArrayList<>();
+	private List<String> args = new ArrayList<>();
 }

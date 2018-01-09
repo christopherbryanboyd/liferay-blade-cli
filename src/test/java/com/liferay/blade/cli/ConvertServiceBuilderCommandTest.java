@@ -19,7 +19,6 @@ package com.liferay.blade.cli;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,8 +28,6 @@ import org.junit.Test;
 
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
-
-import aQute.lib.io.IO;
 
 /**
  * @author Terry Jia
@@ -49,7 +46,7 @@ public class ConvertServiceBuilderCommandTest {
 
 	@Test
 	public void testConvertServiceBuilderTasksPortletDefaultName() throws Exception {
-		/*Path testdir = Paths.get("build","test-tasks-portlet-conversion");
+		Path testdir = Paths.get("build","test-tasks-portlet-conversion");
 
 		if (Files.exists(testdir)) {
 			FileUtil.deleteDir(testdir);
@@ -89,49 +86,6 @@ public class ConvertServiceBuilderCommandTest {
 		assertTrue(Files.exists(portletGradleFile));
 
 		String content = new String(Files.readAllBytes(portletGradleFile));
-
-		assertTrue(content.contains("compileOnly project(\":modules:tasks:tasks-api\")"));*/
-		
-		File testdir = IO.getFile("build/test-tasks-portlet-conversion");
-
-		if (testdir.exists()) {
-			IO.deleteWithException(testdir);
-			assertFalse(testdir.exists());
-		}
-
-		String[] args = {"-b", testdir.getPath(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		File pluginsSdkDir = new File(testdir, "plugins-sdk");
-
-		IO.copy(new File("test-resources/projects/tasks-plugins-sdk"), pluginsSdkDir);
-
-		assertTrue(new File(testdir, "plugins-sdk/portlets/tasks-portlet").exists());
-
-		String[] convertArgs = {"-b", testdir.getPath(), "convert", "tasks-portlet"};
-
-		new bladenofail().run(convertArgs);
-
-		assertTrue(new File(testdir, "modules/tasks/tasks-api/build.gradle").exists());
-
-		assertTrue(new File(testdir, "modules/tasks/tasks-api/src/main/java/com/liferay/tasks/exception").exists());
-
-		assertTrue(new File(testdir, "modules/tasks/tasks-service/src/main/java/com/liferay/tasks/model/impl/TasksEntryModelImpl.java").exists());
-
-		assertTrue(new File(testdir, "modules/tasks/tasks-service/src/main/java/com/liferay/tasks/service/impl/TasksEntryServiceImpl.java").exists());
-
-		assertTrue(new File(testdir, "modules/tasks/tasks-service/service.xml").exists());
-
-		assertFalse(new File(testdir, "wars/tasks-portlet/src/main/webapp/WEB-INF/service.xml").exists());
-
-		assertTrue(new File(testdir, "wars/tasks-portlet/src/main/webapp/WEB-INF/portlet.xml").exists());
-
-		File portletGradleFile = new File(testdir, "wars/tasks-portlet/build.gradle");
-
-		assertTrue(portletGradleFile.exists());
-
-		String content = new String(Files.readAllBytes(portletGradleFile.toPath()));
 
 		assertTrue(content.contains("compileOnly project(\":modules:tasks:tasks-api\")"));
 	}

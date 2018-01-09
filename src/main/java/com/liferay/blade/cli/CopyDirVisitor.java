@@ -30,9 +30,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class CopyDirVisitor extends SimpleFileVisitor<Path> {
 	private final Path fromPath;
 	private final Path toPath;
-	private final CopyOption copyOption;
+	private final CopyOption[] copyOption;
 
-	public CopyDirVisitor(Path fromPath, Path toPath, CopyOption copyOption) {
+	public CopyDirVisitor(Path fromPath, Path toPath, CopyOption... copyOption) {
 		this.fromPath = fromPath;
 		this.toPath = toPath;
 		this.copyOption = copyOption;
