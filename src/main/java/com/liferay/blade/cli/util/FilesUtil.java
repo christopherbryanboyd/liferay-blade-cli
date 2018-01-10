@@ -13,12 +13,15 @@ public class FilesUtil {
 	public static void delete(Path path) throws IOException {
 		if (Files.exists(path))
 		{
+			if (!path.isAbsolute())
+				path= path.toAbsolutePath();
 			if (Files.isDirectory(path))
 			{
 				for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
 						.collect(Collectors.toList())) {
 					Files.delete(p);
 				}
+				
 				
 			}
 			else
