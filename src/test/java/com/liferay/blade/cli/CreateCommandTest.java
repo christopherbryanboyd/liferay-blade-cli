@@ -49,7 +49,7 @@ import org.junit.Test;
  * @author Gregory Amerson
  */
 public class CreateCommandTest {
-	private Path testdir = Paths.get("build","test");
+	private Path testdir = Paths.get("build","test").toAbsolutePath();
 
 	@Before
 	public void setUp() throws Exception {
