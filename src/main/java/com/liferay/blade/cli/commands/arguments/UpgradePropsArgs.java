@@ -23,19 +23,19 @@ public class UpgradePropsArgs {
 	}
 
 	@Parameter(
-			names = {"-d", "--bundleDir"},
-			description ="Liferay server bundle directory.")
-		private File bundleDir;
+		names = {"-d", "--bundleDir"},
+		description ="Liferay server bundle directory.")
+	private File bundleDir;
 
 	@Parameter(
-			names = {"-o", "--outputFile"},
-			description ="If specified, write out report to this file, otherwise uses stdout.")
-		private File outputFile;
+		names = {"-o", "--outputFile"},
+		description ="If specified, write out report to this file, otherwise uses stdout.")
+	private File outputFile;
 
 	@Parameter(
-			names = {"-p", "--propertiesFile"},
-			description ="Specify existing Liferay 6.x portal-ext.properties file.")
-		private File propertiesFile;
+		names = {"-p", "--propertiesFile"},
+		description ="Specify existing Liferay 6.x portal-ext.properties file.")
+	private File propertiesFile;
 	
 
 }

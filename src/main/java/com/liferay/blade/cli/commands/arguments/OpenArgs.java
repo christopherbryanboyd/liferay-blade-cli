@@ -10,15 +10,6 @@ import com.liferay.blade.cli.commands.OpenCommand;
 commandDescription = OpenCommand.DESCRIPTION)
 public class OpenArgs {
 
-	@Parameter(
-		names = {"-w", "--workspace"},
-		description ="The workspace to open or import this file or project")
-	private String workspace;
-	
-	@Parameter(
-			description ="<file or directory to open/import>")
-		private File file;
-
 	public String getWorkspace() {
 		return workspace;
 	}
@@ -26,4 +17,12 @@ public class OpenArgs {
 	public File getFile() {
 		return file;
 	}
+
+	@Parameter(
+			names = {"-w", "--workspace"},
+			description ="The workspace to open or import this file or project")
+	private String workspace;
+	
+	@Parameter(description ="<file or directory to open/import>")
+	private File file;
 }

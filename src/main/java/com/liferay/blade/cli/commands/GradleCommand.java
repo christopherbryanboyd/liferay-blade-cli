@@ -16,10 +16,6 @@
 
 package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
 import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.commands.arguments.GradleArgs;
 import com.liferay.blade.cli.gradle.GradleExec;
@@ -45,11 +41,6 @@ public class GradleCommand {
 		GradleExec gradleExec = new GradleExec(_blade);
 
 		gradleExec.executeGradleCommand(gradleCommand);
-	}
-
-	@Arguments(arg = {"gradle-command", "args..."})
-	@Description(DESCRIPTION)
-	public interface GradleOptions extends Options {
 	}
 
 	private blade _blade;

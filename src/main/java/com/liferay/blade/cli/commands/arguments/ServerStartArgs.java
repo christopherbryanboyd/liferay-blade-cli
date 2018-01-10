@@ -9,10 +9,6 @@ import com.liferay.blade.cli.commands.ServerStartCommand;
 commandDescription = ServerStartCommand.DESCRIPTION)
 public class ServerStartArgs {
 	
-	@Parameter(
-			names = {"-b", "--background"},
-			description ="Start server in background")
-	private boolean background;
 
 	public boolean isBackground() {
 		return background;
@@ -36,5 +32,8 @@ public class ServerStartArgs {
 			description ="Tail a running server")
 	private boolean tail;
 
-	
+	@Parameter(
+			names = {"-b", "--background"},
+			description ="Start server in background")
+	private boolean background;
 }

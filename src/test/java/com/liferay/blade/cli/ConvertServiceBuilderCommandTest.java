@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import org.junit.After;
 import org.junit.Test;
 
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
 
 /**
@@ -58,7 +59,7 @@ public class ConvertServiceBuilderCommandTest {
 
 		Path pluginsSdkDir = testdir.resolve("plugins-sdk");
 
-		Files.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
+		FilesUtil.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
 
 		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk","portlets","tasks-portlet"))));
 
@@ -104,15 +105,16 @@ public class ConvertServiceBuilderCommandTest {
 
 		Path pluginsSdkDir = testdir.resolve("plugins-sdk");
 
-		Files.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
+		FilesUtil.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk","portlets","tasks-portlet"))));
+		assertTrue(Files.exists(pluginsSdkDir.resolve(Paths.get("portlets","tasks-portlet"))));
 
 		String[] convertArgs = {"-b", testdir.toString(), "convert", "tasks-portlet", "foo"};
 
 		new bladenofail().run(convertArgs);
 
 		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","foo","foo-api","build.gradle"))));
+		
 	}
 
 	@Test

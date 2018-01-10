@@ -72,7 +72,7 @@ import org.osgi.framework.Constants;
 public class blade implements Runnable {
 
 	public void run(String[] args) {
-		_bladeArgs = new BladeArgs();
+		
 		List<Object> argsList = Arrays.asList(
 				new CreateArgs(),
 				new ConvertArgs(),
@@ -121,11 +121,18 @@ public class blade implements Runnable {
 	}
 	
 	public void error(String error) {
-		// TODO: Implement this
+		err().println(error);
 	}
 	
 	public void addErrors(String prefix, Collection<String> data) {
-		// TODO: Implement this.
+		err().println("Error: " + prefix);
+		data.forEach(err()::println);
+	}
+	
+	public void error(String string, String name, String message) {
+		err().println(string + " [" + name + "]");
+		err().println(message);
+		
 	}
 	
 	public Path getBase() {
@@ -226,98 +233,75 @@ public class blade implements Runnable {
 
 	@Override
 	public void run() {
-		try
-		{
-		 switch (_command) {
-		 case "create":
-		 {
-			 _create((CreateArgs)_commandArgs);
-		 }
-		 break;
-		 case "convert":
-		 {
-			 _convert((ConvertArgs)_commandArgs);
-		 }
-		 break;
-		 case "deploy":
-		 {
-			 _deploy((DeployArgs)_commandArgs);
-		 }
-		 break;
-		 case "gw":
-		 {
-			 _gw((GradleArgs)_commandArgs);
-		 }
-		 break;
-		 case "help":
-		 {
-			 // TODO: Print help here?
-		 }
-		 break;
-		 case "init":
-		 {
-			 _init((InitArgs)_commandArgs);
-		 }
-		 break;
-		 case "install":
-		 {
-			 _install((InstallArgs)_commandArgs);
-		 }
-		 case "open":
-		 {
-			 _open((OpenArgs)_commandArgs);
-		 }
-		 break;
-		 case "outputs":
-		 {
-			 _outputs((OutputsArgs)_commandArgs);
-		 }
-		 break;
-		 case "samples":
-		 {
-			 _samples((SamplesArgs)_commandArgs);
-		 }
-		 break;
-		 case "server start":
-		 {
-			 _serverStart((ServerStartArgs)_commandArgs);
-			 
-		 }
-		 break;
-		 case "server stop":
-		 {
-			 _serverStop((ServerStopArgs)_commandArgs);
-		 }
-		 break;
-		 case "sh":
-		 {
-			 _sh((ShellArgs)_commandArgs);
-		 }
-		 break;
-		 case "update":
-		 {
-			 _update((UpdateArgs)_commandArgs);
-		 }
-		 break;
-		 case "upgradeProps":
-		 {
-			 _upgradeProps((UpgradePropsArgs)_commandArgs);
-		 }
-		 break;
-		 case "version":
-		 {
-			 // TODO: What is this supposed to do?
-		 }
-		 break;
-		 default:
-		 {
-			 // TODO: Print help here?
-		 }
-		 break;
-	 }
-		}
-		catch (Exception e)
-		{
+		try {
+			switch (_command) {
+			case "create": {
+				_create((CreateArgs) _commandArgs);
+			}
+				break;
+			case "convert": {
+				_convert((ConvertArgs) _commandArgs);
+			}
+				break;
+			case "deploy": {
+				_deploy((DeployArgs) _commandArgs);
+			}
+				break;
+			case "gw": {
+				_gw((GradleArgs) _commandArgs);
+			}
+				break;
+			default:
+			case "help": {
+				// TODO: Print help here?
+			}
+				break;
+			case "init": {
+				_init((InitArgs) _commandArgs);
+			}
+				break;
+			case "install": {
+				_install((InstallArgs) _commandArgs);
+			}
+			case "open": {
+				_open((OpenArgs) _commandArgs);
+			}
+				break;
+			case "outputs": {
+				_outputs((OutputsArgs) _commandArgs);
+			}
+				break;
+			case "samples": {
+				_samples((SamplesArgs) _commandArgs);
+			}
+				break;
+			case "server start": {
+				_serverStart((ServerStartArgs) _commandArgs);
+
+			}
+				break;
+			case "server stop": {
+				_serverStop((ServerStopArgs) _commandArgs);
+			}
+				break;
+			case "sh": {
+				_sh((ShellArgs) _commandArgs);
+			}
+				break;
+			case "update": {
+				_update((UpdateArgs) _commandArgs);
+			}
+				break;
+			case "upgradeProps": {
+				_upgradeProps((UpgradePropsArgs) _commandArgs);
+			}
+				break;
+			case "version": {
+				// TODO: What is this supposed to do?
+			}
+				break;
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -329,13 +313,9 @@ public class blade implements Runnable {
 		}
 	}
 	private String _command;
-	private BladeArgs _bladeArgs;
+	private BladeArgs _bladeArgs = new BladeArgs();
 	private Object _commandArgs;
 	private final Formatter tracer = new Formatter(System.out);
-	public void error(String string, String name, String message) {
-		// TODO Auto-generated method stub
-		
-	}
 	private PrintStream out = System.out;
 	private PrintStream err = System.err;
 }

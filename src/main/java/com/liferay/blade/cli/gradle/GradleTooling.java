@@ -16,16 +16,14 @@
 
 package com.liferay.blade.cli.gradle;
 
-import aQute.lib.io.IO;
-
 import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.blade.gradle.model.CustomModel;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,7 +66,6 @@ public class GradleTooling {
 	private static <T> T getModel(
 			Class<T> modelClass, Path cacheDir, Path projectDir)
 		throws Exception {
-
 		T retval = null;
 
 		final GradleConnector connector = GradleConnector.newConnector();
@@ -87,12 +84,10 @@ public class GradleTooling {
 
 			InputStream in = GradleTooling.class.getResourceAsStream(
 				"/deps.zip");
-			
-			Path depsTarget = depsDir.resolve("deps.zip");
-			if (Files.notExists(depsTarget))
-				Files.copy(in, depsTarget);
 
-			final String initScriptTemplate = IO.collect(
+			Util.copy(in, depsDir);
+
+			final String initScriptTemplate = FilesUtil.convertStreamToString(
 				GradleTooling.class.getResourceAsStream("init.gradle"));
 
 			String path = depsDir.toAbsolutePath().toString();

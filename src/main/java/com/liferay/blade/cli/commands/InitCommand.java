@@ -16,9 +16,6 @@
 
 package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.blade.cli.Util;
@@ -157,7 +154,7 @@ public class InitCommand {
 
 				_moveContentsToDirectory(gitFile, destGitFile);
 
-				FilesUtil.deleteWithException(gitFile);
+				FilesUtil.delete(gitFile);
 
 			}
 
@@ -165,25 +162,10 @@ public class InitCommand {
 
 			_moveContentsToDirectory(temp, pluginsSdkDir);
 
-			FilesUtil.deleteWithException(temp);
+			FilesUtil.delete(temp);
 		}
 	}
-
-	@Arguments(arg = "[name]")
-	@Description(DESCRIPTION)
-	public interface InitOptions extends Options {
-
-		@Description(
-				"create anyway if there are files located at target folder")
-		public boolean force();
-
-		@Description("force to refresh workspace template")
-		public boolean refresh();
-
-		@Description("upgrade plugins-sdk from 6.2 to 7.0")
-		public boolean upgrade();
-	}
-
+	
 	private void addError(String msg) {
 		_blade.addErrors("init", Collections.singleton(msg));
 	}

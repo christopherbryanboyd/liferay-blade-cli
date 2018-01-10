@@ -95,7 +95,7 @@ public class ConvertServiceBuilderCommand {
 
 			return;
 		}
-
+		
 		Path project = _warsDir.resolve(projectName);
 
 		if (Files.notExists(project)) {
@@ -114,7 +114,7 @@ public class ConvertServiceBuilderCommand {
 		List<String> args = _options.getName();
 		String sbProjectName = !args.isEmpty() && args.size() >= 2 ? args.get(1) : null;
 
-		if (sbProjectName == null) {
+		if (sbProjectName == null || sbProjectName.endsWith("-portlet")) {
 			if (projectName.endsWith("-portlet")) {
 				sbProjectName = projectName.replaceAll("-portlet$", "");
 			}
@@ -139,7 +139,7 @@ public class ConvertServiceBuilderCommand {
 		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
 
 		projectTemplatesArgs.setDestinationDir(_moduleDir.toFile());
-		projectTemplatesArgs.setName(sbProject.getFileName().toString());
+		projectTemplatesArgs.setName(sbProject.toFile().getName());
 		projectTemplatesArgs.setPackageName(oldServiceBuilderXml.getPackagePath());
 		projectTemplatesArgs.setTemplate("service-builder");
 
@@ -207,7 +207,7 @@ public class ConvertServiceBuilderCommand {
 
 			Files.createDirectories(newApiFolder);
 
-			for (Path oldApiFile : Files.find(oldApiFolder, 999, (p, a) -> true).collect(Collectors.toList())) {
+			for (Path oldApiFile : Files.list(oldApiFolder).collect(Collectors.toList())) {
 				Files.move(oldApiFile, newApiFolder.resolve(oldApiFile.getFileName()));
 			}
 		}
@@ -269,8 +269,8 @@ public class ConvertServiceBuilderCommand {
 	}
 
 	private static class ServiceBuilder {
-		public static final String META_INF = "META-INF/";
-		public static final String API_62 = "WEB-INF/service/";
+		public static final String META_INF = "META-INF";
+		public static final String API_62 = "WEB-INF" + File.separator + "service";
 		public static final String PORTLET_MODEL_HINTS_XML = "portlet-model-hints.xml";
 		public static final String SERVICE_XML = "service.xml";
 		public static final String SERVICE_PROPERTIES = "service.properties";

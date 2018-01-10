@@ -10,20 +10,21 @@ import com.liferay.blade.cli.commands.SamplesCommand;
 @Parameters(commandNames = {"samples"},
 commandDescription = SamplesCommand.DESCRIPTION)
 public class SamplesArgs {
-	@Parameter(
-			names = {"-d", "--dir"},
-			description ="The directory where to create the new project.")
-	private File dir;
-
+	
 	public File getDir() {
 		return dir;
 	}
 	
-	@Parameter(
-			description ="[name]")
-	private String sampleName;
-
 	public String getSampleName() {
 		return sampleName;
 	}
+
+	@Parameter(
+		names = {"-d", "--dir"},
+		description ="The directory where to create the new project.")
+	private File dir;
+
+	@Parameter(description ="[name]")
+	private String sampleName;
+
 }

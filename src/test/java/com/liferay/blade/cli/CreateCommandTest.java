@@ -32,6 +32,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -947,6 +948,7 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateTheme() throws Exception {
+
 		Path testPath = Paths.get("build", "test"); 
 		
 		String[] args = {
@@ -954,7 +956,7 @@ public class CreateCommandTest {
 		};
 
 		new bladenofail().run(args);
-
+		
 		Path projectPath = testPath.resolve("theme-test");
 
 		assertPathExists(projectPath);
@@ -969,12 +971,12 @@ public class CreateCommandTest {
 		contains(properties, ".*^name=theme-test.*");
 
 		Path buildFile = projectPath.resolve("build.gradle");
-		
-		try(Writer writer = Files.newBufferedWriter(buildFile)) {
-			writer.write("\nbuildTheme { jvmArgs \"-Djava.awt.headless=true\" }");
-		}
 
-		verifyBuild(projectPath, projectPath, "theme-test.war");
+		String dataStr = System.lineSeparator() + "buildTheme { jvmArgs " + '"' + "-Djava.awt.headless=true" + '"' + " }";
+
+		Files.write(buildFile, dataStr.getBytes(), StandardOpenOption.APPEND);
+
+		verifyBuild(projectPath,projectPath, "theme-test.war");
 	}
 
 	@Test

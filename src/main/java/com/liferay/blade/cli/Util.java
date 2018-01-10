@@ -19,12 +19,9 @@ package com.liferay.blade.cli;
 import aQute.bnd.osgi.Jar;
 import aQute.bnd.osgi.Resource;
 import aQute.lib.getopt.Options;
-import aQute.lib.io.IO;
 import aQute.lib.justif.Justif;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -40,6 +37,7 @@ import java.util.Enumeration;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.Properties;
@@ -133,8 +131,8 @@ public class Util {
 
 				Path dest = getPath(outputDir, path);
 
-				if ((Files.getLastModifiedTime(dest).toMillis() < r.lastModified()) ||
-					(r.lastModified() <= 0)) {
+				if (Files.notExists(dest) || ((Files.getLastModifiedTime(dest).toMillis() < r.lastModified()) ||
+					(r.lastModified() <= 0))) {
 
 					Path dp = dest.getParent();
 
@@ -147,7 +145,7 @@ public class Util {
 						}
 					}
 
-					Files.copy(r.openInputStream(), dest);
+					Files.copy(r.openInputStream(), dest.toAbsolutePath(), StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
 		}
@@ -156,7 +154,11 @@ public class Util {
 	public static Path findParentFile(
 		Path dir, String[] fileNames, boolean checkParents) {
 
+		
+		try
+		{
 		if (dir == null) {
+		
 			return null;
 		}
 
@@ -171,7 +173,10 @@ public class Util {
 		if (checkParents) {
 			return findParentFile(dir.getParent(), fileNames, checkParents);
 		}
-
+		}
+		catch (Throwable th) {
+			th.printStackTrace();
+		}
 		return null;
 	}
 
@@ -190,6 +195,7 @@ public class Util {
 		}
 
 		return properties;
+
 	}
 
 	public static Properties getGradleProperties(Path dir) {
@@ -275,14 +281,19 @@ public class Util {
 	}
 
 	public static boolean isWorkspace(Path dir) {
-		Path workspaceDir = getWorkspaceDir(dir);
-
-		Path gradleFile = workspaceDir.resolve(_SETTINGS_GRADLE_FILE_NAME);
+		
+		Path workspacePath = getWorkspaceDir(dir);
+		
+		if (Objects.isNull(workspacePath)) {
+			return false;
+		}
+		
+		Path gradleFile = workspacePath.resolve(_SETTINGS_GRADLE_FILE_NAME);
 
 		if (Files.notExists(gradleFile)) {
 			return false;
 		}
-
+		
 		try {
 			String script = read(gradleFile);
 
@@ -295,7 +306,7 @@ public class Util {
 			else {
 				//For workspace plugin < 1.0.5
 
-				gradleFile = workspaceDir.resolve(_BUILD_GRADLE_FILE_NAME);
+				gradleFile = workspacePath.resolve(_BUILD_GRADLE_FILE_NAME);
 
 				script = read(gradleFile);
 
@@ -456,65 +467,6 @@ public class Util {
 					entryName = entryName.replaceFirst(entryToStart, "");
 				}
 
-				final File f = new File(destDir.toFile(), entryName);
-
-				if (f.exists()) {
-					IO.delete(f);
-
-					if (f.exists()) {
-						throw new IOException(
-							"Could not delete " + f.getAbsolutePath());
-					}
-				}
-
-				final File dir = f.getParentFile();
-
-				if (!dir.exists() && !dir.mkdirs()) {
-					final String msg = "Could not create dir: " + dir.getPath();
-					throw new IOException(msg);
-				}
-
-				try (final InputStream in = zip.getInputStream(entry);
-					 final FileOutputStream out = new FileOutputStream(f)) {
-
-					final byte[] bytes = new byte[1024];
-					int count = in.read(bytes);
-
-					while (count != -1) {
-						out.write(bytes, 0, count);
-						count = in.read(bytes);
-					}
-
-					out.flush();
-				}
-			}
-		}
-		/*try (final ZipFile zip = new ZipFile(srcFile.toFile())) {
-			final Enumeration<? extends ZipEntry> entries = zip.entries();
-
-			boolean foundStartEntry = entryToStart == null;
-
-			while (entries.hasMoreElements()) {
-				final ZipEntry entry = entries.nextElement();
-
-				String entryName = entry.getName();
-
-				if (!foundStartEntry) {
-					foundStartEntry = entryToStart.equals(entryName);
-					continue;
-				}
-
-				if (entry.isDirectory() ||
-					((entryToStart != null) &&
-					 !entryName.startsWith(entryToStart))) {
-
-					continue;
-				}
-
-				if (entryToStart != null) {
-					entryName = entryName.replaceFirst(entryToStart, "");
-				}
-
 				final Path f = destDir.resolve(entryName);
 
 				final Path dir = f.getParent();
@@ -527,7 +479,7 @@ public class Util {
 					Files.copy(in, f, StandardCopyOption.REPLACE_EXISTING);
 				}
 			}
-		}*/
+		}
 	}
 
 	private static final String[] _APP_SERVER_PROPERTIES_FILE_NAMES = {

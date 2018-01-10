@@ -24,10 +24,6 @@ import com.liferay.properties.locator.PropertiesLocatorArgs;
 import java.io.File;
 import java.util.Collections;
 
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-import aQute.lib.justif.Justif;
-
 /**
  * @author Gregory Amerson
  */

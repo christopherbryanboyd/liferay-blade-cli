@@ -143,7 +143,7 @@ public class SamplesCommand {
 		List<String> samples;
 		try {
 			samples = Files.find(gradleSamples, 999, (path, bfa) -> 
-				 (Files.isDirectory(path)) && path.getFileName().startsWith("blade.")).map(path -> path.getFileName().toString()).collect(Collectors.toList());
+				 (Files.isDirectory(path))).map(path -> path.getFileName().toString()).filter(string -> string.startsWith("blade.")).collect(Collectors.toList());
 			_blade.out().println(
 					"Please provide the sample project name to create, " +
 						"e.g. \"blade samples blade.rest\"\n");
@@ -153,7 +153,6 @@ public class SamplesCommand {
 		} catch (IOException e) {
 			_blade.error(e.getMessage());
 		}
-
 
 	}
 
@@ -230,6 +229,7 @@ public class SamplesCommand {
 	}
 
 	private void updateBuildGradle(Path dir) throws Exception {
+
 		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
 
 		Path sampleGradleFile = dir.resolve("build.gradle");

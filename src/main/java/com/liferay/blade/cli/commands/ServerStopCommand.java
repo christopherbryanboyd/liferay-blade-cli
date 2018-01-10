@@ -40,7 +40,6 @@ public class ServerStopCommand {
 
 	public ServerStopCommand(blade blade, ServerStopArgs options) {
 		_blade = blade;
-		_options = options;
 	}
 
 	private void commandServer(
@@ -208,6 +207,5 @@ public class ServerStopCommand {
 	}
 
 	private blade _blade;
-	
-	private ServerStopArgs _options;
+
 }

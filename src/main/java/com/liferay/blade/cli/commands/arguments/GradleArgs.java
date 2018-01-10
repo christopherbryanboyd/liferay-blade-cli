@@ -11,10 +11,10 @@ import com.liferay.blade.cli.commands.GradleCommand;
 commandDescription = GradleCommand.DESCRIPTION)
 public class GradleArgs {
 
-	  public List<String> getArgs() {
+	public List<String> getArgs() {
 		return args;
 	}
 
-	@Parameter
-	  private List<String> args = new ArrayList<>();
+	@Parameter(description="[arguments]")
+	private List<String> args = new ArrayList<>();
 }

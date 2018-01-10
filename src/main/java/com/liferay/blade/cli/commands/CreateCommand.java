@@ -58,6 +58,7 @@ public class CreateCommand {
 	}
 
 	public void execute() throws Exception {
+
 		if (_options.isListtemplates()) {
 			printTemplates();
 			return;
