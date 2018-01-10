@@ -11,15 +11,18 @@ import java.nio.file.*;
 
 public class FilesUtil {
 
-	public static void delete(Path path) throws IOException {
+	public static void delete(Path path) throws Exception {
 		if (Files.exists(path))
 		{
 			if (Files.isDirectory(path))
 			{
-				for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
-						.collect(Collectors.toList())) {
+
+				for (Path p : Files.list(path).collect(Collectors.toList())) {
+				/*for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
+						.collect(Collectors.toList())) {*/
+					
 					try {
-						deleteFile(p);
+						delete(p);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
@@ -29,7 +32,7 @@ public class FilesUtil {
 			}
 			else
 			{
-				Files.delete(path);
+				deleteFile(path);
 			}
 		}
 	}
