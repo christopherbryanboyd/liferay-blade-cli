@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
-import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Date;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.SamplesArgs;
 
 /**
  * @author David Truong
@@ -39,7 +41,7 @@ public class SamplesCommand {
 
 	public static final String DESCRIPTION = "Generate a sample project";
 
-	public SamplesCommand(blade blade, SamplesOptions options)
+	public SamplesCommand(blade blade, SamplesArgs options)
 		throws Exception {
 
 		_blade = blade;
@@ -47,9 +49,8 @@ public class SamplesCommand {
 	}
 
 	public void execute() throws Exception {
-		final List<String> args = _options._arguments();
 
-		final String sampleName = args.size() > 0 ? args.get(0) : null;
+		final String sampleName = _options.getSampleName();
 
 		if (downloadBladeRepoIfNeeded()) {
 			extractBladeRepo();
@@ -63,49 +64,48 @@ public class SamplesCommand {
 		}
 	}
 
-	@Arguments(arg = {"[name]"})
-	@Description(DESCRIPTION)
-	public interface SamplesOptions extends Options {
-
-		@Description("The directory where to create the new project.")
-		public File dir();
-
-	}
-
 	private void copySample(String sampleName) throws Exception {
-		File workDir = _options.dir();
-
-		if (workDir == null) {
-			workDir = _blade.getBase();
+		final Path workDir; 
+		if (_options.getDir() == null) {
+			workDir = _blade.getBase();			
+		} else {
+			workDir = _options.getDir().toPath();
 		}
 
-		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
+		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
+		
+		Predicate<Path> isCorrectSample = (path) -> Files.isDirectory(path) && path.getFileName().toString().equals(sampleName);
 
-		File gradleSamples = new File(bladeRepo, "gradle");
+		Path gradleSamples = bladeRepo.resolve("gradle");
 
-		for (File file : gradleSamples.listFiles()) {
-			String fileName = file.getName();
+		Files.find(gradleSamples, 999, (path, bfa) -> isCorrectSample.test(path)).forEach((path) -> copySampleFiles(workDir, path));
+	}
 
-			if (file.isDirectory() && fileName.equals(sampleName)) {
-				File dest = new File(workDir, fileName);
+	private void copySampleFiles(final Path workDir, Path path) {
+		Path fileName = path.getFileName();
+		
+		Path dest = workDir.resolve(fileName);
 
-				FileUtils.copyDirectory(file, dest);
+		try {
+			FileUtils.copyDirectory(path.toFile(), dest.toFile());
+			
+			updateBuildGradle(dest);
 
-				updateBuildGradle(dest);
-
-				if (!Util.hasGradleWrapper(dest)) {
-					addGradleWrapper(dest);
-				}
+			if (!Util.hasGradleWrapper(dest)) {
+				addGradleWrapper(dest);
 			}
+			
+		} catch (Exception e) {
+			_blade.error(e.getMessage());
 		}
 	}
 
-	private void addGradleWrapper(File dest) throws Exception {
+	private void addGradleWrapper(Path dest) throws Exception {
 		InputStream in = SamplesCommand.class.getResourceAsStream("/wrapper.zip");
 
 		Util.copy(in, dest);
 
-		new File(dest, "gradlew").setExecutable(true);
+		dest.resolve("gradlew").toFile().setExecutable(true);
 	}
 
 	private String deindent(String s) {
@@ -113,15 +113,14 @@ public class SamplesCommand {
 	}
 
 	private boolean downloadBladeRepoIfNeeded() throws Exception {
-		File bladeRepoArchive = new File(
-			_blade.getCacheDir(), _BLADE_REPO_ARCHIVE_NAME);
+		Path bladeRepoArchive = 
+			_blade.getCacheDir().resolve(_BLADE_REPO_ARCHIVE_NAME);
 
-		Date now = new Date();
 
-		long diff = now.getTime() - bladeRepoArchive.lastModified();
+		long diff = System.currentTimeMillis() - Files.getLastModifiedTime(bladeRepoArchive).toMillis();
 
-		if (!bladeRepoArchive.exists() || (diff > _FILE_EXPIRATION_TIME)) {
-			FileUtils.copyURLToFile(new URL(_BLADE_REPO_URL), bladeRepoArchive);
+		if (Files.notExists(bladeRepoArchive) || (diff > _FILE_EXPIRATION_TIME)) {
+			FileUtils.copyURLToFile(new URL(_BLADE_REPO_URL), bladeRepoArchive.toFile());
 
 			return true;
 		}
@@ -130,33 +129,32 @@ public class SamplesCommand {
 	}
 
 	private void extractBladeRepo() throws Exception {
-		File bladeRepoArchive = new File(
-			_blade.getCacheDir(), _BLADE_REPO_ARCHIVE_NAME);
+		Path bladeRepoArchive = 
+			_blade.getCacheDir().resolve(_BLADE_REPO_ARCHIVE_NAME);
 
 		Util.unzip(bladeRepoArchive, _blade.getCacheDir(), null);
 	}
 
 	private void listSamples() {
-		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
+		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
 
-		File gradleSamples = new File(bladeRepo, "gradle");
+		Path gradleSamples = bladeRepo.resolve("gradle");
 
-		List<String> samples = new ArrayList<>();
-
-		for (File file : gradleSamples.listFiles()) {
-			String fileName = file.getName();
-
-			if (file.isDirectory() && fileName.startsWith("blade.")) {
-				samples.add(fileName);
-			}
+		List<String> samples;
+		try {
+			samples = Files.find(gradleSamples, 999, (path, bfa) -> 
+				 (Files.isDirectory(path)) && path.getFileName().startsWith("blade.")).map(path -> path.getFileName().toString()).collect(Collectors.toList());
+			_blade.out().println(
+					"Please provide the sample project name to create, " +
+						"e.g. \"blade samples blade.rest\"\n");
+				_blade.out().println("Currently available samples:");
+				_blade.out().println(
+					WordUtils.wrap(StringUtils.join(samples, ", "), 80));
+		} catch (IOException e) {
+			_blade.error(e.getMessage());
 		}
 
-		_blade.out().println(
-			"Please provide the sample project name to create, " +
-				"e.g. \"blade samples blade.rest\"\n");
-		_blade.out().println("Currently available samples:");
-		_blade.out().println(
-			WordUtils.wrap(StringUtils.join(samples, ", "), 80));
+
 	}
 
 	private String parseGradleScript(
@@ -231,16 +229,16 @@ public class SamplesCommand {
 			section);
 	}
 
-	private void updateBuildGradle(File dir) throws Exception {
-		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
+	private void updateBuildGradle(Path dir) throws Exception {
+		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
 
-		File sampleGradleFile = new File(dir, "build.gradle");
+		Path sampleGradleFile = dir.resolve("build.gradle");
 
 		String script = Util.read(sampleGradleFile);
 
 		if (!Util.isWorkspace(dir)) {
-			File parentBuildGradleFile = new File(
-				bladeRepo, "gradle/build.gradle");
+			Path parentBuildGradleFile = 
+				bladeRepo.resolve(Paths.get("gradle", "build.gradle"));
 
 			String parentBuildScript = parseGradleScript(
 				Util.read(parentBuildGradleFile), "buildscript", false);
@@ -256,7 +254,7 @@ public class SamplesCommand {
 			script = parentBuildScript + parentSubprojectsScript + script;
 		}
 
-		Files.write(sampleGradleFile.toPath(), script.getBytes());
+		Files.write(sampleGradleFile, script.getBytes());
 	}
 
 	private static final String _BLADE_REPO_ARCHIVE_NAME =
@@ -271,6 +269,6 @@ public class SamplesCommand {
 	private static final long _FILE_EXPIRATION_TIME = 604800000;
 
 	private final blade _blade;
-	private final SamplesOptions _options;
+	private final SamplesArgs _options;
 
 }

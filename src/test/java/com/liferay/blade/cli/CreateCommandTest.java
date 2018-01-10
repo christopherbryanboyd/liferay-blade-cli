@@ -23,25 +23,21 @@ import static org.junit.Assert.assertTrue;
 import aQute.bnd.header.Parameters;
 import aQute.bnd.osgi.Domain;
 import aQute.bnd.osgi.Jar;
-import aQute.lib.io.IO;
-
 import com.liferay.project.templates.ProjectTemplates;
+import com.liferay.project.templates.internal.util.FileUtil;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.PrintStream;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileUtils;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.tooling.internal.consumer.ConnectorServices;
 import org.junit.After;
@@ -52,126 +48,135 @@ import org.junit.Test;
  * @author Gregory Amerson
  */
 public class CreateCommandTest {
-	private File testdir = IO.getFile("build/test");
+	private Path testdir = Paths.get("build","test");
 
 	@Before
 	public void setUp() throws Exception {
-		testdir.mkdirs();
+		Files.createDirectories(testdir);
 
-		assertTrue(new File(testdir, "afile").createNewFile());
+		Path afile = testdir.resolve("afile");
+		
+		if (Files.notExists(afile))
+		Files.createFile(afile);
 	}
 
 	@After
 	public void cleanUp() throws Exception {
 		ConnectorServices.reset();
 
-		if (testdir.exists()) {
-			IO.delete(testdir);
-			assertFalse(testdir.exists());
+		if (Files.exists(testdir)) {
+			FileUtil.deleteDir(testdir);
+			assertTrue(Files.notExists(testdir));
 		}
 	}
 
 	@Test
 	public void testCreateActivator() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
+		
 		String[] gradleArgs = {
-			"create", "-d", "build/test", "-t", "activator",
+			"create", "-d", testPath.toString(), "-t", "activator",
 			"bar-activator"
 		};
 
 		String[] mavenArgs = {
-			"create", "-d", "build/test", "-b", "maven", "-t", "activator",
+			"create", "-d", testPath.toString(), "-b", "maven", "-t", "activator",
 			"bar-activator"
 		};
 
-		String projectPath = "build/test/bar-activator";
+		Path projectPath = testPath.resolve("bar-activator");
 
 		new bladenofail().run(gradleArgs);
 
 		checkGradleBuildFiles(projectPath);
 
-		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/bar/activator/BarActivator.java"),
+		Path implPath = projectPath.resolve(Paths.get("src","main","java","bar","activator","BarActivator.java"));
+		
+		contains(assertPathExists(implPath),
 			".*^public class BarActivator implements BundleActivator.*$");
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "bar.activator-1.0.0.jar");
-		verifyImportPackage(new File(projectPath + "/build/libs/bar.activator-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","bar.activator-1.0.0.jar")));
 
-		FileUtils.deleteDirectory(IO.getFile(projectPath));
+		FileUtil.deleteDir(projectPath);
 
 		new bladenofail().run(mavenArgs);
 
 		checkMavenBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/bar/activator/BarActivator.java"),
+			assertPathExists(
+				projectPath.resolve(Paths.get("src","main","java","bar","activator","BarActivator.java"))),
 			".*^public class BarActivator implements BundleActivator.*$");
 
 		MavenRunnerUtil.executeMavenPackage(projectPath, new String[]{"clean", "package"});
 		MavenRunnerUtil.verifyBuildOutput(projectPath, "bar-activator-1.0.0.jar");
-		verifyImportPackage(new File(projectPath + "/target/bar-activator-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("target","bar-activator-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateApi() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
+		
 		String[] gradleArgs = {
-			"create", "-d", "build/test", "-t", "api", "foo"
+			"create", "-d", testPath.toString(), "-t", "api", "foo"
 		};
 
 		String[] mavenArgs = {
-			"create", "-d", "build/test", "-b", "maven", "-t", "api", "foo"
+			"create", "-d", testPath.toString(), "-b", "maven", "-t", "api", "foo"
 		};
 
-		String projectPath = "build/test/foo";
+		Path projectPath = testPath.resolve("foo");
 
 		new bladenofail().run(gradleArgs);
 
 		checkGradleBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/foo/api/Foo.java"),
+				assertPathExists(
+				projectPath.resolve(Paths.get("src","main","java","foo","api","Foo.java"))),
 				".*^public interface Foo.*");
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/resources/foo/api/packageinfo"),
+			assertPathExists(
+				projectPath.resolve(Paths.get("src","main","resources","foo","api","packageinfo"))),
 				"version 1.0.0");
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
 
-		try (Jar jar = new Jar(new File(projectPath + "/build/libs/foo-1.0.0.jar"))) {
+		try (Jar jar = new Jar(projectPath.resolve(Paths.get("build","libs","foo-1.0.0.jar")).toFile())) {
 			assertEquals(
 				"foo.api;version=\"1.0.0\"",
 				jar.getManifest().getMainAttributes().getValue("Export-Package"));
 		}
 
-		FileUtils.deleteDirectory(IO.getFile(projectPath));
+		FileUtil.deleteDir(projectPath);
 
 		new bladenofail().run(mavenArgs);
 
 		checkMavenBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/foo/api/Foo.java"),
+			assertPathExists(
+				projectPath.resolve(Paths.get("src","main","java","foo","api","Foo.java"))),
 				".*^public interface Foo.*");
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/resources/foo/api/packageinfo"),
+				assertPathExists(
+						projectPath.resolve(Paths.get("src", "main","resources","foo","api","packageinfo"))),
 				"version 1.0.0");
 
 		MavenRunnerUtil.executeMavenPackage(projectPath, new String[]{"clean", "package"});
 		MavenRunnerUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
-		verifyImportPackage(new File(projectPath + "/target/foo-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("target","foo-1.0.0.jar")));
 
-		try (Jar jar = new Jar(new File(projectPath + "/target/foo-1.0.0.jar"))) {
+		try (Jar jar = new Jar(projectPath.resolve(Paths.get("target","foo-1.0.0.jar")).toFile())) {
 			assertEquals(
 				"foo.api;version=\"1.0.0\"",
 				jar.getManifest().getMainAttributes().getValue("Export-Package"));
@@ -180,47 +185,50 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateFragment() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
+		
 		String[] gradleArgs = {
-			"create", "-d", "build/test", "-t", "fragment", "-h",
+			"create", "-d", testPath.toString(), "-t", "fragment", "-h",
 			"com.liferay.login.web", "-H", "1.0.0", "loginHook"
 		};
 
 		String[] mavenArgs = {
-			"create", "-d", "build/test", "-b", "maven", "-t", "fragment", "-h",
+			"create", "-d", testPath.toString(), "-b", "maven", "-t", "fragment", "-h",
 			"com.liferay.login.web", "-H", "1.0.0", "loginHook"
 		};
 
-		String projectPath = "build/test/loginHook";
+		Path projectPath = testPath.resolve("loginHook");
 
 		new bladenofail().run(gradleArgs);
 
 		checkGradleBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(projectPath + "/bnd.bnd"),
+				assertPathExists(projectPath.resolve("bnd.bnd")),
 			new String[] {
 				".*^Bundle-SymbolicName: loginhook.*$",
 				".*^Fragment-Host: com.liferay.login.web;bundle-version=\"1.0.0\".*$"
 			});
 
 		contains(
-			checkFileExists(projectPath + "/build.gradle"),
+			assertPathExists(projectPath.resolve("build.gradle")),
 			".*^apply plugin: \"com.liferay.plugin\".*");
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "loginhook-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/loginhook-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","loginhook-1.0.0.jar")));
 
-		FileUtils.deleteDirectory(IO.getFile(projectPath));
+		FileUtil.deleteDir(projectPath);
 
 		new bladenofail().run(mavenArgs);
 
 		checkMavenBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(projectPath + "/bnd.bnd"),
+			assertPathExists(projectPath.resolve("bnd.bnd")),
 			new String[] {
 				".*^Bundle-SymbolicName: loginhook.*$",
 				".*^Fragment-Host: com.liferay.login.web;bundle-version=\"1.0.0\".*$"
@@ -228,159 +236,168 @@ public class CreateCommandTest {
 
 		MavenRunnerUtil.executeMavenPackage(projectPath, new String[]{"clean", "package"});
 		MavenRunnerUtil.verifyBuildOutput(projectPath, "loginHook-1.0.0.jar");
-		verifyImportPackage(new File(projectPath + "/target/loginHook-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("target","loginHook-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateMVCPortlet() throws Exception {
+		Path testPath = Paths.get("build", "test");
+		
 		String[] gradleArgs = {
-			"create", "-d", "build/test", "-t", "mvc-portlet", "foo"
+			"create", "-d", testPath.toString(), "-t", "mvc-portlet", "foo"
 		};
 
 		String[] mavenArgs = {
-			"create", "-d", "build/test", "-b", "maven", "-t",
+			"create", "-d", testPath.toString(), "-b", "maven", "-t",
 			"mvc-portlet", "foo"
 		};
 
-		String projectPath = "build/test/foo";
+		Path projectPath = testPath.resolve("foo");
 
 		new bladenofail().run(gradleArgs);
 
 		checkGradleBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(projectPath + "/src/main/java/foo/portlet/FooPortlet.java"),
+			assertPathExists(projectPath.resolve(Paths.get("src","main","java","foo","portlet","FooPortlet.java"))),
 			".*^public class FooPortlet extends MVCPortlet.*$");
 
 		contains(
-			checkFileExists(projectPath + "/build.gradle"),
+				assertPathExists(projectPath.resolve("build.gradle")),
 			".*^apply plugin: \"com.liferay.plugin\".*");
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
+		Path resourcesPath = projectPath.resolve(Paths.get("src","main","resources","META-INF","resources"));
+		
+		assertPathExists(resourcesPath.resolve("view.jsp"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(resourcesPath.resolve("init.jsp"));
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/foo-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","foo-1.0.0.jar")));
 
-		FileUtils.deleteDirectory(IO.getFile(projectPath));
+		FileUtil.deleteDir(projectPath);
 
 		new bladenofail().run(mavenArgs);
 
 		checkMavenBuildFiles(projectPath);
 
 		contains(
-			checkFileExists(projectPath + "/src/main/java/foo/portlet/FooPortlet.java"),
+				assertPathExists(projectPath.resolve(Paths.get("src","main","java","foo","portlet","FooPortlet.java"))),
 			".*^public class FooPortlet extends MVCPortlet.*$");
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
+		assertPathExists(resourcesPath.resolve("view.jsp"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(resourcesPath.resolve("init.jsp"));
 
 		MavenRunnerUtil.executeMavenPackage(projectPath, new String[]{"clean", "package"});
 		MavenRunnerUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
-		verifyImportPackage(new File(projectPath + "/target/foo-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("target","foo-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleMVCPortletProjectWithPackage()
 		throws Exception {
 
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "mvc-portlet", "-p",
+			"create", "-d", testPath.toString(), "-t", "mvc-portlet", "-p",
 			"com.liferay.test", "foo"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/foo";
+		Path projectPath = testPath.resolve("foo");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/com/liferay/test/portlet/FooPortlet.java"),
+				assertPathExists(
+				projectPath.resolve(Paths.get("src","main","java","com","liferay","test","portlet","FooPortlet.java"))),
 			".*^public class FooPortlet extends MVCPortlet.*$");
 
 		contains(
-			checkFileExists("build/test/foo/build.gradle"),
+				assertPathExists(projectPath.resolve("build.gradle")),
 			".*^apply plugin: \"com.liferay.plugin\".*");
+		
+		Path resourcesDir = projectPath.resolve(Paths.get("src","main","resources","META-INF","resources"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
+		assertPathExists(
+				resourcesDir.resolve("view.jsp"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(
+				resourcesDir.resolve("init.jsp"));
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "com.liferay.test-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/com.liferay.test-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","com.liferay.test-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleMVCPortletProjectWithPortletSuffix() throws Exception {
+		Path testPath = Paths.get("build", "test");
 		String[] args = {
-			"create", "-d", "build/test", "-t", "mvc-portlet", "portlet-portlet"
+			"create", "-d", testPath.toString(), "-t", "mvc-portlet", "portlet-portlet"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/portlet-portlet";
+		Path projectPath = testPath.resolve("portlet-portlet");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
 		contains(
-			checkFileExists(projectPath + "/src/main/java/portlet/portlet/portlet/PortletPortlet.java"),
+			assertPathExists(projectPath.resolve(Paths.get("src","main","java","portlet","portlet","portlet","PortletPortlet.java"))),
 			".*^public class PortletPortlet extends MVCPortlet.*$");
 
 		contains(
-			checkFileExists(projectPath + "/build.gradle"),
+				assertPathExists(projectPath.resolve("build.gradle")),
 			".*^apply plugin: \"com.liferay.plugin\".*");
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
+		Path resourcesDir = projectPath.resolve(Paths.get("src","main","resources","META-INF","resources"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(
+				resourcesDir.resolve("view.jsp"));
+
+		assertPathExists(
+				resourcesDir.resolve("init.jsp"));
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "portlet.portlet-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/portlet.portlet-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","portlet.portlet-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradlePortletProject() throws Exception {
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "portlet", "-c", "Foo",
+			"create", "-d", testPath.toString(), "-t", "portlet", "-c", "Foo",
 			"gradle.test"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/gradle.test";
+		Path projectPath = testPath.resolve("gradle.test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/gradle/test/portlet/FooPortlet.java"),
+				assertPathExists(
+				projectPath.resolve(Paths.get("src","main","java","gradle","test","portlet","FooPortlet.java"))),
 			new String[] {
 				"^package gradle.test.portlet;.*",
 				".*javax.portlet.display-name=gradle.test.*",
@@ -392,27 +409,28 @@ public class CreateCommandTest {
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "gradle.test-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/gradle.test-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","gradle.test-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleServiceBuilderDashes() throws Exception {
+		Path testPath = Paths.get("build", "test");
 		String[] args = {
-			"create", "-d", "build/test", "-t", "service-builder", "-p",
+			"create", "-d", testPath.toString(), "-t", "service-builder", "-p",
 			"com.liferay.backend.integration", "backend-integration"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/backend-integration";
+		Path projectPath = testPath.resolve("backend-integration");
 
 		contains(
-			checkFileExists(projectPath + "/settings.gradle"),
+				assertPathExists(projectPath.resolve("settings.gradle")),
 			"include \"backend-integration-api\", " +
 			"\"backend-integration-service\"");
 
 		contains(
-			checkFileExists(projectPath + "/backend-integration-api/bnd.bnd"),
+				assertPathExists(projectPath.resolve(Paths.get("backend-integration-api","bnd.bnd"))),
 			new String[] {
 				".*Export-Package:\\\\.*",
 				".*com.liferay.backend.integration.exception,\\\\.*",
@@ -422,39 +440,41 @@ public class CreateCommandTest {
 			});
 
 		contains(
-			checkFileExists(
-				projectPath + "/backend-integration-service/bnd.bnd"),
+			assertPathExists(
+				projectPath.resolve(Paths.get("backend-integration-service","bnd.bnd"))),
 				".*Liferay-Service: true.*");
 
 		BuildTask buildServiceTask = GradleRunnerUtil.executeGradleRunner(projectPath, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildServiceTask);
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/backend-integration-api",
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("backend-integration-api"),
 				"com.liferay.backend.integration.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/backend-integration-service",
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("backend-integration-service"),
 				"com.liferay.backend.integration.service-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/backend-integration-service/build/libs/com.liferay.backend.integration.service-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("backend-integration-service","build","libs","com.liferay.backend.integration.service-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleServiceBuilderDefault() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
 		String[] args = {
-			"create", "-d", "build/test", "-t", "service-builder", "-p",
+			"create", "-d", testPath.toString(), "-t", "service-builder", "-p",
 			"com.liferay.docs.guestbook", "guestbook"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/guestbook";
+		Path projectPath = testPath.resolve("guestbook");
 
 		contains(
-			checkFileExists(projectPath + "/settings.gradle"),
+			assertPathExists(projectPath.resolve("settings.gradle")),
 			"include \"guestbook-api\", \"guestbook-service\"");
 
 		contains(
-			checkFileExists(projectPath + "/guestbook-api/bnd.bnd"),
+				assertPathExists(projectPath.resolve(Paths.get("guestbook-api","bnd.bnd"))),
 			new String[] {
 				".*Export-Package:\\\\.*",
 				".*com.liferay.docs.guestbook.exception,\\\\.*",
@@ -464,25 +484,25 @@ public class CreateCommandTest {
 			});
 
 		contains(
-			checkFileExists(projectPath + "/guestbook-service/bnd.bnd"),
+				assertPathExists(projectPath.resolve(Paths.get("guestbook-service","bnd.bnd"))),
 				".*Liferay-Service: true.*");
 
 		contains(
-			checkFileExists(projectPath + "/guestbook-service/build.gradle"),
+				assertPathExists(projectPath.resolve(Paths.get("guestbook-service","build.gradle"))),
 				".*compileOnly project\\(\":guestbook-api\"\\).*");
 
 		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(projectPath, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/guestbook-api", "com.liferay.docs.guestbook.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/guestbook-service", "com.liferay.docs.guestbook.service-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("guestbook-api"), "com.liferay.docs.guestbook.api-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("guestbook-service"), "com.liferay.docs.guestbook.service-1.0.0.jar");
 
-		File serviceJar = new File(projectPath + "/guestbook-service/build/libs/com.liferay.docs.guestbook.service-1.0.0.jar");
+		Path serviceJar = projectPath.resolve(Paths.get("guestbook-service","build","libs","com.liferay.docs.guestbook.service-1.0.0.jar"));
 
 		verifyImportPackage(serviceJar);
 
-		try(JarFile serviceJarFile = new JarFile(serviceJar)) {
+		try(JarFile serviceJarFile = new JarFile(serviceJar.toFile())) {
 			String springContext = serviceJarFile.getManifest().getMainAttributes().getValue("Liferay-Spring-Context");
 
 			assertTrue(springContext.equals("META-INF/spring"));
@@ -491,23 +511,26 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateGradleServiceBuilderDots() throws Exception {
+		
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "service-builder", "-p",
+			"create", "-d", testPath.toString(), "-t", "service-builder", "-p",
 			"com.liferay.docs.guestbook", "com.liferay.docs.guestbook"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/com.liferay.docs.guestbook";
+		Path projectPath = testPath.resolve("com.liferay.docs.guestbook");
 
 		contains(
-			checkFileExists(projectPath + "/settings.gradle"),
+			assertPathExists(projectPath.resolve("settings.gradle")),
 			"include \"com.liferay.docs.guestbook-api\", " +
 			"\"com.liferay.docs.guestbook-service\"");
 
 		contains(
-			checkFileExists(
-				projectPath + "/com.liferay.docs.guestbook-api/bnd.bnd"),
+				assertPathExists(
+				projectPath.resolve(Paths.get("com.liferay.docs.guestbook-api","bnd.bnd"))),
 			new String[] {
 				".*Export-Package:\\\\.*",
 				".*com.liferay.docs.guestbook.exception,\\\\.*",
@@ -517,40 +540,42 @@ public class CreateCommandTest {
 			});
 
 		contains(
-			checkFileExists(
-				projectPath + "/com.liferay.docs.guestbook-service/bnd.bnd"),
+				assertPathExists(
+				projectPath.resolve(Paths.get("com.liferay.docs.guestbook-service","bnd.bnd"))),
 				".*Liferay-Service: true.*");
 
 		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(projectPath, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/com.liferay.docs.guestbook-api",
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("com.liferay.docs.guestbook-api"),
 				"com.liferay.docs.guestbook.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/com.liferay.docs.guestbook-service",
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("com.liferay.docs.guestbook-service"),
 				"com.liferay.docs.guestbook.service-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/com.liferay.docs.guestbook-service/build/libs/com.liferay.docs.guestbook.service-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("com.liferay.docs.guestbook-service","build","libs","com.liferay.docs.guestbook.service-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleService() throws Exception {
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "service", "-s",
+			"create", "-d", testPath.toString(), "-t", "service", "-s",
 			"com.liferay.portal.kernel.events.LifecycleAction", "-c",
 			"FooAction", "servicepreaction"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/servicepreaction";
+		Path projectPath = testPath.resolve("servicepreaction");
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
-		File file = new File(projectPath + "/src/main/java/servicepreaction/FooAction.java");
+		Path file = projectPath.resolve(Paths.get("src","main","java","servicepreaction","FooAction.java"));
 
 		contains(
-			checkFileExists(file.getPath()),
+				assertPathExists(file),
 			new String[] {
 				"^package servicepreaction;.*",
 				".*^import com.liferay.portal.kernel.events.LifecycleAction;$.*",
@@ -559,31 +584,31 @@ public class CreateCommandTest {
 			});
 
 		List<String> lines = new ArrayList<String>();
-		String line = null;
+	
 
-		try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			while ((line = reader.readLine()) !=null) {
-				lines.add(line);
-				if (line.equals("import com.liferay.portal.kernel.events.LifecycleAction;")) {
-					lines.add("import com.liferay.portal.kernel.events.LifecycleEvent;");
-					lines.add("import com.liferay.portal.kernel.events.ActionException;");
-				}
-
-				if (line.equals("public class FooAction implements LifecycleAction {")) {
-					String s = new StringBuilder()
-					           .append("@Override\n")
-					           .append("public void processLifecycleEvent(LifecycleEvent lifecycleEvent)\n")
-					           .append("throws ActionException {\n")
-					           .append("System.out.println(\"login.event.pre=\" + lifecycleEvent);\n")
-					           .append("}\n")
-					           .toString();
-					lines.add(s);
-				}
+		Files.lines(file).forEach(line ->
+		{
+			lines.add(line);
+			if (line.equals("import com.liferay.portal.kernel.events.LifecycleAction;")) {
+				lines.add("import com.liferay.portal.kernel.events.LifecycleEvent;");
+				lines.add("import com.liferay.portal.kernel.events.ActionException;");
 			}
-		}
 
-		try(Writer writer = new FileWriter(file)) {
-			for(String string : lines){
+			if (line.equals("public class FooAction implements LifecycleAction {")) {
+				String s = new StringBuilder()
+				           .append("@Override\n")
+				           .append("public void processLifecycleEvent(LifecycleEvent lifecycleEvent)\n")
+				           .append("throws ActionException {\n")
+				           .append("System.out.println(\"login.event.pre=\" + lifecycleEvent);\n")
+				           .append("}\n")
+				           .toString();
+				lines.add(s);
+			}
+		});
+	
+
+		try(Writer writer = Files.newBufferedWriter(file)) {
+			for (String string : lines) {
 				writer.write(string + "\n");
 			}
 		}
@@ -592,26 +617,29 @@ public class CreateCommandTest {
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "servicepreaction-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/servicepreaction-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","servicepreaction-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateGradleServiceWrapper() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "service-wrapper", "-s",
+			"create", "-d", testPath.toString(), "-t", "service-wrapper", "-s",
 			"com.liferay.portal.kernel.service.UserLocalServiceWrapper",
 			"serviceoverride"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/serviceoverride";
+		Path projectPath = testPath.resolve("serviceoverride");
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(
-			checkFileExists(
-				projectPath + "/src/main/java/serviceoverride/Serviceoverride.java"),
+			assertPathExists(
+				projectPath.resolve(Paths.get("src", "main","java","serviceoverride","Serviceoverride.java"))),
 			new String[] {
 				"^package serviceoverride;.*",
 				".*^import com.liferay.portal.kernel.service.UserLocalServiceWrapper;$.*",
@@ -624,7 +652,7 @@ public class CreateCommandTest {
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "serviceoverride-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/serviceoverride-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","serviceoverride-1.0.0.jar")));
 	}
 
 	@Test
@@ -633,57 +661,62 @@ public class CreateCommandTest {
 			"create", "-d", "build", "-t", "activator", "exist"
 		};
 
-		File existFile = IO.getFile("build/exist/file.txt");
+		Path projectPath = Paths.get("build","exist");
+		Path existFile = projectPath.resolve("file.txt");
 
-		if(!existFile.exists()) {
-			IO.getFile("build/exist").mkdirs();
-			existFile.createNewFile();
-			assertTrue(existFile.exists());
+		if(Files.notExists(existFile)) {
+			Files.createDirectories(projectPath);
+			Files.createFile(existFile);
+			assertPathExists(existFile);
 		}
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/exist";
 
-		checkFileDoesNotExists(projectPath+"/bnd.bnd");
+		assertPathDoesNotExist(projectPath.resolve("bnd.bnd"));
 	}
 
 	@Test
 	public void testCreateGradleSymbolicName() throws Exception {
+
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-p", "foo.bar", "barfoo"
+			"create", "-d", testPath.toString(), "-p", "foo.bar", "barfoo"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/barfoo";
+		Path projectPath = testPath.resolve("barfoo");
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(
-			checkFileExists(projectPath + "/bnd.bnd"),
+			assertPathExists(projectPath.resolve("bnd.bnd")),
 			".*Bundle-SymbolicName: foo.bar.*");
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "foo.bar-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/foo.bar-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","foo.bar-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateNpmAngular() throws Exception {
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "npm-angular-portlet", "npmangular"
+			"create", "-d", testPath.toString(), "-t", "npm-angular-portlet", "npmangular"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/npmangular";
+		Path projectPath = testPath.resolve("npmangular");
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
-		File jsp = checkFileExists(projectPath + "/src/main/resources/META-INF/resources/view.jsp");
+		Path jsp = assertPathExists(projectPath.resolve(Paths.get("src","main","resources","META-INF","resources","view.jsp")));
 
 		contains(jsp, ".*<aui:script require=\"npmangular@1.0.0\">.*");
 
@@ -692,27 +725,29 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreatePortletConfigurationIcon() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "portlet-configuration-icon", "-p", "blade.test", "icontest"
+			"create", "-d", testPath.toString(), "-t", "portlet-configuration-icon", "-p", "blade.test", "icontest"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/icontest";
+		Path projectPath = testPath.resolve("icontest");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
-		File componentFile = checkFileExists(
-			projectPath + "/src/main/java/blade/test/portlet/configuration/icon/" +
-				"IcontestPortletConfigurationIcon.java");
+		Path componentFile = assertPathExists(
+			projectPath.resolve(Paths.get("src","main","java","blade","test","portlet","configuration","icon",
+				"IcontestPortletConfigurationIcon.java")));
 
 		contains(
 			componentFile,
 			".*^public class IcontestPortletConfigurationIcon.*extends BasePortletConfigurationIcon.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		Path gradleBuildFile = assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
@@ -721,27 +756,29 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreatePortletToolbarContributor() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "portlet-toolbar-contributor", "-p", "blade.test",  "toolbartest"
+			"create", "-d", testPath.toString(), "-t", "portlet-toolbar-contributor", "-p", "blade.test",  "toolbartest"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/toolbartest";
+		Path projectPath = testPath.resolve("toolbartest");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
-		File componentFile = checkFileExists(
-			projectPath + "/src/main/java/blade/test/portlet/toolbar/contributor/" +
-				"ToolbartestPortletToolbarContributor.java");
+		Path componentFile = assertPathExists(
+			projectPath.resolve(Paths.get("src","main","java","blade","test","portlet","toolbar","contributor",
+				"ToolbartestPortletToolbarContributor.java")));
 
 		contains(
 			componentFile,
 			".*^public class ToolbartestPortletToolbarContributor.*implements PortletToolbarContributor.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		Path gradleBuildFile = assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
@@ -750,105 +787,105 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateProjectAllDefaults() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "hello-world-portlet"
+			"create", "-d", testPath.toString(), "hello-world-portlet"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/hello-world-portlet";
+		Path projectPath = testPath.resolve("hello-world-portlet");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
-
-		File portletFile = checkFileExists(
-			projectPath + "/src/main/java/hello/world/portlet/portlet/" +
-				"HelloWorldPortlet.java");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
 		contains(
-			portletFile,
+			assertPathExists(
+					projectPath.resolve(Paths.get("src","main","java","hello","world","portlet","portlet",
+						"HelloWorldPortlet.java"))),
 			".*^public class HelloWorldPortlet extends MVCPortlet.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		contains(assertPathExists(projectPath.resolve("build.gradle")), ".*^apply plugin: \"com.liferay.plugin\".*");
 
-		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
+		Path resourcesDir = projectPath.resolve(Paths.get("src","main","resources","META-INF","resources"));
+		
+		assertPathExists(resourcesDir.resolve("view.jsp"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
-
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(resourcesDir.resolve("init.jsp"));
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "hello.world.portlet-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/hello.world.portlet-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","hello.world.portlet-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateProjectWithRefresh() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-				"create", "-d", "build/test", "hello-world-refresh"
+				"create", "-d", testPath.toString(), "hello-world-refresh"
 			};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/hello-world-refresh";
+		Path projectPath = testPath.resolve("hello-world-refresh");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
-
-		File portletFile = checkFileExists(
-			projectPath + "/src/main/java/hello/world/refresh/portlet/" +
-				"HelloWorldRefreshPortlet.java");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
 		contains(
-			portletFile,
+				assertPathExists(
+						projectPath.resolve(Paths.get("src","main","java","hello","world","refresh","portlet",
+							"HelloWorldRefreshPortlet.java"))),
 			".*^public class HelloWorldRefreshPortlet extends MVCPortlet.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		contains(assertPathExists(projectPath.resolve("build.gradle")), ".*^apply plugin: \"com.liferay.plugin\".*");
 
-		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
+		Path resourcesPath = projectPath.resolve(Paths.get("src","main","resources","META-INF","resources"));
+		
+		assertPathExists(
+				resourcesPath.resolve("view.jsp"));
 
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/view.jsp");
-
-		checkFileExists(
-			projectPath + "/src/main/resources/META-INF/resources/init.jsp");
+		assertPathExists(
+				resourcesPath.resolve("init.jsp"));
 
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "hello.world.refresh-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/hello.world.refresh-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","hello.world.refresh-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateSimulationPanelEntry() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "simulation-panel-entry", "-p", "test.simulator", "simulator"
+			"create", "-d", testPath.toString(), "-t", "simulation-panel-entry", "-p", "test.simulator", "simulator"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/simulator";
+		Path projectPath =  testPath.resolve("simulator");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
-		File componentFile = checkFileExists(
-			projectPath + "/src/main/java/test/simulator/application/list/" +
-				"SimulatorSimulationPanelApp.java");
+		Path componentFile = assertPathExists(
+			projectPath.resolve(Paths.get("src","main","java","test","simulator","application","list",
+				"SimulatorSimulationPanelApp.java")));
 
 		contains(
 			componentFile,
 			".*^public class SimulatorSimulationPanelApp.*extends BaseJSPPanelApp.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		Path gradleBuildFile = assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
@@ -857,48 +894,51 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateSpringMvcPortlet() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "spring-mvc-portlet", "-p", "test.spring.portlet", "spring-test"
+			"create", "-d", testPath.toString(), "-t", "spring-mvc-portlet", "-p", "test.spring.portlet", "spring-test"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/spring-test";
+		Path projectPath = testPath.resolve("spring-test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(
-			projectPath + "/src/main/java/test/spring/portlet/portlet/" +
-				"SpringTestPortletViewController.java");
+		assertPathExists(
+			projectPath.resolve(Paths.get("src","main","java","test","spring","portlet","portlet","" +
+				"SpringTestPortletViewController.java")));
 
-		checkFileExists(projectPath + "/build.gradle");
+		assertPathExists(projectPath.resolve("build.gradle"));
 
 		verifyBuild(projectPath, projectPath, "spring-test.war");
 	}
 
 	@Test
 	public void testCreateTemplateContextContributor() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "template-context-contributor", "blade-test"
+			"create", "-d", testPath.toString(), "-t", "template-context-contributor", "blade-test"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/blade-test";
+		Path projectPath = testPath.resolve("blade-test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
-		File componentFile = checkFileExists(
-			projectPath + "/src/main/java/blade/test/context/contributor/" +
-				"BladeTestTemplateContextContributor.java");
+		Path componentFile = assertPathExists(
+			projectPath.resolve(Paths.get("src","main","java","blade","test","context","contributor","BladeTestTemplateContextContributor.java")));
 
 		contains(
 			componentFile,
 			".*^public class BladeTestTemplateContextContributor.*implements TemplateContextContributor.*$");
 
-		File gradleBuildFile = checkFileExists(projectPath + "/build.gradle");
+		Path gradleBuildFile = assertPathExists(projectPath.resolve("build.gradle"));
 
 		contains(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
@@ -907,49 +947,52 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateTheme() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "theme", "theme-test"
+			"create", "-d", testPath.toString(), "-t", "theme", "theme-test"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/theme-test";
+		Path projectPath = testPath.resolve("theme-test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileDoesNotExists(projectPath + "/bnd.bnd");
+		assertPathDoesNotExist(projectPath.resolve("bnd.bnd"));
 
-		checkFileExists(projectPath + "/src/main/webapp/css/_custom.scss");
+		assertPathExists(projectPath.resolve(Paths.get("src","main","webapp","css","_custom.scss")));
 
-		File properties = checkFileExists(
-			projectPath + "/src/main/webapp/WEB-INF/liferay-plugin-package.properties");
+		Path properties = assertPathExists(
+			projectPath.resolve(Paths.get("src","main","webapp","WEB-INF","liferay-plugin-package.properties")));
 
 		contains(properties, ".*^name=theme-test.*");
 
-		File buildFile = new File(projectPath + "/build.gradle");
-
-		FileWriter fileWriter = new FileWriter(buildFile, true);
-		BufferedWriter bufferWriter = new BufferedWriter(fileWriter);
-		bufferWriter.write("\nbuildTheme { jvmArgs \"-Djava.awt.headless=true\" }");
-		bufferWriter.close();
+		Path buildFile = projectPath.resolve("build.gradle");
+		
+		try(Writer writer = Files.newBufferedWriter(buildFile)) {
+			writer.write("\nbuildTheme { jvmArgs \"-Djava.awt.headless=true\" }");
+		}
 
 		verifyBuild(projectPath, projectPath, "theme-test.war");
 	}
 
 	@Test
 	public void testCreateThemeContributor() throws Exception {
+		Path testPath = Paths.get("build", "test"); 
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "theme-contributor", "-C", "foobar",
+			"create", "-d", testPath.toString(), "-t", "theme-contributor", "-C", "foobar",
 			"theme-contributor-test"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/theme-contributor-test";
+		Path projectPath = testPath.resolve("theme-contributor-test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		File bnd = checkFileExists(projectPath + "/bnd.bnd");
+		Path bnd = assertPathExists(projectPath.resolve("bnd.bnd"));
 
 		contains(bnd, ".*Liferay-Theme-Contributor-Type: foobar.*");
 
@@ -958,63 +1001,66 @@ public class CreateCommandTest {
 
 	@Test
 	public void testCreateWorkspaceGradleFragment() throws Exception {
+		
+		Path workspace = Paths.get("build","test","workspace");
+		Path projectPath = workspace.resolve(Paths.get("modules","extensions"));
+		
+
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules/extensions", "-t",
+			"create", "-d", projectPath.toString(), "-t",
 			"fragment", "-h", "com.liferay.login.web", "-H", "1.0.0", "loginHook"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
-
-		String projectPath = "build/test/workspace/modules/extensions";
-
-		checkFileExists(projectPath + "/loginHook");
+		
+		Path loginHookDir = assertPathExists(projectPath.resolve("loginHook"));
 
 		contains(
-			checkFileExists(projectPath + "/loginHook/bnd.bnd"),
+				assertPathExists(loginHookDir.resolve("bnd.bnd")),
 			new String[] {
 				".*^Bundle-SymbolicName: loginhook.*$",
 				".*^Fragment-Host: com.liferay.login.web;bundle-version=\"1.0.0\".*$"
 			});
 
-		checkFileExists(projectPath + "/loginHook/build.gradle");
+		Path buildGradle = assertPathExists(loginHookDir.resolve("build.gradle"));
 
 		lacks(
-			checkFileExists(projectPath + "/loginHook/build.gradle"),
+			buildGradle,
 			".*^apply plugin: \"com.liferay.plugin\".*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/loginHook", "loginhook-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(loginHookDir, "loginhook-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/loginHook/build/libs/loginhook-1.0.0.jar"));
+		verifyImportPackage(loginHookDir.resolve(Paths.get("build","libs","loginhook-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceGradlePortletProject() throws Exception {
+		Path workspace = Paths.get("build","test","workspace");
+
+		Path projectPath = workspace.resolve(Paths.get("modules","apps"));
+
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules/apps", "-t",
+			"create", "-d", projectPath.toString(), "-t",
 			"portlet", "-c", "Foo", "gradle.test"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/workspace/modules/apps";
+		Path gradleTestPath = assertPathExists(projectPath.resolve("gradle.test"));
 
-		checkFileExists(projectPath + "/gradle.test/build.gradle");
-
-		checkFileDoesNotExists(projectPath + "/gradle.test/gradlew");
+		assertPathDoesNotExist(gradleTestPath.resolve("gradlew"));
 
 		contains(
-			checkFileExists(
-				projectPath + "/gradle.test/src/main/java/gradle/test/portlet/FooPortlet.java"),
+				assertPathExists(
+				gradleTestPath.resolve(Paths.get("src","main","java","gradle","test","portlet","FooPortlet.java"))),
 			new String[] {
 				"^package gradle.test.portlet;.*",
 				".*javax.portlet.display-name=gradle.test.*",
@@ -1023,141 +1069,145 @@ public class CreateCommandTest {
 			});
 
 		lacks(
-			checkFileExists(projectPath + "/gradle.test/build.gradle"),
+			assertPathExists(gradleTestPath.resolve("build.gradle")),
 			".*^apply plugin: \"com.liferay.plugin\".*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/gradle.test", "gradle.test-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(gradleTestPath, "gradle.test-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/gradle.test/build/libs/gradle.test-1.0.0.jar"));
+		verifyImportPackage(gradleTestPath.resolve(Paths.get("build","libs","gradle.test-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceGradleServiceBuilderProjectApiPath()
 		throws Exception {
 
+		Path workspace = Paths.get("build","test","workspace");
+		
+		Path projectPath = workspace.resolve(Paths.get("modules","nested","path"));
+		
+		
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules/nested/path",
+			"create", "-d", projectPath.toString(),
 			"-t", "service-builder", "-p", "com.liferay.sample", "sample"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
-		assertTrue(
-			new File("build/test/workspace/modules/nested/path").mkdirs());
+		Files.createDirectories(projectPath);
 
 		new bladenofail().run(args);
+		
+		Path samplePath = projectPath.resolve("sample");
 
-		String projectPath = "build/test/workspace/modules/nested/path";
+		assertPathExists(samplePath.resolve("build.gradle"));
 
-		checkFileExists(projectPath + "/sample/build.gradle");
+		assertPathDoesNotExist(samplePath.resolve("settings.gradle"));
 
-		checkFileDoesNotExists(projectPath + "/sample/settings.gradle");
+		assertPathExists(samplePath.resolve(Paths.get("sample-api","build.gradle")));
 
-		checkFileExists(projectPath + "/sample/sample-api/build.gradle");
-
-		checkFileExists(projectPath + "/sample/sample-service/build.gradle");
+		assertPathExists(samplePath.resolve(Paths.get("sample-service","build.gradle")));
 
 		contains(
-			checkFileExists(
-				projectPath + "/sample/sample-service/build.gradle"),
+				samplePath.resolve(Paths.get("sample-service","build.gradle")),
 				".*compileOnly project\\(\":modules:nested:path:sample:sample-api\"\\).*");
 
-		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "buildService");
+		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/sample/sample-api", "com.liferay.sample.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/sample/sample-service", "com.liferay.sample.service-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("sample-api"), "com.liferay.sample.api-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("sample-service"), "com.liferay.sample.service-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/sample/sample-service/build/libs/com.liferay.sample.service-1.0.0.jar"));
+		verifyImportPackage(samplePath.resolve(Paths.get("sample-service","build","libs","com.liferay.sample.service-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceGradleServiceBuilderProjectDashes()
 		throws Exception {
 
+		Path workspace = Paths.get("build","test","workspace");
+		
+		Path projectPath = workspace.resolve("modules");
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules", "-t",
+			"create", "-d", projectPath.toString(), "-t",
 			"service-builder", "-p", "com.sample", "workspace-sample"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
+		
+		Path workspaceSample = projectPath.resolve("workspace-sample");
 
-		String projectPath = "build/test/workspace/modules";
+		assertPathExists(workspaceSample.resolve("build.gradle"));
 
-		checkFileExists(projectPath + "/workspace-sample/build.gradle");
+		assertPathDoesNotExist(
+				workspaceSample.resolve("settings.gradle"));
 
-		checkFileDoesNotExists(
-			projectPath + "/workspace-sample/settings.gradle");
+		assertPathExists(workspaceSample.resolve(Paths.get("workspace-sample-api","build.gradle")));
 
-		checkFileExists(
-			projectPath + "/workspace-sample/workspace-sample-api/build.gradle");
+		assertPathExists(workspaceSample.resolve(Paths.get("workspace-sample-service","build.gradle")));
 
-		checkFileExists(
-			projectPath + "/workspace-sample/workspace-sample-service/build.gradle");
-
-		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "buildService");
+		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/workspace-sample/workspace-sample-api",
+		GradleRunnerUtil.verifyBuildOutput(workspaceSample.resolve("workspace-sample-api"),
 				"com.sample.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/workspace-sample/workspace-sample-service",
+		GradleRunnerUtil.verifyBuildOutput(workspaceSample.resolve("workspace-sample-service"),
 				"com.sample.service-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/workspace-sample/workspace-sample-service/build/libs/com.sample.service-1.0.0.jar"));
+		verifyImportPackage(workspaceSample.resolve(Paths.get("workspace-sample-service","build","libs","com.sample.service-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceGradleServiceBuilderProjectDefault()
 		throws Exception {
 
+		Path workspace = Paths.get("build","test","workspace");
+		
+		Path projectPath = workspace.resolve("modules");
+		
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules", "-t",
+			"create", "-d", projectPath.toString(), "-t",
 			"service-builder", "-p", "com.liferay.sample", "sample"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/workspace/modules";
+		Path samplePath = projectPath.resolve("sample");
 
-		checkFileExists(projectPath + "/sample/build.gradle");
+		assertPathExists(samplePath.resolve("build.gradle"));
 
-		checkFileDoesNotExists(projectPath + "/sample/settings.gradle");
+		assertPathDoesNotExist(samplePath.resolve("settings.gradle"));
 
-		checkFileExists(projectPath + "/sample/sample-api/build.gradle");
+		assertPathExists(samplePath.resolve(Paths.get("sample-api","build.gradle")));
 
-		checkFileExists(projectPath + "/sample/sample-service/build.gradle");
+		
 
 		contains(
-			checkFileExists(
-				projectPath + "/sample/sample-service/build.gradle"),
+				assertPathExists(samplePath.resolve(Paths.get("sample-service","build.gradle"))),
 				".*compileOnly project\\(\":modules:sample:sample-api\"\\).*");
 
-		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "buildService");
+		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/sample/sample-api", "com.liferay.sample.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/sample/sample-service", "com.liferay.sample.service-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("sample-api"), "com.liferay.sample.api-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("sample-service"), "com.liferay.sample.service-1.0.0.jar");
 
-		File serviceJar = new File(projectPath + "/sample/sample-service/build/libs/com.liferay.sample.service-1.0.0.jar");
+		Path serviceJar = samplePath.resolve(Paths.get("sample-service","build","libs","com.liferay.sample.service-1.0.0.jar"));
 
 		verifyImportPackage(serviceJar);
 
-		try (JarFile serviceJarFile = new JarFile(serviceJar)) {
+		try (JarFile serviceJarFile = new JarFile(serviceJar.toFile())) {
 			String springContext = serviceJarFile.getManifest().getMainAttributes().getValue("Liferay-Spring-Context");
 
 			assertTrue(springContext.equals("META-INF/spring"));
@@ -1168,177 +1218,189 @@ public class CreateCommandTest {
 	public void testCreateWorkspaceGradleServiceBuilderProjectDots()
 		throws Exception {
 
+		Path workspace = Paths.get("build","test","workspace");
+		
+		Path projectPath = workspace.resolve("modules");
+
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules", "-t",
+			"create", "-d", projectPath.toString(), "-t",
 			"service-builder", "-p", "com.sample", "workspace.sample"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
+		
+		Path samplePath = assertPathExists(projectPath.resolve("workspace.sample"));
 
-		String projectPath = "build/test/workspace/modules";
+		assertPathExists(samplePath.resolve("build.gradle"));
 
-		checkFileExists(projectPath + "/workspace.sample/build.gradle");
+		assertPathDoesNotExist(
+				samplePath.resolve("settings.gradle"));
 
-		checkFileDoesNotExists(
-			projectPath + "/workspace.sample/settings.gradle");
+		assertPathExists(
+				samplePath.resolve(Paths.get("workspace.sample-api","build.gradle")));
 
-		checkFileExists(
-			projectPath + "/workspace.sample/workspace.sample-api/build.gradle");
+		assertPathExists(
+				samplePath.resolve(Paths.get("workspace.sample-service","build.gradle")));
 
-		checkFileExists(
-			projectPath + "/workspace.sample/workspace.sample-service/build.gradle");
-
-		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "buildService");
+		BuildTask buildService = GradleRunnerUtil.executeGradleRunner(workspace, "buildService");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildService);
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/workspace.sample/workspace.sample-api",
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("workspace.sample-api"),
 				"com.sample.api-1.0.0.jar");
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/workspace.sample/workspace.sample-service",
+		GradleRunnerUtil.verifyBuildOutput(samplePath.resolve("workspace.sample-service"),
 				"com.sample.service-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/workspace.sample/workspace.sample-service/build/libs/com.sample.service-1.0.0.jar"));
+		verifyImportPackage(samplePath.resolve(Paths.get("workspace.sample-service","build","libs","com.sample.service-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceModuleLocation() throws Exception {
-		String[] args = {"-b", "build/test/workspace", "create", "foo"};
-
-		File workspace = new File("build/test/workspace");
+		
+		Path workspace = Paths.get("build","test","workspace");
+		
+		String[] args = {"-b", workspace.toString(), "create", "foo"};
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/workspace/modules";
+		Path projectPath = workspace.resolve("modules");
 
-		checkFileExists(projectPath + "/foo");
+		Path fooPath = assertPathExists(projectPath.resolve("foo"));
 
-		checkFileExists(projectPath + "/foo/bnd.bnd");
+		assertPathExists(fooPath.resolve("bnd.bnd"));
 
-		File portletFile = checkFileExists(
-			projectPath + "/foo/src/main/java/foo/portlet/FooPortlet.java");
+		Path portletFile = assertPathExists(
+				fooPath.resolve(Paths.get("src","main","java","foo","portlet","FooPortlet.java")));
 
 		contains(
 			portletFile, ".*^public class FooPortlet extends MVCPortlet.*$");
 
-		File gradleBuildFile = checkFileExists(
-			projectPath + "/foo/build.gradle");
+		Path gradleBuildFile = assertPathExists(
+				fooPath.resolve("build.gradle"));
 
 		lacks(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/foo", "foo-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(fooPath, "foo-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/foo/build/libs/foo-1.0.0.jar"));
+		verifyImportPackage(fooPath.resolve(Paths.get("build","libs","foo-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceProjectAllDefaults() throws Exception {
+
+		Path projectPath = Paths.get("build","test","workspace","modules","apps");
+
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules/apps", "foo"
+			"create", "-d", projectPath.toString(), "foo"
 		};
 
-		File workspace = new File("build/test/workspace");
+		Path workspace = Paths.get("build","test","workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/workspace/modules/apps";
 
-		checkFileExists(projectPath + "/foo");
+		assertPathExists(projectPath.resolve("foo"));
 
-		checkFileExists(projectPath + "/foo/bnd.bnd");
+		assertPathExists(projectPath.resolve(Paths.get("foo", "bnd.bnd")));
 
-		File portletFile = checkFileExists(
-			projectPath + "/foo/src/main/java/foo/portlet/FooPortlet.java");
+		Path portletFile = assertPathExists(
+			projectPath.resolve(Paths.get("foo","src","main","java","foo","portlet","FooPortlet.java")));
 
 		contains(
 			portletFile, ".*^public class FooPortlet extends MVCPortlet.*$");
 
-		File gradleBuildFile = checkFileExists(
-			projectPath + "/foo/build.gradle");
+		Path gradleBuildFile = assertPathExists(
+			projectPath.resolve(Paths.get("foo","build.gradle")));
 
 		lacks(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectPath + "/foo", "foo-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectPath.resolve("foo"), "foo-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/foo/build/libs/foo-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("foo","build","libs","foo-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceProjectWithRefresh() throws Exception {
+		
+		Path workspace = Paths.get("build","test","workspace");
+		
+		Path apps = workspace.resolve(Paths.get("modules","apps"));
+
 		String[] args = {
-			"create", "-d", "build/test/workspace/modules/apps",
+			"create", "-d", apps.toString(),
 			"foo-refresh"
 		};
 
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath =
-				"build/test/workspace/modules/apps/foo-refresh";
+		Path projectPath = apps.resolve("foo-refresh");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileExists(projectPath + "/bnd.bnd");
+		assertPathExists(projectPath.resolve("bnd.bnd"));
 
-		File portletFile = checkFileExists(
-				projectPath +
-				"/src/main/java/foo/refresh/portlet/FooRefreshPortlet.java");
+		Path portletFile = assertPathExists(
+				projectPath.resolve(Paths.get(
+				"src","main","java","foo","refresh","portlet","FooRefreshPortlet.java")));
 
 		contains(
 			portletFile,
 			".*^public class FooRefreshPortlet extends MVCPortlet.*$");
 
-		File gradleBuildFile = checkFileExists(
-			projectPath + "/build.gradle");
+		Path gradleBuildFile = assertPathExists(
+			projectPath.resolve("build.gradle"));
 
 		lacks(gradleBuildFile, ".*^apply plugin: \"com.liferay.plugin\".*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "foo.refresh-1.0.0.jar");
 
-		verifyImportPackage(new File(projectPath + "/build/libs/foo.refresh-1.0.0.jar"));
+		verifyImportPackage(projectPath.resolve(Paths.get("build","libs","foo.refresh-1.0.0.jar")));
 	}
 
 	@Test
 	public void testCreateWorkspaceThemeLocation() throws Exception {
+		Path workspace = Paths.get("build","test","workspace");
+
 		String[] args = {
-				"-b", "build/test/workspace", "create", "-t", "theme",
+				"-b", workspace.toString(), "create", "-t", "theme",
 				"theme-test"};
-		File workspace = new File("build/test/workspace");
 
 		makeWorkspace(workspace);
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/workspace/wars/theme-test";
+		Path projectPath = Paths.get("build","test","workspace","wars","theme-test");
 
-		checkFileExists(projectPath);
+		assertPathExists(projectPath);
 
-		checkFileDoesNotExists(projectPath + "/bnd.bnd");
+		assertPathDoesNotExist(projectPath.resolve("bnd.bnd"));
 
-		checkFileExists(projectPath + "/src/main/webapp/css/_custom.scss");
+		assertPathExists(projectPath.resolve(Paths.get("src","main","webapp","css","_custom.scss")));
 
-		File properties = checkFileExists(
-			projectPath + "/src/main/webapp/WEB-INF/liferay-plugin-package.properties");
+		Path properties = 
+			projectPath.resolve(Paths.get("src","main","webapp","WEB-INF","liferay-plugin-package.properties"));
 
+		assertPathExists(properties);
+		
 		contains(properties, ".*^name=theme-test.*");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace.getPath(), "war");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspace, "war");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, "theme-test.war");
 	}
@@ -1359,64 +1421,60 @@ public class CreateCommandTest {
 		List<String> templateNames =
 			new ArrayList<>(ProjectTemplates.getTemplates().keySet());
 
-		for (String templateName : templateNames) {
-			assertTrue(templateList.contains(templateName));
-		}
+		assertTrue(templateNames.stream().allMatch(templateList::contains));
 	}
 
 	@Test
 	public void testWrongTemplateTyping() throws Exception {
+		
+		Path testPath = Paths.get("build", "test");
+		
 		String[] args = {
-			"create", "-d", "build/test", "-t", "activatorXXX", "wrong-activator"
+			"create", "-d", testPath.toString(), "-t", "activatorXXX", "wrong-activator"
 		};
 
 		new bladenofail().run(args);
 
-		String projectPath = "build/test/wrong-activator";
+		Path projectPath = testPath.resolve("wrong-activator");
 
-		checkFileDoesNotExists(projectPath);
+		assertPathDoesNotExist(projectPath);
+	}
+	
+	private static Path assertPathExists(Path path) {
+		assertTrue(Files.exists(path));
+		return path;
+	}
+	
+	private static Path assertPathDoesNotExist(Path path) {
+		assertTrue(Files.notExists(path));
+		return path;
 	}
 
-	private void checkGradleBuildFiles(String projectPath) {
-		checkFileExists(projectPath);
-		checkFileExists(projectPath + "/bnd.bnd");
-		checkFileExists(projectPath + "/build.gradle");
-		checkFileExists(projectPath + "/gradlew");
-		checkFileExists(projectPath + "/gradlew.bat");
+	private static void checkGradleBuildFiles(Path path) {
+		assertPathExists(path);
+		assertPathExists(path.resolve("bnd.bnd"));
+		assertPathExists(path.resolve("build.gradle"));
+		assertPathExists(path.resolve("gradlew"));
+		assertPathExists(path.resolve("gradlew.bat"));
 	}
 
-	private void checkMavenBuildFiles(String projectPath) {
-		checkFileExists(projectPath);
-		checkFileExists(projectPath + "/bnd.bnd");
-		checkFileExists(projectPath + "/pom.xml");
-		checkFileExists(projectPath + "/mvnw");
-		checkFileExists(projectPath + "/mvnw.cmd");
+	private static void checkMavenBuildFiles(Path path) {
+		assertPathExists(path);
+		assertPathExists(path.resolve("bnd.bnd"));
+		assertPathExists(path.resolve("pom.xml"));
+		assertPathExists(path.resolve("mvnw"));
+		assertPathExists(path.resolve("mvnw.cmd"));
 	}
 
-	private File checkFileDoesNotExists(String path) {
-		File file = IO.getFile(path);
 
-		assertFalse(file.exists());
-
-		return file;
-	}
-
-	private File checkFileExists(String path) {
-		File file = IO.getFile(path);
-
-		assertTrue(file.exists());
-
-		return file;
-	}
-
-	private void contains(File file, String pattern) throws Exception {
-		String content = new String(IO.read(file));
+	private void contains(Path file, String pattern) throws Exception {
+		String content = new String(Files.readAllBytes(file));
 
 		contains(content, pattern);
 	}
 
-	private void contains(File file, String[] patterns) throws Exception {
-		String content = new String(IO.read(file));
+	private void contains(Path file, String[] patterns) throws Exception {
+		String content = new String(Files.readAllBytes(file));
 
 		for (String pattern : patterns) {
 			contains(content, pattern);
@@ -1430,8 +1488,8 @@ public class CreateCommandTest {
 				Pattern.MULTILINE | Pattern.DOTALL).matcher(content).matches());
 	}
 
-	private void lacks(File file, String pattern) throws Exception {
-		String content = new String(IO.read(file));
+	private void lacks(Path file, String pattern) throws Exception {
+		String content = new String(Files.readAllBytes(file));
 
 		assertFalse(
 			Pattern.compile(
@@ -1439,22 +1497,22 @@ public class CreateCommandTest {
 				Pattern.MULTILINE | Pattern.DOTALL).matcher(content).matches());
 	}
 
-	private void makeWorkspace(File workspace) throws Exception {
-		String[] args = {"-b", workspace.getParentFile().getPath(), "init", workspace.getName()};
+	private void makeWorkspace(Path workspace) throws Exception {
+		String[] args = {"-b", workspace.getParent().toString(), "init", workspace.getFileName().toString()};
 
 		new bladenofail().run(args);
 
 		assertTrue(Util.isWorkspace(workspace));
 	}
 
-	private void verifyBuild(String runnerPath, String projectPath, String outputFileName) {
+	private void verifyBuild(Path runnerPath, Path projectPath, String outputFileName) {
 		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(runnerPath, "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
 		GradleRunnerUtil.verifyBuildOutput(projectPath, outputFileName);
 	}
 
-	private void verifyImportPackage(File serviceJar) throws Exception {
-		try (Jar jar = new Jar(serviceJar)) {
+	private void verifyImportPackage(Path serviceJar) throws Exception {
+		try (Jar jar = new Jar(serviceJar.toFile())) {
 			Manifest m = jar.getManifest();
 			Domain domain = Domain.domain(m);
 			Parameters imports = domain.getImportPackage();

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Arguments;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.OpenArgs;
 import com.liferay.blade.cli.jmx.IDEConnector;
 
 import java.io.File;
@@ -33,13 +31,13 @@ public class OpenCommand {
 	public static final String DESCRIPTION =
 		"Opens or imports a file or project in Liferay IDE.";
 
-	public OpenCommand(blade blade, OpenOptions options) throws Exception {
+	public OpenCommand(blade blade, OpenArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
 	}
 
 	public void execute() throws Exception {
-		File fileName = new File(_options._arguments().get(0));
+		File fileName = _options.getFile();
 
 		if (!fileName.exists()) {
 			addError(
@@ -59,21 +57,11 @@ public class OpenCommand {
 			}
 		}
 	}
-
-	@Arguments(arg = "file or directory to open/import")
-	@Description(DESCRIPTION)
-	public interface OpenOptions extends Options {
-
-		@Description("The workspace to open or import this file or project")
-		public String workspace();
-
-	}
-
 	private void addError(String prefix, String msg) {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
 	private final blade _blade;
-	private final OpenOptions _options;
+	private final OpenArgs _options;
 
 }

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.UpgradePropsArgs;
 import com.liferay.properties.locator.PropertiesLocator;
 import com.liferay.properties.locator.PropertiesLocatorArgs;
 
@@ -34,39 +36,26 @@ public class UpgradePropsCommand {
 	public static final String DESCRIPTION =
 		"Helps to upgrade portal properties from Liferay server 6.x to 7.x versions";
 
-	public UpgradePropsCommand(blade blade, UpgradePropsOptions options)
+	public UpgradePropsCommand(blade blade, UpgradePropsArgs options)
 		throws Exception {
 
-		File bundleDir = options.bundleDir();
-		File propertiesFile = options.propertiesFile();
+		File bundleDir = options.getBundleDir();
+		File propertiesFile = options.getPropertiesFile();
 
 		if (bundleDir == null || propertiesFile == null) {
 			blade.addErrors("upgradeProps", Collections.singleton("bundleDir and propertiesFile options both required."));
-			options._command().help(new Justif().formatter(), blade);
-
+			//options._command().help(new Justif().formatter(), blade);
+			// TODO: What to do here?
 			return;
 		}
 
 		PropertiesLocatorArgs args = new PropertiesLocatorArgs();
 
-		args.setBundleDir(options.bundleDir());
-		args.setOutputFile(options.outputFile());
-		args.setPropertiesFile(options.propertiesFile());
+		args.setBundleDir(options.getBundleDir());
+		args.setOutputFile(options.getOutputFile());
+		args.setPropertiesFile(options.getPropertiesFile());
 
 		new PropertiesLocator(args);
-	}
-
-	@Description(DESCRIPTION)
-	public interface UpgradePropsOptions extends Options {
-
-		@Description("Liferay server bundle directory.")
-		public File bundleDir();
-
-		@Description("If specified, write out report to this file, otherwise uses stdout.")
-		public File outputFile();
-
-		@Description("Specify existing Liferay 6.x portal-ext.properties file.")
-		public File propertiesFile();
 	}
 
 }

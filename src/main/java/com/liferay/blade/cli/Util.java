@@ -17,7 +17,6 @@
 package com.liferay.blade.cli;
 
 import aQute.bnd.osgi.Jar;
-import aQute.bnd.osgi.Processor;
 import aQute.bnd.osgi.Resource;
 import aQute.lib.getopt.Options;
 import aQute.lib.io.IO;
@@ -25,7 +24,6 @@ import aQute.lib.justif.Justif;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,12 +32,16 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
@@ -51,6 +53,7 @@ import java.util.zip.ZipFile;
  */
 public class Util {
 
+	private static final Path work = Paths.get(System.getProperty("user.dir"));
 	public static final String APP_SERVER_PARENT_DIR_PROPERTY =
 		"app.server.parent.dir";
 
@@ -85,63 +88,103 @@ public class Util {
 
 		return false;
 	}
+	
+	public static Path getPath(Path base, String file) {
+		Path home = Paths.get(System.getProperty("user.home"));
+		if (file.startsWith("~/")) {
+			file = file.substring(2);
+			if (!file.startsWith("~/")) {
+				return getPath(home, file);
+			}
+		}
+		if (file.startsWith("~")) {
+			file = file.substring(1);
+			return getPath(home.getParent(), file);
+		}
 
-	public static void copy(InputStream in, File outputDir) throws Exception {
+		Path p = Paths.get(file);
+		if (p.isAbsolute())
+			return p;
+
+		if (base == null)
+			base = work;
+
+		p = base.toAbsolutePath();
+
+		for (int n; (n = file.indexOf('/')) > 0;) {
+			String first = file.substring(0, n);
+			file = file.substring(n + 1);
+			if (first.equals(".."))
+				p = p.getParent();
+			else
+				p = p.resolve(first);
+		}
+		if (file.equals(".."))
+			return p.getParent();
+		return p.resolve(file).toAbsolutePath();
+	}
+
+	public static void copy(InputStream in, Path outputDir) throws Exception {
 		try (Jar jar = new Jar("dot", in)) {
 			for (Entry<String, Resource> e : jar.getResources().entrySet()) {
 				String path = e.getKey();
 
 				Resource r = e.getValue();
 
-				File dest = Processor.getFile(outputDir, path);
+				Path dest = getPath(outputDir, path);
 
-				if ((dest.lastModified() < r.lastModified()) ||
+				if ((Files.getLastModifiedTime(dest).toMillis() < r.lastModified()) ||
 					(r.lastModified() <= 0)) {
 
-					File dp = dest.getParentFile();
+					Path dp = dest.getParent();
 
-					if (!dp.exists() && !dp.mkdirs()) {
-						throw new Exception("Could not create directory " + dp);
+					if (Files.notExists(dp)) {
+						try {
+							Files.createDirectories(dp);
+						}
+						catch (Exception ex) {
+							throw new Exception("Could not create directory " + dp, ex);
+						}
 					}
 
-					IO.copy(r.openInputStream(), dest);
+					Files.copy(r.openInputStream(), dest);
 				}
 			}
 		}
 	}
 
-	public static File findParentFile(
-		File dir, String[] fileNames, boolean checkParents) {
+	public static Path findParentFile(
+		Path dir, String[] fileNames, boolean checkParents) {
 
 		if (dir == null) {
 			return null;
 		}
 
 		for (String fileName : fileNames) {
-			File file = new File(dir, fileName);
+			Path path = dir.resolve(fileName);
 
-			if (file.exists()) {
+			if (Files.exists(path)) {
 				return dir;
 			}
 		}
 
 		if (checkParents) {
-			return findParentFile(dir.getParentFile(), fileNames, checkParents);
+			return findParentFile(dir.getParent(), fileNames, checkParents);
 		}
 
 		return null;
 	}
 
-	public static List<Properties> getAppServerProperties(File dir) {
-		File projectRoot = findParentFile(
+	public static List<Properties> getAppServerProperties(Path dir) {
+		Path projectRoot = findParentFile(
 			dir, _APP_SERVER_PROPERTIES_FILE_NAMES, true);
 
 		List<Properties> properties = new ArrayList<>();
 
 		for (String fileName : _APP_SERVER_PROPERTIES_FILE_NAMES) {
-			File file = new File(projectRoot, fileName);
+			Path file = projectRoot.resolve(fileName);
 
-			if (file.exists()) {
+			if (Files.exists(file)) {
 				properties.add(getProperties(file));
 			}
 		}
@@ -149,21 +192,21 @@ public class Util {
 		return properties;
 	}
 
-	public static Properties getGradleProperties(File dir) {
-		File file = getGradlePropertiesFile(dir);
+	public static Properties getGradleProperties(Path dir) {
+		Path file = getGradlePropertiesFile(dir);
 
 		return getProperties(file);
 	}
 
-	public static File getGradlePropertiesFile(File dir) {
-		File gradlePropertiesFile = new File(
-			getWorkspaceDir(dir), _GRADLE_PROPERTIES_FILE_NAME);
+	public static Path getGradlePropertiesFile(Path dir) {
+		Path gradlePropertiesFile = 
+			getWorkspaceDir(dir).resolve(_GRADLE_PROPERTIES_FILE_NAME);
 
 		return gradlePropertiesFile;
 	}
 
-	public static File getGradleWrapper(File dir) {
-		File gradleRoot = findParentFile(
+	public static Path getGradleWrapper(Path dir) {
+		Path gradleRoot = findParentFile(
 			dir,
 			new String[] {
 				_GRADLEW_UNIX_FILE_NAME, _GRADLEW_WINDOWS_FILE_NAME },
@@ -171,18 +214,18 @@ public class Util {
 
 		if (gradleRoot != null) {
 			if (isWindows()) {
-				return new File(gradleRoot, _GRADLEW_WINDOWS_FILE_NAME);
+				return gradleRoot.resolve(_GRADLEW_WINDOWS_FILE_NAME);
 			}
 			else {
-				return new File(gradleRoot, _GRADLEW_UNIX_FILE_NAME);
+				return gradleRoot.resolve(_GRADLEW_UNIX_FILE_NAME);
 			}
 		}
 
 		return null;
 	}
 
-	public static Properties getProperties(File file) {
-		try (InputStream inputStream = new FileInputStream(file)) {
+	public static Properties getProperties(Path file) {
+		try (InputStream inputStream = Files.newInputStream(file)) {
 			Properties properties = new Properties();
 
 			properties.load(inputStream);
@@ -194,11 +237,11 @@ public class Util {
 		}
 	}
 
-	public static File getWorkspaceDir(blade blade) {
+	public static Path getWorkspaceDir(blade blade) {
 		return getWorkspaceDir(blade.getBase());
 	}
 
-	public static File getWorkspaceDir(File dir) {
+	public static Path getWorkspaceDir(Path dir) {
 		return findParentFile(
 			dir,
 			new String[] {
@@ -207,16 +250,15 @@ public class Util {
 			true);
 	}
 
-	public static boolean hasGradleWrapper(File dir) {
-		if (new File(dir, "gradlew").exists() &&
-			new File(dir, "gradlew.bat").exists()) {
-
+	public static boolean hasGradleWrapper(Path dir) {
+		if (Files.exists(dir.resolve("gradlew")) &&
+			Files.exists(dir.resolve("gradlew.bat"))) {
 			return true;
 		}
 		else {
-			File parent = dir.getParentFile();
+			Path parent = dir.getParent();
 
-			if (parent != null && parent.exists()) {
+			if (parent != null && Files.exists(parent)) {
 				return hasGradleWrapper(parent);
 			}
 		}
@@ -232,12 +274,12 @@ public class Util {
 		return isWorkspace(blade.getBase());
 	}
 
-	public static boolean isWorkspace(File dir) {
-		File workspaceDir = getWorkspaceDir(dir);
+	public static boolean isWorkspace(Path dir) {
+		Path workspaceDir = getWorkspaceDir(dir);
 
-		File gradleFile = new File(workspaceDir, _SETTINGS_GRADLE_FILE_NAME);
+		Path gradleFile = workspaceDir.resolve(_SETTINGS_GRADLE_FILE_NAME);
 
-		if (!gradleFile.exists()) {
+		if (Files.notExists(gradleFile)) {
 			return false;
 		}
 
@@ -253,7 +295,7 @@ public class Util {
 			else {
 				//For workspace plugin < 1.0.5
 
-				gradleFile = new File(workspaceDir, _BUILD_GRADLE_FILE_NAME);
+				gradleFile = workspaceDir.resolve(_BUILD_GRADLE_FILE_NAME);
 
 				script = read(gradleFile);
 
@@ -283,36 +325,26 @@ public class Util {
 		}
 	}
 
-	public static String read(File file) throws IOException {
-		return new String(Files.readAllBytes(file.toPath()));
+	public static String read(Path file) throws IOException {
+		return new String(Files.readAllBytes(file));
 	}
 
-	public static void readProcessStream(
+	public static CompletableFuture<Void> readProcessStream(
 		final InputStream is, final PrintStream ps) {
 
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try (InputStreamReader isr = new InputStreamReader(is);
-					 BufferedReader br = new BufferedReader(isr)) {
+		return CompletableFuture.runAsync(() -> {
+			try (InputStreamReader isr = new InputStreamReader(is);
+				 BufferedReader br = new BufferedReader(isr)) {
 
-					String line = null;
+				br.lines().forEach(ps::println);
 
-					while ( (line = br.readLine()) != null) {
-						ps.println(line);
-					}
-
-					is.close();
-				}
-
-				catch (IOException ioe) {
-					ioe.printStackTrace();
-				}
+				is.close();
 			}
 
+			catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
 		});
-
-		t.start();
 	}
 
 	public static void setShell(ProcessBuilder processBuilder, String cmd) {
@@ -343,14 +375,14 @@ public class Util {
 	}
 
 	public static Process startProcess(
-			blade blade, String command, File dir, boolean inheritIO)
+			blade blade, String command, Path dir, boolean inheritIO)
 		throws Exception {
 
 		return startProcess(blade, command, dir, null, inheritIO);
 	}
 
 	public static Process startProcess(
-			blade blade, String command, File dir,
+			blade blade, String command, Path dir,
 			Map<String, String> environment)
 		throws Exception {
 
@@ -358,7 +390,7 @@ public class Util {
 	}
 
 	public static Process startProcess(
-			blade blade, String command, File dir,
+			blade blade, String command, Path dir,
 			Map<String, String> environment, boolean inheritIO)
 		throws Exception {
 
@@ -370,8 +402,8 @@ public class Util {
 			env.putAll(environment);
 		}
 
-		if ((dir != null) && dir.exists()) {
-			processBuilder.directory(dir);
+		if ((dir != null) && Files.exists(dir)) {
+			processBuilder.directory(dir.toFile());
 		}
 
 		setShell(processBuilder, command);
@@ -392,14 +424,13 @@ public class Util {
 		return process;
 	}
 
-	public static void unzip(File srcFile, File destDir) throws IOException {
+	public static void unzip(Path srcFile, Path destDir) throws IOException {
 		unzip(srcFile, destDir, null);
 	}
 
-	public static void unzip(File srcFile, File destDir, String entryToStart)
+	public static void unzip(Path srcFile, Path destDir, String entryToStart)
 		throws IOException {
-
-		try (final ZipFile zip = new ZipFile(srcFile)) {
+		try (final ZipFile zip = new ZipFile(srcFile.toFile())) {
 			final Enumeration<? extends ZipEntry> entries = zip.entries();
 
 			boolean foundStartEntry = entryToStart == null;
@@ -425,7 +456,7 @@ public class Util {
 					entryName = entryName.replaceFirst(entryToStart, "");
 				}
 
-				final File f = new File(destDir, entryName);
+				final File f = new File(destDir.toFile(), entryName);
 
 				if (f.exists()) {
 					IO.delete(f);
@@ -458,6 +489,45 @@ public class Util {
 				}
 			}
 		}
+		/*try (final ZipFile zip = new ZipFile(srcFile.toFile())) {
+			final Enumeration<? extends ZipEntry> entries = zip.entries();
+
+			boolean foundStartEntry = entryToStart == null;
+
+			while (entries.hasMoreElements()) {
+				final ZipEntry entry = entries.nextElement();
+
+				String entryName = entry.getName();
+
+				if (!foundStartEntry) {
+					foundStartEntry = entryToStart.equals(entryName);
+					continue;
+				}
+
+				if (entry.isDirectory() ||
+					((entryToStart != null) &&
+					 !entryName.startsWith(entryToStart))) {
+
+					continue;
+				}
+
+				if (entryToStart != null) {
+					entryName = entryName.replaceFirst(entryToStart, "");
+				}
+
+				final Path f = destDir.resolve(entryName);
+
+				final Path dir = f.getParent();
+
+				if (!Files.exists(dir)) {
+					Files.createDirectories(dir);
+				}
+
+				try (final InputStream in = zip.getInputStream(entry)) {
+					Files.copy(in, f, StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+		}*/
 	}
 
 	private static final String[] _APP_SERVER_PROPERTIES_FILE_NAMES = {

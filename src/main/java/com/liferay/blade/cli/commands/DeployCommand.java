@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
 import aQute.bnd.header.Parameters;
 import aQute.bnd.osgi.Jar;
-import aQute.lib.getopt.Description;
-import aQute.lib.getopt.Options;
-
+import com.liferay.blade.cli.FileWatcher;
+import com.liferay.blade.cli.GogoTelnetClient;
+import com.liferay.blade.cli.Util;
+import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.FileWatcher.Consumer;
+import com.liferay.blade.cli.commands.arguments.DeployArgs;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -46,14 +49,14 @@ public class DeployCommand {
 	public static final String DESCRIPTION =
 		"Builds and deploys bundles to the Liferay module framework.";
 
-	public DeployCommand(blade blade, DeployOptions options) throws Exception {
+	public DeployCommand(blade blade, DeployArgs options) throws Exception {
 		_blade = blade;
 		_options = options;
 		_host = /*options.host() != null ? options.host() : */"localhost";
 		_port = /*options.port() != 0 ? options.port() : */11311;
 	}
 
-	public void deploy(GradleExec gradle, Set<File> outputFiles)
+	public void deploy(GradleExec gradle, Set<Path> outputFiles)
 		throws Exception {
 
 		int retcode = gradle.executeGradleCommand("build -x check");
@@ -63,49 +66,44 @@ public class DeployCommand {
 			return;
 		}
 
-		for (File outputFile : outputFiles) {
+		for (Path outputFile : outputFiles) {
 			installOrUpdate(outputFile);
 		}
 	}
 
 	public void deployWatch(
-			final GradleExec gradleExec, final Set<File> outputFiles)
+			final GradleExec gradleExec, final Set<Path> outputFiles)
 		throws Exception {
 
 		deploy(gradleExec, outputFiles);
 
-		new Thread() {
+		Exception[] exception = new Exception[1];
+		CountDownLatch latch = new CountDownLatch(1);
+		CompletableFuture.runAsync(() -> {
+			try {
+				gradleExec.executeGradleCommand("build -x check -t");
+			}
+			catch (Exception e) {
+				exception[0] = e;
+			}
+			latch.countDown();
+		});
+		latch.await();
 
-			public void run() {
+		Consumer<Path> consumer = (modified) -> {
+			if (outputFiles.contains(modified)) {
+				_blade.out().println("installOrUpdate " + modified);
+
 				try {
-					gradleExec.executeGradleCommand("build -x check -t");
-				}
-				catch (Exception e) {
+					installOrUpdate(modified);
+				} catch (Exception e) {
+
+					_blade.error(e.getMessage());
 				}
 			}
-
-		}.start();
-
-		Consumer<Path> consumer = new Consumer<Path>() {
-
-			@Override
-			public void consume(Path modified) {
-				try {
-					File modifiedFile = modified.toFile();
-
-					if (outputFiles.contains(modifiedFile)) {
-						_blade.out().println("installOrUpdate " + modifiedFile);
-
-						installOrUpdate(modifiedFile);
-					}
-				}
-				catch (Exception e) {
-				}
-			}
-
 		};
 
-		new FileWatcher(_blade.getBase().toPath(), true, consumer);
+		new FileWatcher(_blade.getBase(), true, consumer);
 	}
 
 	public void execute() throws Exception {
@@ -118,32 +116,15 @@ public class DeployCommand {
 
 		GradleExec gradleExec = new GradleExec(_blade);
 
-		Set<File> outputFiles = GradleTooling.getOutputFiles(
+		Set<Path> outputFiles = GradleTooling.getOutputFiles(
 			_blade.getCacheDir(), _blade.getBase());
 
-		if (_options.watch()) {
+		if (_options.isWatch()) {
 			deployWatch(gradleExec, outputFiles);
 		}
 		else {
 			deploy(gradleExec, outputFiles);
 		}
-	}
-
-	@Description(DESCRIPTION)
-	public interface DeployOptions extends Options {
-
-		//@Description("The host to use to connect to gogo shell")
-		//public String host();
-
-		//@Description("The port to use to connect to gogo shell")
-		//public int port();
-
-		@Description(
-			"Watches the deployed file for changes and will automatically " +
-				"redeploy"
-		)
-		public boolean watch();
-
 	}
 
 
@@ -155,13 +136,13 @@ public class DeployCommand {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
-	private void installOrUpdate(File outputFile) throws Exception {
+	private void installOrUpdate(Path outputFile) throws Exception {
 		boolean isFragment = false;
 		String fragmentHost = null;
 		String bsn = null;
 		String hostBSN = null;
 
-		try(Jar bundle = new Jar(outputFile)) {
+		try(Jar bundle = new Jar(outputFile.toString())) {
 			Manifest manifest = bundle.getManifest();
 			Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -185,7 +166,7 @@ public class DeployCommand {
 
 		long existingId = getBundleId(bundles,bsn);
 
-		String bundleURL = outputFile.toURI().toASCIIString();
+		String bundleURL = outputFile.toUri().toASCIIString();
 
 		if (existingId > 0) {
 			if (isFragment && hostId > 0) {
@@ -313,7 +294,7 @@ public class DeployCommand {
 
 	private final blade _blade;
 	private final String _host;
-	private final DeployOptions _options;
+	private final DeployArgs _options;
 	private final int _port;
 
 }

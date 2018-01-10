@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.liferay.blade.cli;
+package com.liferay.blade.cli.commands;
 
-import aQute.lib.getopt.Options;
-
+import com.liferay.blade.cli.blade;
+import com.liferay.blade.cli.commands.arguments.OutputsArgs;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -29,22 +28,21 @@ import java.util.Set;
  */
 public class OutputsCommand {
 
-	public OutputsCommand(blade blade, Options options)
+	public OutputsCommand(blade blade, OutputsArgs options)
 		throws Exception {
 
 		_blade = blade;
 	}
 
 	public void execute() throws Exception {
-		final File base = _blade.getBase();
-		final Path basePath = base.toPath();
+		final Path basePath = _blade.getBase();
 		final Path basePathRoot = basePath.getRoot();
 
-		final Set<File> outputs = GradleTooling.getOutputFiles(
-			_blade.getCacheDir(), base);
+		final Set<Path> outputs = GradleTooling.getOutputFiles(
+			_blade.getCacheDir(), basePath);
 
-		for (File output : outputs) {
-			Path outputPath = output.toPath();
+		outputs.forEach(outputPath -> 
+		{
 			Path outputPathRoot = outputPath.getRoot();
 
 			Object print = null;
@@ -57,7 +55,7 @@ public class OutputsCommand {
 			}
 
 			_blade.out().println(print);
-		}
+		});
 	}
 
 	private blade _blade;

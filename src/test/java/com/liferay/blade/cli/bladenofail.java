@@ -29,14 +29,15 @@ public class bladenofail extends blade {
 	}
 
 	public bladenofail(PrintStream out) throws UnsupportedEncodingException {
+		super();
 		_out = out;
 		_err = out;
 	}
-
+	/*
 	@Override
 	public boolean check(String... pattern) {
 		return true;
-	}
+	}*/
 
 	@Override
 	public PrintStream err() {
