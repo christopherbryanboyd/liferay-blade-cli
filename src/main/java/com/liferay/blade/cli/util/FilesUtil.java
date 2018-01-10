@@ -24,8 +24,13 @@ public class FilesUtil {
 					try {
 						delete(p);
 					} catch (Exception e) {
+						e.printStackTrace();
 						throw new RuntimeException(e);
 					}
+				}
+				if (Files.list(path).findAny().isPresent())
+				{
+					delete(path);
 				}
 				deleteFile(path);
 				
@@ -50,7 +55,8 @@ public class FilesUtil {
 			{
 				exception= Optional.of(e);
 				try {
-					Thread.sleep(100);
+					Thread.sleep(200);
+					System.gc();
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				}
