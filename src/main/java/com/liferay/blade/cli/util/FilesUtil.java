@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
+
 import com.liferay.blade.cli.CopyDirVisitor;
 
 import java.nio.file.*;
@@ -13,14 +15,13 @@ public class FilesUtil {
 	public static void delete(Path path) throws IOException {
 		if (Files.exists(path))
 		{
-			if (!path.isAbsolute())
-				path= path.toAbsolutePath();
 			if (Files.isDirectory(path))
 			{
-				for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
+				FileUtils.deleteDirectory(path.toFile());
+				/*for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
 						.collect(Collectors.toList())) {
 					Files.delete(p);
-				}
+				}*/
 				
 				
 			}
