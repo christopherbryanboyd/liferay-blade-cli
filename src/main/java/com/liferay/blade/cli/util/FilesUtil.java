@@ -27,7 +27,7 @@ public class FilesUtil {
 						throw new RuntimeException(e);
 					}
 				}
-				
+				deleteFile(path);
 				
 			}
 			else
