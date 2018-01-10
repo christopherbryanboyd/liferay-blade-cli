@@ -1,49 +1,83 @@
 package com.liferay.blade.cli.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import com.liferay.blade.cli.CopyDirVisitor;
 
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 public class FilesUtil {
-
+	private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 	public static void delete(Path path) throws Exception {
+		Collection<Future<Void>> futures = new ArrayList<>();
 		if (Files.exists(path))
 		{
 			if (Files.isDirectory(path))
 			{
-
-				for (Path p : Files.list(path).collect(Collectors.toList())) {
-				/*for (Path p : Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder())
-						.collect(Collectors.toList())) {*/
+				/*Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).parallel().forEach((p)-> {
 					
 					try {
-						delete(p);
+						deleteFile(p);
 					} catch (Exception e) {
 						e.printStackTrace();
 						throw new RuntimeException(e);
 					}
-				}
-				if (Files.list(path).findAny().isPresent())
-				{
-					delete(path);
-				}
-				deleteFile(path);
+				});*/
+				Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+					   @Override
+					   public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+							futures.add(CompletableFuture.runAsync(() -> {
+								try {
+									deleteFile(file);
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							},  executorService));
+					       return FileVisitResult.CONTINUE;
+					   }
+
+					   @Override
+					   public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+							futures.add(CompletableFuture.runAsync(() -> {
+								try {
+									deleteFile(dir);
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							},  executorService));
+					       return FileVisitResult.CONTINUE;
+					   }
+					});
+
 				
 			}
 			else
 			{
-				deleteFile(path);
+				futures.add(CompletableFuture.runAsync(() -> {
+					try {
+						deleteFile(path);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				},  executorService));
 			}
+			for (Future<Void> future : futures)
+				future.get();
 		}
 	}
-	private static void deleteFile(Path path) throws Exception
+	private static void deleteFile(Path path) throws IOException
 	{
-		Optional<Exception> exception = Optional.empty();
+		Optional<IOException> exception = Optional.empty();
 		for (int i = 0; i < 5 && Files.exists(path); i++)
 		{
 			try
@@ -51,7 +85,7 @@ public class FilesUtil {
 				Files.delete(path);
 				exception = Optional.empty();
 			}
-			catch (Exception e)
+			catch (IOException e)
 			{
 				exception= Optional.of(e);
 				try {
