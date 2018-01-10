@@ -24,6 +24,8 @@ import com.liferay.blade.cli.commands.arguments.ConvertArgs;
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
+import aQute.lib.io.IO;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Files;
@@ -305,7 +307,7 @@ public class ConvertCommand {
 				}
 			}
 
-			FilesUtil.delete(themePlugin);
+			IO.deleteWithException(themePlugin);
 		}
 		catch (Exception e) {
 			_blade.error("Error upgrading project %s\n%s", themePlugin.getFileName().toString(), e.getMessage());
@@ -382,12 +384,12 @@ public class ConvertCommand {
 					Files.move(docrootFile, webapp.resolve(docrootFile.getFileName()));
 				}
 
-				FilesUtil.delete(docroot);
-				FilesUtil.delete(warDir.resolve("build.xml"));
-				FilesUtil.delete(warDir.resolve(".classpath"));
-				FilesUtil.delete(warDir.resolve(".project"));
-				FilesUtil.delete(warDir.resolve(".settings"));
-				FilesUtil.delete(warDir.resolve("ivy.xml.MD5"));
+				IO.deleteWithException(docroot);
+				IO.deleteWithException(warDir.resolve("build.xml"));
+				IO.deleteWithException(warDir.resolve(".classpath"));
+				IO.deleteWithException(warDir.resolve(".project"));
+				IO.deleteWithException(warDir.resolve(".settings"));
+				IO.deleteWithException(warDir.resolve("ivy.xml.MD5"));
 
 				List<String> dependencies = new ArrayList<>();
 				dependencies.add(

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import aQute.bnd.header.Parameters;
 import aQute.bnd.osgi.Domain;
 import aQute.bnd.osgi.Jar;
+import aQute.lib.io.IO;
 
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.ProjectTemplates;
@@ -68,7 +69,7 @@ public class CreateCommandTest {
 		ConnectorServices.reset();
 
 		if (Files.exists(testdir)) {
-			FilesUtil.delete(testdir);
+			IO.delete(testdir);
 			assertTrue(Files.notExists(testdir));
 		}
 	}

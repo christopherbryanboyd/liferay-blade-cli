@@ -24,6 +24,8 @@ import com.liferay.blade.cli.commands.arguments.InitArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
+import aQute.lib.io.IO;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
@@ -154,7 +156,7 @@ public class InitCommand {
 
 				_moveContentsToDirectory(gitFile, destGitFile);
 
-				FilesUtil.delete(gitFile);
+				IO.deleteWithException(gitFile);
 
 			}
 
@@ -162,7 +164,7 @@ public class InitCommand {
 
 			_moveContentsToDirectory(temp, pluginsSdkDir);
 
-			FilesUtil.delete(temp);
+			IO.deleteWithException(temp);
 		}
 	}
 	

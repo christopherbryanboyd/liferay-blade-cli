@@ -29,6 +29,8 @@ import org.junit.Test;
 
 import com.liferay.blade.cli.util.FilesUtil;
 
+import aQute.lib.io.IO;
+
 /**
  * @author David Truong
  */
@@ -38,7 +40,7 @@ public class UtilTest {
 		testdir = Paths.get("build/test");
 
 		if (Files.exists(testdir)) {
-			FilesUtil.delete(testdir);
+			IO.delete(testdir);
 			assertTrue(Files.notExists(testdir));
 		}
 	}

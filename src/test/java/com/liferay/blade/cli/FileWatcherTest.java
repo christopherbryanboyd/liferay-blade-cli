@@ -35,6 +35,8 @@ import org.junit.Test;
 import com.liferay.blade.cli.FileWatcher.Consumer;
 import com.liferay.blade.cli.util.FilesUtil;
 
+import aQute.lib.io.IO;
+
 /**
  * @author Greg Amerson
  */
@@ -55,7 +57,7 @@ public class FileWatcherTest {
 	public void cleanUp() throws Exception {
 		if (Files.exists(testdir))
 		{
-			FilesUtil.delete(testdir);
+			IO.delete(testdir);
 		}
 		assertTrue(Files.notExists(testdir));
 	}
