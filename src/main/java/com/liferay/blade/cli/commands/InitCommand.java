@@ -26,6 +26,7 @@ import com.liferay.project.templates.ProjectTemplatesArgs;
 
 import aQute.lib.io.IO;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileVisitResult;
@@ -63,75 +64,74 @@ public class InitCommand {
 
 		String name = _options.getName();
 
-		Path destDir = name != null ? Paths.get(
-			_blade.getBase().toString(), name) : Paths.get(_blade.getBase().toString());
+		File destDir = name != null ? Paths.get(
+			_blade.getBase().toString(), name).toFile() : Paths.get(_blade.getBase().toString()).toFile();
 
 		Path temp = null;
 
-		boolean isPluginsSDK = isPluginsSDK(destDir);
+		boolean isPluginsSDK = isPluginsSDK(destDir.toPath());
 
 		trace("Using destDir " + destDir);
 
-		if (Files.exists(destDir)) {
-			if (!Files.isDirectory(destDir)) {
-				addError(destDir.toAbsolutePath() + " is not a directory.");
-				return;				
-			}
-			else
-			{
-				if (isPluginsSDK) {
-					if (!isPluginsSDK70(destDir)) {
-						if (_options.isUpgrade()) {
-							trace(
-								"Found plugins-sdk 6.2, upgraded to 7.0, moving contents to new subdirectory " +
-									"and initing workspace.");
+		if (destDir.exists() && !destDir.isDirectory()) {
+			addError(destDir.getAbsolutePath() + " is not a directory.");
+			return;
+		}
 
-							for (String fileName : _SDK_6_GA5_FILES) {
-								Path file = destDir.resolve(fileName);
+		if (destDir.exists()) {
+			if (isPluginsSDK) {
+				if (!isPluginsSDK70(destDir.toPath())) {
+					if (_options.isUpgrade()) {
+						trace(
+							"Found plugins-sdk 6.2, upgraded to 7.0, moving contents to new subdirectory " +
+								"and initing workspace.");
 
-								Files.deleteIfExists(file);
+						for (String fileName : _SDK_6_GA5_FILES) {
+							File file = new File(destDir, fileName);
+
+							if (file.exists()) {
+								file.delete();
 							}
 						}
-						else {
-							addError("Unable to run blade init in plugins sdk 6.2, please add -u (--upgrade)"
-								+ " if you want to upgrade to 7.0");
-							return;
-						}
-					}
-
-					trace("Found plugins-sdk, moving contents to new subdirectory " +
-						"and initing workspace.");
-
-					temp = Files.createTempDirectory("orignal-sdk");
-
-					_moveContentsToDirectory(destDir, temp);
-				}
-				else if (Files.list(destDir).findAny().isPresent()) {
-					if (_options.isForce()) {
-						trace("Files found, initing anyways.");
 					}
 					else {
-						addError(
-							destDir.toAbsolutePath() +
-							" contains files, please move them before continuing " +
-								"or use -f (--force) option to init workspace " +
-									"anyways.");
+						addError("Unable to run blade init in plugins sdk 6.2, please add -u (--upgrade)"
+							+ " if you want to upgrade to 7.0");
 						return;
 					}
 				}
+
+				trace("Found plugins-sdk, moving contents to new subdirectory " +
+					"and initing workspace.");
+
+				temp = Files.createTempDirectory("orignal-sdk");
+
+				_moveContentsToDirectory(destDir.toPath(), temp);
+			}
+			else if (destDir.list().length > 0) {
+				if (_options.isForce()) {
+					trace("Files found, initing anyways.");
+				}
+				else {
+					addError(
+						destDir.getAbsolutePath() +
+						" contains files, please move them before continuing " +
+							"or use -f (--force) option to init workspace " +
+								"anyways.");
+					return;
+				}
 			}
 		}
-
 
 		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
 
 		if (name == null) {
-			name = destDir.getFileName().toString();
+			name = destDir.getName();
 		}
 
-		Path destParentDir = destDir.getParent();
+		File destParentDir = destDir.getParentFile();
 
-		projectTemplatesArgs.setDestinationDir(destParentDir.toFile());
+		projectTemplatesArgs.setDestinationDir(destParentDir);
 
 		if (_options.isForce() || _options.isUpgrade()) {
 			projectTemplatesArgs.setForce(true);
@@ -149,20 +149,19 @@ public class InitCommand {
 				gradleExec.executeGradleCommand("upgradePluginsSDK");
 			}
 
-			Path gitFile = temp.resolve(".git");
+			File gitFile = new File(temp.toFile(), ".git");
 
-			if (Files.exists(gitFile)) {
-				Path destGitFile = destDir.resolve(".git");
+			if (gitFile.exists()) {
+				File destGitFile = new File(destDir, ".git");
 
-				_moveContentsToDirectory(gitFile, destGitFile);
+				_moveContentsToDirectory(gitFile.toPath(), destGitFile.toPath());
 
 				IO.deleteWithException(gitFile);
-
 			}
 
-			Path pluginsSdkDir = destDir.resolve("plugins-sdk");
+			File pluginsSdkDir = new File(destDir, "plugins-sdk");
 
-			_moveContentsToDirectory(temp, pluginsSdkDir);
+			_moveContentsToDirectory(temp, pluginsSdkDir.toPath());
 
 			IO.deleteWithException(temp);
 		}

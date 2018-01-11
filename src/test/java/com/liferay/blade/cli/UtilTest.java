@@ -21,17 +21,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 
 import org.junit.After;
 import org.junit.Test;
 
-import com.liferay.blade.cli.util.FilesUtil;
-
 import aQute.lib.io.IO;
+
 /**
  * @author David Truong
  */

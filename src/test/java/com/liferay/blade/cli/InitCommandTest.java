@@ -21,23 +21,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import aQute.lib.io.IO;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
 import org.gradle.testkit.runner.BuildTask;
 import org.junit.After;
 import org.junit.Test;
-
-import com.liferay.project.templates.internal.util.FileUtil;
-
-import aQute.lib.io.IO;
-
 
 /**
  * @author Gregory Amerson
@@ -92,7 +87,7 @@ public class InitCommandTest {
 
 		testdir.mkdirs();
 
-		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(),testdir.toPath());
 
 		assertTrue(testdir.exists());
 
@@ -162,27 +157,6 @@ public class InitCommandTest {
 		assertTrue(new File(workspaceDir, "modules").exists());
 
 		verifyGradleBuild();
-	}
-
-	@Test
-	public void testNestedCopyBug() throws Exception {
-		if (!workspaceDir.mkdirs()) {
-			fail("Unable to create workspace dir");
-		}
-
-		makeSDK(workspaceDir);
-
-		File childPluginsSDK = new File(workspaceDir, "plugins-sdk");
-
-		makeSDK(childPluginsSDK);
-
-		String[] args = {"-b", workspaceDir.getPath(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		assertFalse((new File(workspaceDir, "plugins-sdk/plugins-sdk").exists()));
-
-		assertTrue((new File(workspaceDir, "settings.gradle").exists()));
 	}
 
 	@Test
