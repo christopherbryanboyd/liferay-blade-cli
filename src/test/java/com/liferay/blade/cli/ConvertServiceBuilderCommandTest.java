@@ -29,6 +29,8 @@ import org.junit.Test;
 import com.liferay.blade.cli.util.FilesUtil;
 import com.liferay.project.templates.internal.util.FileUtil;
 
+import aQute.lib.io.IO;
+
 /**
  * @author Terry Jia
  */
@@ -39,8 +41,8 @@ public class ConvertServiceBuilderCommandTest {
 	@After
 	public void cleanUp() throws Exception {
 		if (Files.exists(workspaceDir.getParent())) {
-			FileUtil.deleteDir(workspaceDir.getParent());
-			assertTrue(Files.notExists(workspaceDir.getParent()));
+			IO.delete(workspaceDir.getParent());
+			assertFalse(workspaceDir.getParent().toFile().exists());
 		}
 	}
 
@@ -49,8 +51,8 @@ public class ConvertServiceBuilderCommandTest {
 		Path testdir = Paths.get("build","test-tasks-portlet-conversion");
 
 		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+			IO.delete(testdir);
+			assertFalse(testdir.toFile().exists());
 		}
 
 		String[] args = {"-b", testdir.toString(), "init", "-u"};
@@ -95,7 +97,7 @@ public class ConvertServiceBuilderCommandTest {
 		Path testdir = Paths.get("build","test-tasks-portlet-conversion");
 
 		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
+			IO.delete(testdir);
 			assertTrue(Files.notExists(testdir));
 		}
 
@@ -122,8 +124,8 @@ public class ConvertServiceBuilderCommandTest {
 		Path testdir = Paths.get("build","testMigrateServiceBuilder");
 
 		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+			IO.delete(testdir);
+			assertFalse(testdir.toFile().exists());
 		}
 
 		Util.unzip(Paths.get("test-resources","projects","plugins-sdk-with-git.zip"), testdir);

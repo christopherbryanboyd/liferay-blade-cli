@@ -70,7 +70,7 @@ public class CreateCommandTest {
 
 		if (Files.exists(testdir)) {
 			IO.delete(testdir);
-			assertTrue(Files.notExists(testdir));
+			assertFalse(testdir.toFile().exists());
 		}
 	}
 

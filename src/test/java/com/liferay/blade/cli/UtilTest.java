@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
@@ -41,7 +42,7 @@ public class UtilTest {
 
 		if (Files.exists(testdir)) {
 			IO.delete(testdir);
-			assertTrue(Files.notExists(testdir));
+			assertFalse(testdir.toFile().exists());
 		}
 	}
 
