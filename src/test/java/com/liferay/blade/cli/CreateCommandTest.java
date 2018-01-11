@@ -30,6 +30,7 @@ import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.internal.util.FileUtil;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -67,10 +68,10 @@ public class CreateCommandTest {
 	@After
 	public void cleanUp() throws Exception {
 		ConnectorServices.reset();
-
-		if (Files.exists(testdir)) {
+		File testdir = this.testdir.toFile();
+		if (testdir.exists()) {
 			IO.delete(testdir);
-			assertFalse(testdir.toFile().exists());
+			assertFalse(testdir.exists());
 		}
 	}
 
