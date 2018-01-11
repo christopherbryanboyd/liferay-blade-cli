@@ -17,11 +17,15 @@
 package com.liferay.blade.cli;
 
 import aQute.bnd.osgi.Jar;
+import aQute.bnd.osgi.Processor;
 import aQute.bnd.osgi.Resource;
 import aQute.lib.getopt.Options;
+import aQute.lib.io.IO;
 import aQute.lib.justif.Justif;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -129,23 +133,18 @@ public class Util {
 
 				Resource r = e.getValue();
 
-				Path dest = getPath(outputDir, path);
+				File dest = Processor.getFile(outputDir.toFile(), path);
 
-				if (Files.notExists(dest) || ((Files.getLastModifiedTime(dest).toMillis() < r.lastModified()) ||
-					(r.lastModified() <= 0))) {
+				if ((dest.lastModified() < r.lastModified()) ||
+					(r.lastModified() <= 0)) {
 
-					Path dp = dest.getParent();
+					File dp = dest.getParentFile();
 
-					if (Files.notExists(dp)) {
-						try {
-							Files.createDirectories(dp);
-						}
-						catch (Exception ex) {
-							throw new Exception("Could not create directory " + dp, ex);
-						}
+					if (!dp.exists() && !dp.mkdirs()) {
+						throw new Exception("Could not create directory " + dp);
 					}
 
-					Files.copy(r.openInputStream(), dest.toAbsolutePath(), StandardCopyOption.REPLACE_EXISTING);
+					IO.copy(r.openInputStream(), dest);
 				}
 			}
 		}
@@ -153,30 +152,28 @@ public class Util {
 
 	public static Path findParentFile(
 		Path dir, String[] fileNames, boolean checkParents) {
+	
 
-		
-		try
-		{
 		if (dir == null) {
-		
 			return null;
 		}
 
 		for (String fileName : fileNames) {
-			Path path = dir.resolve(fileName);
+			File file = new File(dir.toFile(), fileName);
 
-			if (Files.exists(path)) {
+			if (file.exists()) {
 				return dir;
 			}
 		}
 
 		if (checkParents) {
-			return findParentFile(dir.getParent(), fileNames, checkParents);
+			File parentFile = dir.toFile().getParentFile();
+			if (parentFile == null)
+				return null;
+			else
+				return findParentFile(parentFile.toPath(), fileNames, checkParents);
 		}
-		}
-		catch (Throwable th) {
-			th.printStackTrace();
-		}
+
 		return null;
 	}
 
@@ -282,20 +279,16 @@ public class Util {
 
 	public static boolean isWorkspace(Path dir) {
 		
-		Path workspacePath = getWorkspaceDir(dir);
-		
-		if (Objects.isNull(workspacePath)) {
-			return false;
-		}
-		
-		Path gradleFile = workspacePath.resolve(_SETTINGS_GRADLE_FILE_NAME);
+		File workspaceDir = getWorkspaceDir(dir).toFile();
 
-		if (Files.notExists(gradleFile)) {
+		File gradleFile = new File(workspaceDir, _SETTINGS_GRADLE_FILE_NAME);
+
+		if (!gradleFile.exists()) {
 			return false;
 		}
-		
+
 		try {
-			String script = read(gradleFile);
+			String script = read(gradleFile.toPath());
 
 			Matcher matcher = Workspace.PATTERN_WORKSPACE_PLUGIN.matcher(
 				script);
@@ -306,9 +299,9 @@ public class Util {
 			else {
 				//For workspace plugin < 1.0.5
 
-				gradleFile = workspacePath.resolve(_BUILD_GRADLE_FILE_NAME);
+				gradleFile = new File(workspaceDir, _BUILD_GRADLE_FILE_NAME);
 
-				script = read(gradleFile);
+				script = read(gradleFile.toPath());
 
 				matcher = Workspace.PATTERN_WORKSPACE_PLUGIN.matcher(script);
 
@@ -467,17 +460,38 @@ public class Util {
 					entryName = entryName.replaceFirst(entryToStart, "");
 				}
 
-				final Path f = destDir.resolve(entryName);
+				final File f = new File(destDir.toFile(), entryName);
 
-				final Path dir = f.getParent();
+				if (f.exists()) {
+					IO.delete(f);
 
-				if (!Files.exists(dir)) {
-					Files.createDirectories(dir);
+					if (f.exists()) {
+						throw new IOException(
+							"Could not delete " + f.getAbsolutePath());
+					}
 				}
 
-				try (final InputStream in = zip.getInputStream(entry)) {
-					Files.copy(in, f, StandardCopyOption.REPLACE_EXISTING);
+				final File dir = f.getParentFile();
+
+				if (!dir.exists() && !dir.mkdirs()) {
+					final String msg = "Could not create dir: " + dir.getPath();
+					throw new IOException(msg);
 				}
+
+				try (final InputStream in = zip.getInputStream(entry);
+					 final FileOutputStream out = new FileOutputStream(f)) {
+
+					final byte[] bytes = new byte[1024];
+					int count = in.read(bytes);
+
+					while (count != -1) {
+						out.write(bytes, 0, count);
+						count = in.read(bytes);
+					}
+
+					out.flush();
+				}
+
 			}
 		}
 	}

@@ -21,14 +21,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.junit.After;
 import org.junit.Test;
-
-import com.liferay.blade.cli.util.FilesUtil;
-import com.liferay.project.templates.internal.util.FileUtil;
 
 import aQute.lib.io.IO;
 
