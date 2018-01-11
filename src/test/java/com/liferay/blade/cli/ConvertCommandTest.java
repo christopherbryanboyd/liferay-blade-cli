@@ -31,7 +31,6 @@ import org.junit.After;
 import org.junit.Test;
 
 import com.liferay.project.templates.internal.util.FileUtil;
-
 /**
  * @author Gregory Amerson
  */
@@ -39,7 +38,7 @@ public class ConvertCommandTest {
 
 	@After
 	public void cleanUp() throws Exception {
-		Files.deleteIfExists(workspaceDir.getParentFile().toPath());
+		IO.delete(workspaceDir.getParentFile());
 	}
 
 	@Test
@@ -72,234 +71,206 @@ public class ConvertCommandTest {
 		assertTrue(new File(testdir, "plugins-sdk-with-git/modules/sample-service-builder/sample-service-builder-service").exists());
 
 		assertTrue(new File(testdir, "plugins-sdk-with-git/wars/sample-service-builder-portlet").exists());
-		/*Path testdir = Paths.get("build","testUpgradePluginsSDKTo70");
-
-		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
-		}
-
-		Files.createDirectories(testdir);
-
-		Util.unzip(Paths.get("test-resources","projects","plugins-sdk-with-git.zip"), testdir);
-
-		assertTrue(Files.exists(testdir));
-
-		Path projectDir = testdir.resolve( "plugins-sdk-with-git");
-
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "-a"};
-
-		new bladenofail().run(args);
-
-		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk-with-git", "modules", "sample-service-builder", "sample-service-builder-api"))));
-
-		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk-with-git", "modules", "sample-service-builder", "sample-service-builder-service"))));;
-
-		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk-with-git", "wars", "sample-service-builder-portlet"))));*/
 	}
 
 	@Test
 	public void testMoveLayouttplToWars() throws Exception {
-		Path testdir = Paths.get("build", "testMoveLayouttplToWars");
+		File testdir = IO.getFile("build/testMoveLayouttplToWars");
 
-		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		Util.unzip(Paths.get("test-resources", "projects", "plugins-sdk-with-git.zip"), testdir);
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
 
-		assertTrue(Files.exists(testdir));
+		assertTrue(testdir.exists());
 
-		Path projectDir = testdir.resolve("plugins-sdk-with-git");
+		File projectDir = new File(testdir, "plugins-sdk-with-git");
 
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "1-2-1-columns-layouttpl"};
+		String[] args = {"-b", projectDir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		Path layoutWar = projectDir.resolve(Paths.get("wars", "1-2-1-columns-layouttpl"));
+		args = new String[] {"-b", projectDir.getPath(), "convert", "1-2-1-columns-layouttpl"};
 
-		assertTrue(Files.exists(layoutWar));
+		new bladenofail().run(args);
 
-		assertTrue(Files.notExists(layoutWar.resolve("build.xml")));
+		File layoutWar = new File(projectDir, "wars/1-2-1-columns-layouttpl");
 
-		assertTrue(Files.notExists(layoutWar.resolve("build.gradle")));
+		assertTrue(layoutWar.exists());
 
-		assertTrue(Files.notExists(layoutWar.resolve("docroot")));
+		assertFalse(new File(layoutWar, "build.xml").exists());
+
+		assertFalse(new File(layoutWar, "build.gradle").exists());
+
+		assertFalse(new File(layoutWar, "docroot").exists());
 	}
 
 	@Test
 	public void testMoveThemesToWars() throws Exception {
-		Path testdir = Paths.get("build", "testMoveThemesToWar");
+		File testdir = IO.getFile("build/testMoveThemesToWar");
 
-		if (Files.exists(testdir)) { 
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		Util.unzip(Paths.get("test-resources", "projects", "plugins-sdk-with-git.zip"), testdir);
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
 
-		assertTrue(Files.exists(testdir));
+		assertTrue(testdir.exists());
 
-		Path projectDir = testdir.resolve( "plugins-sdk-with-git");
+		File projectDir = new File(testdir, "plugins-sdk-with-git");
 
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		Path theme = projectDir.resolve(Paths.get("wars", "sample-styled-minimal-theme"));
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "-t", "sample-styled-minimal-theme"};
+		String[] args = {"-b", projectDir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		assertTrue(Files.exists(theme));
+		File theme = new File(projectDir, "wars/sample-styled-minimal-theme");
 
-		assertTrue(Files.notExists(theme.resolve("build.xml")));
-
-		assertTrue(Files.exists(theme.resolve("build.gradle")));
-
-		assertTrue(Files.notExists(theme.resolve("docroot")));
-
-		assertTrue(Files.exists(theme.resolve(Paths.get("src", "main", "webapp"))));
-
-		assertTrue(Files.notExists(theme.resolve(Paths.get("src", "main", "webapp", "_diffs"))));
-
-		assertTrue(Files.notExists(projectDir.resolve(Paths.get("plugins-sdk", "themes", "sample-styled-minimal-theme"))));
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "-t", "sample-styled-advanced-theme"};
+		args = new String[] {"-b", projectDir.getPath(), "convert", "-t", "sample-styled-minimal-theme"};
 
 		new bladenofail().run(args);
 
-		Path advancedTheme = projectDir.resolve(Paths.get("wars", "sample-styled-advanced-theme"));
+		assertTrue(theme.exists());
 
-		assertTrue(Files.exists(advancedTheme));
+		assertFalse(new File(theme, "build.xml").exists());
 
-		assertTrue(Files.notExists(advancedTheme.resolve("build.xml")));
+		assertTrue(new File(theme, "build.gradle").exists());
 
-		assertTrue(Files.exists(advancedTheme.resolve("build.gradle")));
+		assertFalse(new File(theme, "docroot").exists());
 
-		assertTrue(Files.notExists(advancedTheme.resolve("docroot")));
+		assertTrue(new File(theme, "src/main/webapp").exists());
 
-		assertTrue(Files.exists(advancedTheme.resolve(Paths.get("src", "main", "webapp"))));
+		assertFalse(new File(theme, "src/main/webapp/_diffs").exists());
 
-		assertTrue(Files.notExists(advancedTheme.resolve(Paths.get("src", "main", "webapp","_diffs"))));
+		assertFalse(new File(projectDir, "plugins-sdk/themes/sample-styled-minimal-theme").exists());
 
-		assertTrue(Files.notExists(projectDir.resolve(Paths.get("plugins-sdk","themes","sample-styled-advanced-theme"))));
+		args = new String[] {"-b", projectDir.getPath(), "convert", "-t", "sample-styled-advanced-theme"};
+
+		new bladenofail().run(args);
+
+		File advancedTheme = new File(projectDir, "wars/sample-styled-advanced-theme");
+
+		assertTrue(advancedTheme.exists());
+
+		assertFalse(new File(advancedTheme, "build.xml").exists());
+
+		assertTrue(new File(advancedTheme, "build.gradle").exists());
+
+		assertFalse(new File(advancedTheme, "docroot").exists());
+
+		assertTrue(new File(advancedTheme, "src/main/webapp").exists());
+
+		assertFalse(new File(advancedTheme, "src/main/webapp/_diffs").exists());
+
+		assertFalse(new File(projectDir, "plugins-sdk/themes/sample-styled-advanced-theme").exists());
 	}
 
 	@Test
 	public void testMovePluginsToWars() throws Exception {
-		Path testdir = Paths.get("build","testMovePluginsToWars");
+		File testdir = IO.getFile("build/testMovePluginsToWars");
 
-		if (Files.exists(testdir)) { 
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		Util.unzip(Paths.get("test-resources","projects","plugins-sdk-with-git.zip"), testdir);
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
 
-		assertTrue(Files.exists(testdir));
+		assertTrue(testdir.exists());
 
-		Path projectDir = testdir.resolve("plugins-sdk-with-git");
+		File projectDir = new File(testdir, "plugins-sdk-with-git");
 
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "sample-application-adapter-hook"};
+		String[] args = {"-b", projectDir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		Path sampleExpandoHook = projectDir.resolve(Paths.get("wars", "sample-application-adapter-hook"));
-
-		assertTrue(Files.exists(sampleExpandoHook));
-
-		assertTrue(Files.notExists(projectDir.resolve(Paths.get("plugins-sdk","hooks","sample-application-adapter-hook"))));
-
-		args = new String[] {"-b", projectDir.toString(), "convert", "sample-servlet-filter-hook"};
+		args = new String[] {"-b", projectDir.getPath(), "convert", "sample-application-adapter-hook"};
 
 		new bladenofail().run(args);
 
-		Path sampleServletFilterHook = projectDir.resolve(Paths.get("wars","sample-servlet-filter-hook"));
+		File sampleExpandoHook = new File(projectDir, "wars/sample-application-adapter-hook");
 
-		assertTrue(Files.exists(sampleServletFilterHook));
+		assertTrue(sampleExpandoHook.exists());
 
-		assertTrue(Files.notExists(projectDir.resolve(Paths.get("plugins-sdk","hooks","sample-servlet-filter-hook"))));
+		assertFalse(new File(projectDir, "plugins-sdk/hooks/sample-application-adapter-hook").exists());
+
+		args = new String[] {"-b", projectDir.getPath(), "convert", "sample-servlet-filter-hook"};
+
+		new bladenofail().run(args);
+
+		File sampleServletFilterHook = new File(projectDir, "wars/sample-servlet-filter-hook");
+
+		assertTrue(sampleServletFilterHook.exists());
+
+		assertFalse(new File(projectDir, "plugins-sdk/hooks/sample-servlet-filter-hook").exists());
 	}
 
-	private Path setupWorkspace(String name) throws Exception {
-		Path testdir = Paths.get("build", name);
+	private File setupWorkspace(String name) throws Exception {
+		File testdir = IO.getFile("build/" + name);
 
-		if (Files.exists(testdir)) {
-			FileUtil.deleteDir(testdir);
-			assertTrue(Files.notExists(testdir));
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		Util.unzip(Paths.get("test-resources", "projects", "plugins-sdk-with-git.zip"), testdir);
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
 
-		assertTrue(Files.exists(testdir));
+		assertTrue(testdir.exists());
 
-		Path projectDir = testdir.resolve("plugins-sdk-with-git");
+		File projectDir = new File(testdir, "plugins-sdk-with-git");
 
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
+		String[] args = {"-b", projectDir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		assertTrue(Files.exists(projectDir.resolve("plugins-sdk")));
+		assertTrue(new File(projectDir, "plugins-sdk").exists());
 
 		return projectDir;
 	}
 
 	@Test
 	public void testThemeDocrootBackup() throws Exception {
-		Path projectDir = setupWorkspace("testThemeDocrootBackup");
+		File projectDir = setupWorkspace("testThemeDocrootBackup");
 
-		String[] args = {"-b", projectDir.toString(), "convert", "-t", "sample-html4-theme"};
+		String[] args = {"-b", projectDir.getPath(), "convert", "-t", "sample-html4-theme"};
 
 		new bladenofail().run(args);
 
-		assertTrue(Files.exists(projectDir.resolve(Paths.get("wars","sample-html4-theme","docroot_backup","other","afile"))));
+		assertTrue(new File(projectDir, "wars/sample-html4-theme/docroot_backup/other/afile").exists());
 	}
 
 	@Test
 	public void testReadIvyXml() throws Exception {
-		Path projectDir = setupWorkspace("readIvyXml");
+		File projectDir = setupWorkspace("readIvyXml");
 
-		String[] args = {"-b", projectDir.toString(), "convert", "sample-dao-portlet"};
+		String[] args = {"-b", projectDir.getPath(), "convert", "sample-dao-portlet"};
 
 		new bladenofail().run(args);
 
 		contains(
-			projectDir.resolve(Paths.get("wars","sample-dao-portlet","build.gradle")),
+			new File(projectDir, "wars/sample-dao-portlet/build.gradle"),
 			".*compile group: 'c3p0', name: 'c3p0', version: '0.9.0.4'.*",
 			".*compile group: 'mysql', name: 'mysql-connector-java', version: '5.0.7'.*");
 
-		args = new String[] {"-b", projectDir.toString(), "convert", "sample-tapestry-portlet"};
+		args = new String[] {"-b", projectDir.getPath(), "convert", "sample-tapestry-portlet"};
 
 		new bladenofail().run(args);
 
 		contains(
-			projectDir.resolve(Paths.get("wars","sample-tapestry-portlet","build.gradle")),
+			new File(projectDir, "wars/sample-tapestry-portlet/build.gradle"),
 			".*compile group: 'hivemind', name: 'hivemind', version: '1.1'.*",
 			".*compile group: 'hivemind', name: 'hivemind-lib', version: '1.1'.*",
 			".*compile group: 'org.apache.tapestry', name: 'tapestry-annotations', version: '4.1'.*",
 			".*compile group: 'org.apache.tapestry', name: 'tapestry-framework', version: '4.1'.*",
 			".*compile group: 'org.apache.tapestry', name: 'tapestry-portlet', version: '4.1'.*");
 
-		assertTrue(Files.notExists(projectDir.resolve(Paths.get("wars","sample-tapestry-portlet","ivy.xml"))));
+		assertFalse(new File(projectDir, "wars/sample-tapestry-portlet/ivy.xml").exists());
 	}
 
-	private void contains(Path file, String... patterns) throws Exception {
-		String content = new String(Files.readAllBytes(file));
+	private void contains(File file, String... patterns) throws Exception {
+		String content = new String(IO.read(file));
 
 		for (String pattern : patterns) {
 			contains(content, pattern);

@@ -19,6 +19,7 @@ package com.liferay.blade.cli;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,148 +41,144 @@ public class ConvertServiceBuilderCommandTest {
 
 	@After
 	public void cleanUp() throws Exception {
-		if (Files.exists(workspaceDir.getParent())) {
-			IO.delete(workspaceDir.getParent());
-			assertFalse(workspaceDir.getParent().toFile().exists());
-		}
+		IO.delete(workspaceDir.getParentFile());
 	}
 
 	@Test
 	public void testConvertServiceBuilderTasksPortletDefaultName() throws Exception {
-		Path testdir = Paths.get("build","test-tasks-portlet-conversion");
+		File testdir = IO.getFile("build/test-tasks-portlet-conversion");
 
-		if (Files.exists(testdir)) {
-			IO.delete(testdir);
-			assertFalse(testdir.toFile().exists());
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		String[] args = {"-b", testdir.toString(), "init", "-u"};
+		String[] args = {"-b", testdir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		Path pluginsSdkDir = testdir.resolve("plugins-sdk");
+		File pluginsSdkDir = new File(testdir, "plugins-sdk");
 
-		FilesUtil.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
+		IO.copy(new File("test-resources/projects/tasks-plugins-sdk"), pluginsSdkDir);
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("plugins-sdk","portlets","tasks-portlet"))));
+		assertTrue(new File(testdir, "plugins-sdk/portlets/tasks-portlet").exists());
 
-		String[] convertArgs = {"-b", testdir.toString(), "convert", "tasks-portlet"};
+		String[] convertArgs = {"-b", testdir.getPath(), "convert", "tasks-portlet"};
 
 		new bladenofail().run(convertArgs);
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","tasks","tasks-api","build.gradle"))));
+		assertTrue(new File(testdir, "modules/tasks/tasks-api/build.gradle").exists());
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","tasks","tasks-api","src","main","java","com","liferay","tasks","exception"))));
+		assertTrue(new File(testdir, "modules/tasks/tasks-api/src/main/java/com/liferay/tasks/exception").exists());
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","tasks","tasks-service","src","main","java","com","liferay","tasks","model","impl","TasksEntryModelImpl.java"))));
+		assertTrue(new File(testdir, "modules/tasks/tasks-service/src/main/java/com/liferay/tasks/model/impl/TasksEntryModelImpl.java").exists());
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","tasks","tasks-service","src","main","java","com","liferay","tasks","service","impl","TasksEntryServiceImpl.java"))));
+		assertTrue(new File(testdir, "modules/tasks/tasks-service/src/main/java/com/liferay/tasks/service/impl/TasksEntryServiceImpl.java").exists());
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","tasks","tasks-service","service.xml"))));
+		assertTrue(new File(testdir, "modules/tasks/tasks-service/service.xml").exists());
 
-		assertFalse(Files.exists(testdir.resolve(Paths.get("wars","tasks-portlet","src","main","webapp","WEB-INF","service.xml"))));
+		assertFalse(new File(testdir, "wars/tasks-portlet/src/main/webapp/WEB-INF/service.xml").exists());
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("wars","tasks-portlet", "src","main","webapp","WEB-INF","portlet.xml"))));
+		assertTrue(new File(testdir, "wars/tasks-portlet/src/main/webapp/WEB-INF/portlet.xml").exists());
 
-		Path portletGradleFile = testdir.resolve(Paths.get("wars","tasks-portlet","build.gradle"));
+		File portletGradleFile = new File(testdir, "wars/tasks-portlet/build.gradle");
 
-		assertTrue(Files.exists(portletGradleFile));
+		assertTrue(portletGradleFile.exists());
 
-		String content = new String(Files.readAllBytes(portletGradleFile));
+		String content = new String(Files.readAllBytes(portletGradleFile.toPath()));
 
 		assertTrue(content.contains("compileOnly project(\":modules:tasks:tasks-api\")"));
 	}
 
 	@Test
 	public void testConvertServiceBuilderTasksPortletCustomName() throws Exception {
-		Path testdir = Paths.get("build","test-tasks-portlet-conversion");
+		File testdir = IO.getFile("build/test-tasks-portlet-conversion");
 
-		if (Files.exists(testdir)) {
-			IO.delete(testdir);
-			assertTrue(Files.notExists(testdir));
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		String[] args = {"-b", testdir.toString(), "init", "-u"};
+		String[] args = {"-b", testdir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		Path pluginsSdkDir = testdir.resolve("plugins-sdk");
+		File pluginsSdkDir = new File(testdir, "plugins-sdk");
 
-		FilesUtil.copy(Paths.get("test-resources","projects","tasks-plugins-sdk"), pluginsSdkDir);
+		IO.copy(new File("test-resources/projects/tasks-plugins-sdk"), pluginsSdkDir);
 
-		assertTrue(Files.exists(pluginsSdkDir.resolve(Paths.get("portlets","tasks-portlet"))));
+		assertTrue(new File(testdir, "plugins-sdk/portlets/tasks-portlet").exists());
 
-		String[] convertArgs = {"-b", testdir.toString(), "convert", "tasks-portlet", "foo"};
+		String[] convertArgs = {"-b", testdir.getPath(), "convert", "tasks-portlet", "foo"};
 
 		new bladenofail().run(convertArgs);
 
-		assertTrue(Files.exists(testdir.resolve(Paths.get("modules","foo","foo-api","build.gradle"))));
-		
+		assertTrue(new File(testdir, "modules/foo/foo-api/build.gradle").exists());
 	}
 
 	@Test
 	public void testConvertServiceBuilder() throws Exception {
-		Path testdir = Paths.get("build","testMigrateServiceBuilder");
+		File testdir = IO.getFile("build/testMigrateServiceBuilder");
 
-		if (Files.exists(testdir)) {
-			IO.delete(testdir);
-			assertFalse(testdir.toFile().exists());
+		if (testdir.exists()) {
+			IO.deleteWithException(testdir);
+			assertFalse(testdir.exists());
 		}
 
-		Util.unzip(Paths.get("test-resources","projects","plugins-sdk-with-git.zip"), testdir);
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
 
-		assertTrue(Files.exists(testdir));
+		assertTrue(testdir.exists());
 
-		Path projectDir = testdir.resolve("plugins-sdk-with-git");
+		File projectDir = new File(testdir, "plugins-sdk-with-git");
 
-		String[] args = {"-b", projectDir.toString(), "init", "-u"};
-
-		new bladenofail().run(args);
-
-		args = new String[] {"-b", projectDir.toString(), "convert", SB_PROJECT_NAME};
+		String[] args = {"-b", projectDir.getPath(), "init", "-u"};
 
 		new bladenofail().run(args);
 
-		Path sbWar = projectDir.resolve(Paths.get("wars","sample-service-builder-portlet"));
-
-		assertTrue(Files.exists(sbWar));
-
-		assertTrue(Files.notExists(sbWar.resolve("build.xml")));
-
-		assertTrue(Files.exists(sbWar.resolve("build.gradle")));
-
-		assertTrue(Files.notExists(sbWar.resolve("docroot")));
-
-		args = new String[] {"-b", projectDir.toString(), "convert", SB_PROJECT_NAME};
+		args = new String[] {"-b", projectDir.getPath(), "convert", SB_PROJECT_NAME};
 
 		new bladenofail().run(args);
 
-		Path moduleDir = projectDir.resolve("modules");
+		File sbWar = new File(projectDir, "wars/sample-service-builder-portlet");
 
-		Path newSbDir = moduleDir.resolve("sample-service-builder");
+		assertTrue(sbWar.exists());
 
-		Path sbServiceDir = newSbDir.resolve("sample-service-builder-service");
-		Path sbApiDir = newSbDir.resolve("sample-service-builder-api");
+		assertFalse(new File(sbWar, "build.xml").exists());
 
-		assertTrue(Files.exists(sbServiceDir));
-		assertTrue(Files.exists(sbApiDir));
+		assertTrue(new File(sbWar, "build.gradle").exists());
 
-		assertTrue(Files.exists(sbServiceDir.resolve("service.xml")));
-		assertTrue(Files.exists(sbServiceDir.resolve(Paths.get("src","main","resources","service.properties"))));
-		assertTrue(Files.exists(sbServiceDir.resolve(Paths.get("src","main","resources","META-INF","portlet-model-hints.xml"))));
-		assertTrue(Files.exists(sbServiceDir.resolve(Paths.get("src","main","java","com","liferay","sampleservicebuilder","service","impl","FooLocalServiceImpl.java"))));
-		assertTrue(Files.exists(sbServiceDir.resolve(Paths.get("src","main","java","com","liferay","sampleservicebuilder","service","impl","FooServiceImpl.java"))));
-		assertTrue(Files.exists(sbServiceDir.resolve(Paths.get("src","main","java","com","liferay","sampleservicebuilder","model","impl","FooImpl.java"))));
+		assertFalse(new File(sbWar, "docroot").exists());
 
-		Path bndBnd = sbApiDir.resolve("bnd.bnd");
+		args = new String[] {"-b", projectDir.getPath(), "convert", SB_PROJECT_NAME};
 
-		assertTrue(Files.exists(bndBnd));
+		new bladenofail().run(args);
 
-		String bndContent = new String(Files.readAllBytes(bndBnd));
+		File moduleDir = new File(projectDir, "modules");
+
+		File newSbDir = new File(moduleDir, "sample-service-builder");
+
+		File sbServiceDir = new File(newSbDir, "sample-service-builder-service");
+		File sbApiDir = new File(newSbDir, "sample-service-builder-api");
+
+		assertTrue(sbServiceDir.exists());
+		assertTrue(sbApiDir.exists());
+
+		assertTrue(new File(sbServiceDir, "service.xml").exists());
+		assertTrue(new File(sbServiceDir, "src/main/resources/service.properties").exists());
+		assertTrue(new File(sbServiceDir, "src/main/resources/META-INF/portlet-model-hints.xml").exists());
+		assertTrue(new File(sbServiceDir, "src/main/java/com/liferay/sampleservicebuilder/service/impl/FooLocalServiceImpl.java").exists());
+		assertTrue(new File(sbServiceDir, "src/main/java/com/liferay/sampleservicebuilder/service/impl/FooServiceImpl.java").exists());
+		assertTrue(new File(sbServiceDir, "src/main/java/com/liferay/sampleservicebuilder/model/impl/FooImpl.java").exists());
+
+		File bndBnd = new File(sbApiDir, "bnd.bnd");
+
+		assertTrue(bndBnd.exists());
+
+		String bndContent = new String(IO.read(bndBnd));
 
 		assertTrue(bndContent, bndContent.contains("com.liferay.sampleservicebuilder.exception"));
 	}
 
-	private final Path workspaceDir = Paths.get("build","test","workspace");
+	private final File workspaceDir = IO.getFile("build/test/workspace");
 
 }
