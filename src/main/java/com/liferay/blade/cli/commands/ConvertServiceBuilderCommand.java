@@ -51,7 +51,7 @@ public class ConvertServiceBuilderCommand {
 		_blade = blade;
 		_options = options;
 
-		Path projectDir = Util.getWorkspaceDir(_blade);
+		File projectDir = Util.getWorkspaceDir(_blade);
 
 		Properties gradleProperties = Util.getGradleProperties(projectDir);
 
@@ -65,7 +65,7 @@ public class ConvertServiceBuilderCommand {
 			warsDirPath = Workspace.DEFAULT_WARS_DIR;
 		}
 
-		_warsDir = projectDir.resolve(warsDirPath);
+		_warsDir = new File(projectDir, warsDirPath);
 
 		String moduleDirPath = null;
 
@@ -77,7 +77,7 @@ public class ConvertServiceBuilderCommand {
 			moduleDirPath = Workspace.DEFAULT_MODULES_DIR;
 		}
 
-		_moduleDir = projectDir.resolve(moduleDirPath);
+		_moduleDir = new File(projectDir, moduleDirPath);
 	}
 
 	public void execute() throws Exception {
@@ -96,25 +96,27 @@ public class ConvertServiceBuilderCommand {
 			return;
 		}
 		
-		Path project = _warsDir.resolve(projectName);
 
-		if (Files.notExists(project)) {
-			_blade.error("The project " + projectName + " doesn't exist in " + _warsDir.toAbsolutePath());
+		File project = new File(_warsDir, projectName);
+
+		if (!project.exists()) {
+			_blade.error("The project " + projectName + " doesn't exist in " + _warsDir.getPath());
 
 			return;
 		}
 
-		Path serviceFile = project.resolve(Paths.get("src", "main", "webapp", "WEB-INF", "service.xml"));
+		File serviceFile = new File(project, "src/main/webapp/WEB-INF/service.xml");
 
-		if (Files.notExists(serviceFile)) {
+		if (!serviceFile.exists()) {
 			_blade.error("There is no service.xml file in " + projectName);
 
 			return;
 		}
+
 		List<String> args = _options.getName();
 		String sbProjectName = !args.isEmpty() && args.size() >= 2 ? args.get(1) : null;
 
-		if (sbProjectName == null || sbProjectName.endsWith("-portlet")) {
+		if (sbProjectName == null) {
 			if (projectName.endsWith("-portlet")) {
 				sbProjectName = projectName.replaceAll("-portlet$", "");
 			}
@@ -123,9 +125,9 @@ public class ConvertServiceBuilderCommand {
 			}
 		}
 
-		Path sbProject = _moduleDir.resolve(sbProjectName);
+		File sbProject = new File(_moduleDir, sbProjectName);
 
-		if (Files.exists(sbProject)) {
+		if (sbProject.exists()) {
 			_blade.error(
 				"The service builder module project " + sbProjectName + " exist now, please choose another name");
 
@@ -138,18 +140,18 @@ public class ConvertServiceBuilderCommand {
 
 		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
 
-		projectTemplatesArgs.setDestinationDir(_moduleDir.toFile());
-		projectTemplatesArgs.setName(sbProject.toFile().getName());
+		projectTemplatesArgs.setDestinationDir(_moduleDir);
+		projectTemplatesArgs.setName(sbProject.getName());
 		projectTemplatesArgs.setPackageName(oldServiceBuilderXml.getPackagePath());
 		projectTemplatesArgs.setTemplate("service-builder");
 
 		createCommand.execute(projectTemplatesArgs);
 
-		Path sbServiceProject = sbProject.resolve(sbProjectName + "-service");
+		File sbServiceProject = new File(sbProject, sbProjectName + "-service");
 
-		Path newServiceXml = sbServiceProject.resolve(ServiceBuilder.SERVICE_XML);
+		File newServiceXml = new File(sbServiceProject, ServiceBuilder.SERVICE_XML);
 
-		Files.move(serviceFile, newServiceXml, StandardCopyOption.REPLACE_EXISTING);
+		Files.move(serviceFile.toPath(), newServiceXml.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 		ServiceBuilder serviceBuilderXml = new ServiceBuilder(newServiceXml);
 
@@ -157,66 +159,66 @@ public class ConvertServiceBuilderCommand {
 
 		String packageName = sbPackageName.replaceAll("\\.", "/");
 
-		Path oldSBFolder = project.resolve(Paths.get(Constants.DEFAULT_JAVA_SRC, packageName));
+		File oldSBFolder = new File(project, Constants.DEFAULT_JAVA_SRC + packageName);
 
-		Path newSBFolder = sbServiceProject.resolve(Paths.get(Constants.DEFAULT_JAVA_SRC, packageName));
+		File newSBFolder = new File(sbServiceProject, Constants.DEFAULT_JAVA_SRC + packageName);
 
-		Path oldServiceImplFolder = oldSBFolder.resolve("service");
-		Path newServiceImplFolder = newSBFolder.resolve("service");
+		File oldServiceImplFolder = new File(oldSBFolder, "service");
+		File newServiceImplFolder = new File(newSBFolder, "service");
 
-		if (Files.exists(oldServiceImplFolder)) {
-			Files.createDirectories(newServiceImplFolder);
+		if (oldServiceImplFolder.exists()) {
+			newServiceImplFolder.mkdirs();
 
-			Files.move(oldServiceImplFolder, newServiceImplFolder, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(oldServiceImplFolder.toPath(), newServiceImplFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 
-		Path oldModelImplFolder = oldSBFolder.resolve("model");
-		Path newModelImplFolder = newSBFolder.resolve("model");
+		File oldModelImplFolder = new File(oldSBFolder, "model");
+		File newModelImplFolder = new File(newSBFolder, "model");
 
-		if (Files.exists(oldModelImplFolder)) {
-			Files.createDirectories(newModelImplFolder);
+		if (oldModelImplFolder.exists()) {
+			newModelImplFolder.mkdirs();
 
-			Files.move(oldModelImplFolder, newModelImplFolder, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(oldModelImplFolder.toPath(), newModelImplFolder.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 
-		Path oldMetaInfFolder = project.resolve(Paths.get(Constants.DEFAULT_JAVA_SRC, ServiceBuilder.META_INF));
-		Path newMetaInfFolder = sbServiceProject.resolve(Paths.get(Constants.DEFAULT_RESOURCES_SRC, ServiceBuilder.META_INF));
+		File oldMetaInfFolder = new File(project, Constants.DEFAULT_JAVA_SRC + ServiceBuilder.META_INF);
+		File newMetaInfFolder = new File(sbServiceProject, Constants.DEFAULT_RESOURCES_SRC + ServiceBuilder.META_INF);
 
-		if (Files.exists(oldMetaInfFolder)) {
-			Files.createDirectories(newMetaInfFolder);
+		if (oldMetaInfFolder.exists()) {
+			newMetaInfFolder.mkdirs();
 
-			Files.move(oldMetaInfFolder.resolve(ServiceBuilder.PORTLET_MODEL_HINTS_XML),
-				newMetaInfFolder.resolve(ServiceBuilder.PORTLET_MODEL_HINTS_XML));
+			Files.move(new File(oldMetaInfFolder, ServiceBuilder.PORTLET_MODEL_HINTS_XML).toPath(),
+				new File(newMetaInfFolder, ServiceBuilder.PORTLET_MODEL_HINTS_XML).toPath());
 		}
 
-		Path oldSrcFolder = project.resolve(Constants.DEFAULT_JAVA_SRC);
-		Path newResourcesSrcFolder = sbServiceProject.resolve(Constants.DEFAULT_RESOURCES_SRC);
+		File oldSrcFolder = new File(project, Constants.DEFAULT_JAVA_SRC);
+		File newResourcesSrcFolder = new File(sbServiceProject, Constants.DEFAULT_RESOURCES_SRC);
 
-		if (Files.exists(oldSrcFolder)) {
-			Files.createDirectories(newResourcesSrcFolder);
+		if (oldSrcFolder.exists()) {
+			newResourcesSrcFolder.mkdirs();
 
-			Files.move(oldSrcFolder.resolve(ServiceBuilder.SERVICE_PROPERTIES),
-				newResourcesSrcFolder.resolve(ServiceBuilder.SERVICE_PROPERTIES));
+			Files.move(new File(oldSrcFolder, ServiceBuilder.SERVICE_PROPERTIES).toPath(),
+				new File(newResourcesSrcFolder, ServiceBuilder.SERVICE_PROPERTIES).toPath());
 		}
 
-		Path sbApiProject = sbProject.resolve(sbProjectName + "-api");
-		Path oldApiFolder = project.resolve(Paths.get(Constants.DEFAULT_WEBAPP_SRC, ServiceBuilder.API_62));
+		File sbApiProject = new File(sbProject, sbProjectName + "-api");
+		File oldApiFolder = new File(project, Constants.DEFAULT_WEBAPP_SRC + ServiceBuilder.API_62);
 
-		if (Files.exists(oldApiFolder)) {
-			Path newApiFolder = sbApiProject.resolve(Constants.DEFAULT_JAVA_SRC);
+		if (oldApiFolder.exists()) {
+			File newApiFolder = new File(sbApiProject, Constants.DEFAULT_JAVA_SRC);
 
-			Files.createDirectories(newApiFolder);
+			newApiFolder.mkdirs();
 
-			for (Path oldApiFile : Files.list(oldApiFolder).collect(Collectors.toList())) {
-				Files.move(oldApiFile, newApiFolder.resolve(oldApiFile.getFileName()));
+			for (File oldApiFile : oldApiFolder.listFiles()) {
+				Files.move(oldApiFile.toPath(), newApiFolder.toPath().resolve(oldApiFile.getName()));
 			}
 		}
 
-		Files.deleteIfExists(oldApiFolder);
+		oldApiFolder.delete();
 
 		// go through all api folders and make sure to add a packageinfo file
 
-		Stream<Path> srcPaths = Files.walk(sbApiProject.resolve(Constants.DEFAULT_JAVA_SRC));
+		Stream<Path> srcPaths = Files.walk(sbApiProject.toPath().resolve(Constants.DEFAULT_JAVA_SRC));
 
 		srcPaths.map(
 			path -> path.toFile()
@@ -240,22 +242,22 @@ public class ConvertServiceBuilderCommand {
 		srcPaths.close();
 
 		// add dependency on -api to portlet project
-		Path gradleFile = project.resolve( "build.gradle");
+		File gradleFile = new File(project, "build.gradle");
 
-		String gradleContent = new String(Files.readAllBytes(gradleFile));
+		String gradleContent = new String(Files.readAllBytes(gradleFile.toPath()));
 
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("dependencies {\n");
 		sb.append("\tcompileOnly project(\":modules:");
-		sb.append(sbProject.getFileName());
+		sb.append(sbProject.getName());
 		sb.append(":");
-		sb.append(sbApiProject.getFileName());
+		sb.append(sbApiProject.getName());
 		sb.append("\")\n");
 
 		String updatedContent = gradleContent.replaceAll("dependencies \\{", sb.toString());
 
-		Files.write(gradleFile, updatedContent.getBytes());
+		Files.write(gradleFile.toPath(), updatedContent.getBytes());
 
 		System.out.println("Migrating files done, then you should fix breaking changes and re-run build-service task.");
 	}
@@ -269,25 +271,25 @@ public class ConvertServiceBuilderCommand {
 	}
 
 	private static class ServiceBuilder {
-		public static final String META_INF = "META-INF";
-		public static final String API_62 = "WEB-INF" + File.separator + "service";
+		public static final String META_INF = "META-INF/";
+		public static final String API_62 = "WEB-INF/service/";
 		public static final String PORTLET_MODEL_HINTS_XML = "portlet-model-hints.xml";
 		public static final String SERVICE_XML = "service.xml";
 		public static final String SERVICE_PROPERTIES = "service.properties";
 
-		Path _serviceXml;
+		File _serviceXml;
 		Element _rootElement;
 
-		public ServiceBuilder(Path serviceXml) throws Exception {
+		public ServiceBuilder(File serviceXml) throws Exception {
 			_serviceXml = serviceXml;
 			parse();
 		}
 
 		private void parse() throws Exception {
-			if ((_rootElement == null) && (_serviceXml != null) && (Files.exists(_serviceXml))) {
+			if ((_rootElement == null) && (_serviceXml != null) && (_serviceXml.exists())) {
 				DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-				Document doc = dBuilder.parse(_serviceXml.toFile());
+				Document doc = dBuilder.parse(_serviceXml);
 
 				_rootElement = doc.getDocumentElement();
 			}
@@ -298,9 +300,10 @@ public class ConvertServiceBuilderCommand {
 		}
 	}
 
+
 	private blade _blade;
-	private final Path _warsDir;
-	private final Path _moduleDir;
+	private final File _warsDir;
+	private final File _moduleDir;
 	private ConvertArgs _options;
 
 }

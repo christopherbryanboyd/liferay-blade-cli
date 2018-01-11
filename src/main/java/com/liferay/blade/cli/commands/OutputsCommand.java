@@ -20,6 +20,7 @@ import com.liferay.blade.cli.blade;
 import com.liferay.blade.cli.commands.arguments.OutputsArgs;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -35,14 +36,15 @@ public class OutputsCommand {
 	}
 
 	public void execute() throws Exception {
-		final Path basePath = _blade.getBase();
+		final File base = _blade.getBase();
+		final Path basePath = base.toPath();
 		final Path basePathRoot = basePath.getRoot();
 
-		final Set<Path> outputs = GradleTooling.getOutputFiles(
-			_blade.getCacheDir(), basePath);
+		final Set<File> outputs = GradleTooling.getOutputFiles(
+			_blade.getCacheDir(), base);
 
-		outputs.forEach(outputPath -> 
-		{
+		for (File output : outputs) {
+			Path outputPath = output.toPath();
 			Path outputPathRoot = outputPath.getRoot();
 
 			Object print = null;
@@ -55,7 +57,7 @@ public class OutputsCommand {
 			}
 
 			_blade.out().println(print);
-		});
+		}
 	}
 
 	private blade _blade;

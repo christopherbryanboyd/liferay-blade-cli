@@ -21,16 +21,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import aQute.lib.io.IO;
+
+import java.io.File;
 import java.util.Set;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.liferay.blade.cli.util.FilesUtil;
-import com.liferay.project.templates.internal.util.FileUtil;
 
 /**
  * @author Gregory Amerson
@@ -39,19 +36,15 @@ public class GradleToolingTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		FilesUtil.copy(Paths.get("deps.zip"), Paths.get("build","classes","java","test","deps.zip"));
-		Path testws = Paths.get("build","testws1");
-		if (Files.exists(testws))
-			FileUtil.deleteDir(testws);
-		Files.createDirectories(testws);
-		FilesUtil.copy(
-			Paths.get("test-resources","projects","testws1"), testws);
+		IO.copy(new File("deps.zip"), new File("build/classes/java/test/deps.zip"));
+		IO.copy(
+			new File("test-resources/projects/testws1"), new File("build/testws1"));
 	}
 
 	@Test
 	public void testGetOutputFiles() throws Exception {
-		Set<Path> files = GradleTooling.getOutputFiles(
-			Paths.get("build"), Paths.get("build","testws1"));
+		Set<File> files = GradleTooling.getOutputFiles(
+			new File("build"), new File("build/testws1"));
 
 		assertNotNull(files);
 		assertEquals(1, files.size());
@@ -60,16 +53,16 @@ public class GradleToolingTest {
 	@Test
 	public void testGetPluginClassNames() throws Exception {
 		Set<String> pluginClassNames = GradleTooling.getPluginClassNames(
-			Paths.get("build"), Paths.get("build","testws1","modules","testportlet"));
+			new File("build"), new File("build/testws1/modules/testportlet"));
 
 		assertNotNull(pluginClassNames);
 		assertTrue(pluginClassNames.contains("com.liferay.gradle.plugins.LiferayOSGiPlugin"));
 	}
 
-	@Test 
+	@Test
 	public void testIsLiferayModule() throws Exception {
 		boolean isModule = GradleTooling.isLiferayModule (
-			Paths.get("build"), Paths.get("build","testws1","modules","testportlet"));
+			new File("build"), new File("build/testws1/modules/testportlet"));
 
 		assertTrue(isModule);
 	}
@@ -77,7 +70,7 @@ public class GradleToolingTest {
 	@Test
 	public void testIsNotLiferayModule() throws Exception {
 		boolean isModule = GradleTooling.isLiferayModule (
-			Paths.get("build"), Paths.get("build","testws1","modules"));
+			new File("build"), new File("build/testws1/modules"));
 
 		assertFalse(isModule);
 	}

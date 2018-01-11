@@ -19,7 +19,7 @@ package com.liferay.blade.cli.gradle;
 import com.liferay.blade.cli.Util;
 import com.liferay.blade.cli.blade;
 
-import java.nio.file.Path;
+import java.io.File;
 
 /**
  * @author David Truong
@@ -29,11 +29,11 @@ public class GradleExec {
 	public GradleExec(blade blade) {
 		_blade = blade;
 
-		Path gradlew = Util.getGradleWrapper(blade.getBase());
+		File gradlew = Util.getGradleWrapper(blade.getBase());
 
 		if (gradlew != null) {
 			try {
-				_executable = gradlew.toRealPath().toString();
+				_executable = gradlew.getCanonicalPath();
 			}
 			catch (Exception e) {
 				blade.out().println(
@@ -58,5 +58,6 @@ public class GradleExec {
 
 	private blade _blade;
 	private String _executable;
+
 
 }

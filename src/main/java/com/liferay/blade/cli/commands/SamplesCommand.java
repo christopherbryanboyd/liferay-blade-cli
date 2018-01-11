@@ -71,10 +71,10 @@ public class SamplesCommand {
 		File workDir = _options.getDir();
 
 		if (workDir == null) {
-			workDir = _blade.getBase().toFile();
+			workDir = _blade.getBase();
 		}
 
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
+		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
 
 		File gradleSamples = new File(bladeRepo, "gradle");
 
@@ -110,7 +110,7 @@ public class SamplesCommand {
 
 	private boolean downloadBladeRepoIfNeeded() throws Exception {
 		File bladeRepoArchive = new File(
-			_blade.getCacheDir().toFile(), _BLADE_REPO_ARCHIVE_NAME);
+			_blade.getCacheDir(), _BLADE_REPO_ARCHIVE_NAME);
 
 		Date now = new Date();
 
@@ -127,13 +127,13 @@ public class SamplesCommand {
 
 	private void extractBladeRepo() throws Exception {
 		File bladeRepoArchive = new File(
-			_blade.getCacheDir().toFile(), _BLADE_REPO_ARCHIVE_NAME);
+			_blade.getCacheDir(), _BLADE_REPO_ARCHIVE_NAME);
 
-		Util.unzip(bladeRepoArchive.toPath(), _blade.getCacheDir(), null);
+		Util.unzip(bladeRepoArchive, _blade.getCacheDir(), null);
 	}
 
 	private void listSamples() {
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
+		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
 
 		File gradleSamples = new File(bladeRepo, "gradle");
 
@@ -228,7 +228,7 @@ public class SamplesCommand {
 	}
 
 	private void updateBuildGradle(File dir) throws Exception {
-		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
+		File bladeRepo = new File(_blade.getCacheDir(), _BLADE_REPO_NAME);
 
 		File sampleGradleFile = new File(dir, "build.gradle");
 

@@ -55,7 +55,7 @@ public class InitCommandTest {
 
 		testdir.mkdirs();
 
-		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(), testdir.toPath());
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip"), testdir);
 
 		assertTrue(testdir.exists());
 
@@ -87,7 +87,7 @@ public class InitCommandTest {
 
 		testdir.mkdirs();
 
-		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip").toPath(),testdir.toPath());
+		Util.unzip(new File("test-resources/projects/plugins-sdk-with-git.zip"),testdir);
 
 		assertTrue(testdir.exists());
 

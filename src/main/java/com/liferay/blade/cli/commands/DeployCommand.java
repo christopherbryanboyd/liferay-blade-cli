@@ -27,6 +27,7 @@ import com.liferay.blade.cli.commands.arguments.DeployArgs;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,8 +57,8 @@ public class DeployCommand {
 		_port = /*options.port() != 0 ? options.port() : */11311;
 	}
 
-	public void deploy(GradleExec gradle, Set<Path> outputFiles)
-		throws Exception {
+	public void deploy(GradleExec gradle, Set<File> outputFiles)
+			throws Exception {
 
 		int retcode = gradle.executeGradleCommand("build -x check");
 
@@ -66,44 +67,49 @@ public class DeployCommand {
 			return;
 		}
 
-		for (Path outputFile : outputFiles) {
+		for (File outputFile : outputFiles) {
 			installOrUpdate(outputFile);
 		}
 	}
 
 	public void deployWatch(
-			final GradleExec gradleExec, final Set<Path> outputFiles)
+			final GradleExec gradleExec, final Set<File> outputFiles)
 		throws Exception {
 
 		deploy(gradleExec, outputFiles);
 
-		Exception[] exception = new Exception[1];
-		CountDownLatch latch = new CountDownLatch(1);
-		CompletableFuture.runAsync(() -> {
-			try {
-				gradleExec.executeGradleCommand("build -x check -t");
-			}
-			catch (Exception e) {
-				exception[0] = e;
-			}
-			latch.countDown();
-		});
-		latch.await();
+		new Thread() {
 
-		Consumer<Path> consumer = (modified) -> {
-			if (outputFiles.contains(modified)) {
-				_blade.out().println("installOrUpdate " + modified);
-
+			public void run() {
 				try {
-					installOrUpdate(modified);
-				} catch (Exception e) {
-
-					_blade.error(e.getMessage());
+					gradleExec.executeGradleCommand("build -x check -t");
+				}
+				catch (Exception e) {
 				}
 			}
+
+		}.start();
+
+		Consumer<Path> consumer = new Consumer<Path>() {
+
+			@Override
+			public void consume(Path modified) {
+				try {
+					File modifiedFile = modified.toFile();
+
+					if (outputFiles.contains(modifiedFile)) {
+						_blade.out().println("installOrUpdate " + modifiedFile);
+
+						installOrUpdate(modifiedFile);
+					}
+				}
+				catch (Exception e) {
+				}
+			}
+
 		};
 
-		new FileWatcher(_blade.getBase(), true, consumer);
+		new FileWatcher(_blade.getBase().toPath(), true, consumer);
 	}
 
 	public void execute() throws Exception {
@@ -116,7 +122,7 @@ public class DeployCommand {
 
 		GradleExec gradleExec = new GradleExec(_blade);
 
-		Set<Path> outputFiles = GradleTooling.getOutputFiles(
+		Set<File> outputFiles = GradleTooling.getOutputFiles(
 			_blade.getCacheDir(), _blade.getBase());
 
 		if (_options.isWatch()) {
@@ -136,13 +142,13 @@ public class DeployCommand {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
-	private void installOrUpdate(Path outputFile) throws Exception {
+	private void installOrUpdate(File outputFile) throws Exception {
 		boolean isFragment = false;
 		String fragmentHost = null;
 		String bsn = null;
 		String hostBSN = null;
 
-		try(Jar bundle = new Jar(outputFile.toString())) {
+		try(Jar bundle = new Jar(outputFile)) {
 			Manifest manifest = bundle.getManifest();
 			Attributes mainAttributes = manifest.getMainAttributes();
 
@@ -166,7 +172,7 @@ public class DeployCommand {
 
 		long existingId = getBundleId(bundles,bsn);
 
-		String bundleURL = outputFile.toUri().toASCIIString();
+		String bundleURL = outputFile.toURI().toASCIIString();
 
 		if (existingId > 0) {
 			if (isFragment && hostId > 0) {

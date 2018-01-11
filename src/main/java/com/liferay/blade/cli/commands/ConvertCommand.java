@@ -70,7 +70,7 @@ public class ConvertCommand {
 		
 		_blade = blade;
 		_options = options;
-		File projectDir = Util.getWorkspaceDir(_blade).toFile();
+		File projectDir = Util.getWorkspaceDir(_blade);
 
 		Properties gradleProperties = Util.getGradleProperties(projectDir);
 

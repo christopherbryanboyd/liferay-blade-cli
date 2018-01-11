@@ -49,6 +49,7 @@ import com.liferay.blade.cli.commands.arguments.ShellArgs;
 import com.liferay.blade.cli.commands.arguments.UpdateArgs;
 import com.liferay.blade.cli.commands.arguments.UpgradePropsArgs;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
@@ -135,8 +136,8 @@ public class blade implements Runnable {
 		
 	}
 	
-	public Path getBase() {
-		return Paths.get(_bladeArgs.getBase());
+	public File getBase() {
+		return new File(_bladeArgs.getBase());
 	}
 	
 	public void _help(Options options) throws Exception {
@@ -221,10 +222,10 @@ public class blade implements Runnable {
 		return Paths.get(userHome, ".liferay", "bundles");
 	}
 
-	public Path getCacheDir() {
+	public File getCacheDir() {
 		String userHome = System.getProperty("user.home");
 
-		return Paths.get(userHome, ".blade", "cache");
+		return Paths.get(userHome, ".blade", "cache").toFile();
 	}
 
 	public PrintStream out() {

@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli.commands;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -158,9 +159,9 @@ public class ServerStartCommand {
 	public void execute()
 		throws Exception {
 
-		Path gradleWrapper = Util.getGradleWrapper(_blade.getBase());
+		Path gradleWrapper = Util.getGradleWrapper(_blade.getBase()).toPath();
 
-		Path rootDir = gradleWrapper.getParent();
+		File rootDir = gradleWrapper.getParent().toFile();
 
 		String serverType = null;
 
@@ -198,7 +199,7 @@ public class ServerStartCommand {
 				liferayHomeDir = tempLiferayHome.normalize();
 			}
 			else {
-				Path tempFile = rootDir.resolve(liferayHomePath);
+				Path tempFile = rootDir.toPath().resolve(liferayHomePath);
 				liferayHomeDir = tempFile.normalize();
 			}
 
@@ -222,7 +223,7 @@ public class ServerStartCommand {
 							appServerParentDirTemp =
 								appServerParentDirTemp.replace(
 									"${project.dir}",
-									rootDir.toRealPath().toString());
+									rootDir.toPath().toRealPath().toString());
 
 							appServerParentDir = appServerParentDirTemp;
 						}
@@ -248,7 +249,7 @@ public class ServerStartCommand {
 				}
 				else {
 					commandServer(
-						rootDir.resolve(appServerParentDir), serverType);
+						rootDir.toPath().resolve(appServerParentDir), serverType);
 				}
 			}
 			catch (Exception e) {

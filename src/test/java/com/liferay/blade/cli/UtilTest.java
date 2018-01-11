@@ -59,7 +59,7 @@ public class UtilTest {
 
 		appServerProperty2.createNewFile();
 
-		List<Properties> propertiesList = Util.getAppServerProperties(dir.toPath());
+		List<Properties> propertiesList = Util.getAppServerProperties(dir);
 
 		assertTrue(propertiesList.size() == 2);
 	}
@@ -76,7 +76,7 @@ public class UtilTest {
 
 		Files.write(gradleFile.toPath(), plugin.getBytes());
 
-		assertTrue(Util.isWorkspace(workspace.toPath()));
+		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	@Test
@@ -91,7 +91,7 @@ public class UtilTest {
 
 		Files.write(gradleFile.toPath(), plugin.getBytes());
 
-		assertTrue(Util.isWorkspace(workspace.toPath()));
+		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	@Test
@@ -110,7 +110,7 @@ public class UtilTest {
 
 		Files.write(buildFile.toPath(), plugin.getBytes());
 
-		assertTrue(Util.isWorkspace(workspace.toPath()));
+		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	private File testdir;

@@ -23,6 +23,7 @@ import com.liferay.blade.cli.commands.arguments.CreateArgs;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,10 +84,10 @@ public class CreateCommand {
 				return;
 		}
 
-		Path dir;
+		File dir;
 
 		if(_options.getDir() != null) {
-			dir = _options.getDir().toPath().toAbsolutePath();
+			dir = new File(_options.getDir().getAbsolutePath());
 		}
 		else if (template.equals("theme") || template.equals("layout-template")
 				|| template.equals("spring-mvc-portlet")) {
@@ -96,7 +97,7 @@ public class CreateCommand {
 			dir = getDefaultModulesDir();
 		}
 
-		final Path checkDir = dir.resolve(name);
+		final File checkDir = new File(dir, name);
 
 		if(!checkDir(checkDir)) {
 			addError(
@@ -109,7 +110,7 @@ public class CreateCommand {
 
 		projectTemplatesArgs.setClassName(_options.getClassname());
 		projectTemplatesArgs.setContributorType(_options.getContributorType());
-		projectTemplatesArgs.setDestinationDir(dir.toFile());
+		projectTemplatesArgs.setDestinationDir(dir);
 		projectTemplatesArgs.setHostBundleSymbolicName(_options.getHostbundlebsn());
 		projectTemplatesArgs.setHostBundleVersion(_options.getHostbundleversion());
 		projectTemplatesArgs.setName(name);
@@ -126,19 +127,19 @@ public class CreateCommand {
 
 		_blade.out().println(
 			"Successfully created project " + projectTemplatesArgs.getName() + 
-				" in " + dir.toAbsolutePath());
+				" in " + dir.getAbsolutePath());
 	}
 
 	void execute(ProjectTemplatesArgs projectTemplatesArgs) throws Exception {
-		Path dir = projectTemplatesArgs.getDestinationDir().toPath();
+		File dir = projectTemplatesArgs.getDestinationDir();
 		String name = projectTemplatesArgs.getName();
 
 		new ProjectTemplates(projectTemplatesArgs);
 
-		Path gradlew = dir.resolve(Paths.get(name, "gradlew"));
+		File gradlew = new File(dir, name+"/gradlew");
 
-		if(Files.exists(gradlew)) {
-			gradlew.toFile().setExecutable(true);
+		if(gradlew.exists()) {
+			gradlew.setExecutable(true);
 		}
 	}
 
@@ -146,117 +147,121 @@ public class CreateCommand {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
-	private boolean containsDir(Path currentDir, Path parentDir)
-		throws Exception {
-		return currentDir.toRealPath().startsWith(parentDir.toRealPath());
-	}
+	private boolean containsDir(File currentDir, File parentDir)
+			throws Exception {
 
-	private boolean checkDir(Path file) {
-		if(Files.exists(file)) {
-			if(!Files.isDirectory(file)) {
-				return false;
-			}
-			else {
-				try {
-					return !Files.list(file).findAny().isPresent();
-				} catch (IOException e) {
-					_blade.error(e.getMessage());
+			String currentPath = currentDir.getCanonicalPath();
+
+			String parentPath = parentDir.getCanonicalPath();
+
+			return currentPath.startsWith(parentPath);
+		}
+
+		private boolean checkDir(File file) {
+			if(file.exists()) {
+				if(!file.isDirectory()) {
 					return false;
 				}
+				else {
+					File[] children = file.listFiles();
+
+					if(children != null && children.length > 0) {
+						return false;
+					}
+				}
+			}
+
+			return true;
+		}
+
+		private File getDefaultModulesDir() throws Exception {
+			File baseDir = _blade.getBase();
+
+			if (!Util.isWorkspace(baseDir)) {
+				return baseDir;
+			}
+
+			Properties properties = Util.getGradleProperties(baseDir);
+
+			String modulesDirValue = (String)properties.get(
+				Workspace.DEFAULT_MODULES_DIR_PROPERTY);
+
+			if (modulesDirValue == null) {
+				modulesDirValue = Workspace.DEFAULT_MODULES_DIR;
+			}
+
+			File projectDir = Util.getWorkspaceDir(_blade);
+
+			File modulesDir = new File(projectDir, modulesDirValue);
+
+			return containsDir(baseDir, modulesDir) ? baseDir : modulesDir;
+		}
+
+		private File getDefaultWarsDir() throws Exception {
+			File baseDir = _blade.getBase();
+
+			if (!Util.isWorkspace(baseDir)) {
+				return baseDir;
+			}
+
+			Properties properties = Util.getGradleProperties(baseDir);
+
+			String warsDirValue = (String)properties.get(
+				Workspace.DEFAULT_WARS_DIR_PROPERTY);
+
+			if (warsDirValue == null) {
+				warsDirValue = Workspace.DEFAULT_WARS_DIR;
+			}
+
+			if(warsDirValue.contains(",")) {
+				warsDirValue = warsDirValue.split(",")[0];
+			}
+
+			File projectDir = Util.getWorkspaceDir(_blade);
+
+			File warsDir = new File(projectDir, warsDirValue);
+
+			return containsDir(baseDir, warsDir) ? baseDir : warsDir;
+		}
+
+		private String[] getTemplateNames() throws Exception {
+			Map<String, String> templates = ProjectTemplates.getTemplates();
+
+			return templates.keySet().toArray(new String[0]);
+		}
+
+		private boolean isExistingTemplate(String templateName) throws Exception {
+			String[] templates = getTemplateNames();
+
+			for (String template : templates) {
+				if (templateName.equals(template)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private void printTemplates() throws Exception {
+			Map<String,String> templates = ProjectTemplates.getTemplates();
+
+			List<String> templateNames = new ArrayList<>(templates.keySet());
+
+			Collections.sort(templateNames);
+
+			Comparator<String> compareLength =
+				Comparator.comparingInt(String::length);
+
+			String longestString = templateNames.stream().max(compareLength).get();
+
+			int padLength = longestString.length() + 2;
+
+			for (String name : templateNames) {
+				_blade.out().print(StringUtils.rightPad(name, padLength));
+
+				_blade.out().println(templates.get(name));
 			}
 		}
-
-		return true;
-	}
-
-	private Path getDefaultModulesDir() throws Exception {
-		Path baseDir = _blade.getBase();
-
-		if (!Util.isWorkspace(baseDir)) {
-			return baseDir;
-		}
-
-		Properties properties = Util.getGradleProperties(baseDir);
-
-		String modulesDirValue = (String)properties.get(
-			Workspace.DEFAULT_MODULES_DIR_PROPERTY);
-
-		if (modulesDirValue == null) {
-			modulesDirValue = Workspace.DEFAULT_MODULES_DIR;
-		}
-
-		Path projectDir = Util.getWorkspaceDir(_blade);
-
-		Path modulesDir = projectDir.resolve( modulesDirValue);
-
-		return containsDir(baseDir, modulesDir) ? baseDir : modulesDir;
-	}
-
-	private Path getDefaultWarsDir() throws Exception {
-		Path baseDir = _blade.getBase();
-
-		if (!Util.isWorkspace(baseDir)) {
-			return baseDir;
-		}
-
-		Properties properties = Util.getGradleProperties(baseDir);
-
-		String warsDirValue = (String)properties.get(
-			Workspace.DEFAULT_WARS_DIR_PROPERTY);
-
-		if (warsDirValue == null) {
-			warsDirValue = Workspace.DEFAULT_WARS_DIR;
-		}
-
-		if(warsDirValue.contains(",")) {
-			warsDirValue = warsDirValue.split(",")[0];
-		}
-
-		Path projectDir = Util.getWorkspaceDir(_blade);
-
-		Path warsDir = projectDir.resolve(warsDirValue);
-
-		return containsDir(baseDir, warsDir) ? baseDir : warsDir;
-	}
-
-	public static String[] getTemplateNames() throws Exception {
-		Map<String, String> templates = ProjectTemplates.getTemplates();
-
-		return templates.keySet().toArray(new String[0]);
-	}
-
-	public static boolean isExistingTemplate(String templateName) throws Exception {
-		String[] templates = getTemplateNames();
-
-		for (String template : templates) {
-			if (templateName.equals(template)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private void printTemplates() throws Exception {
-		Map<String,String> templates = ProjectTemplates.getTemplates();
-
-		List<String> templateNames = new ArrayList<>(templates.keySet());
-
-		Collections.sort(templateNames);
-
-		Comparator<String> compareLength =
-			Comparator.comparingInt(String::length);
-
-		String longestString = templateNames.stream().max(compareLength).get();
-
-		int padLength = longestString.length() + 2;
-
-		for (String name : templateNames) {
-			_blade.out().print(StringUtils.rightPad(name, padLength));
-
-			_blade.out().println(templates.get(name));
-		}
-	}
 
 	private final blade _blade;
 	private final CreateArgs _options;

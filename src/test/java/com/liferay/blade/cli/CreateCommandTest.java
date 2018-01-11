@@ -1445,7 +1445,7 @@ public class CreateCommandTest {
 
 		new bladenofail().run(args);
 
-		assertTrue(Util.isWorkspace(workspace.toPath()));
+		assertTrue(Util.isWorkspace(workspace));
 	}
 
 	private void verifyBuild(String runnerPath, String projectPath, String outputFileName) {
