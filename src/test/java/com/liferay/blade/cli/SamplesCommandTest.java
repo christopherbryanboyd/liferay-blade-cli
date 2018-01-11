@@ -16,13 +16,16 @@
 
 package com.liferay.blade.cli;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import aQute.lib.io.IO;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import org.gradle.testkit.runner.BuildTask;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,138 +33,135 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.liferay.blade.cli.util.FilesUtil;
-import com.liferay.project.templates.internal.util.FileUtil;
-
 /**
  * @author David Truong
  */
 public class SamplesCommandTest {
-	private Path testDir;
+	private File testDir;
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		FilesUtil.copy(Paths.get("wrapper.zip"), Paths.get("build","classes","java","test","wrapper.zip"));
+		IO.copy(new File("wrapper.zip"), new File("build/classes/java/test/wrapper.zip"));
 	}
 
 	@Before
 	public void setUp() throws Exception {
-		testDir = Files.createTempDirectory("samplestest");
+		testDir = Files.createTempDirectory("samplestest").toFile();
 	}
 
 	@After
 	public void cleanUp() throws Exception {
-		if (Files.exists(testDir)) {
-			FileUtil.deleteDir(testDir);
-			assertTrue(Files.notExists(testDir));
+		if (testDir.exists()) {
+			IO.delete(testDir);
+			assertFalse(testDir.exists());
 		}
 	}
 
 	@AfterClass
 	public static void cleanUpClass() throws Exception {
-		Files.deleteIfExists(Paths.get("build","wrapper.zip"));
+		IO.delete(new File("build/wrapper.zip"));
 	}
 
 	@Test
 	public void testGetSample() throws Exception {
 		String[] args = {
-			"samples", "-d", testDir.resolve("test").toString(), "blade.friendlyurl"
+			"samples", "-d", testDir.getPath() + "/test", "blade.friendlyurl"
 		};
 
 		new bladenofail().run(args);
 
-		Path projectDir = testDir.resolve(Paths.get("test","blade.friendlyurl"));
+		File projectDir = new File(testDir, "test/blade.friendlyurl");
 
-		assertTrue(Files.exists(projectDir));
+		assertTrue(projectDir.exists());
 
-		Path buildFile = projectDir.resolve("build.gradle");
+		File buildFile = IO.getFile(projectDir, "build.gradle");
 
-		assertTrue(Files.exists(buildFile));
+		assertTrue(buildFile.exists());
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir, "build");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir.toPath(), "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.friendlyurl-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectDir.toPath(), "blade.friendlyurl-1.0.0.jar");
 	}
 
 	@Test
 	public void testGetSampleWithGradleWrapper() throws Exception {
-		String[] args = {"samples", "-d", testDir.resolve("test").toString(), "blade.authenticator.shiro"};
+		String[] args = {"samples", "-d", testDir.getPath() + "/test", "blade.authenticator.shiro"};
 
 		new bladenofail().run(args);
 
-		Path projectDir = testDir.resolve(Paths.get("test","blade.authenticator.shiro"));
+		File projectDir = new File(testDir, "test/blade.authenticator.shiro");
 
-		assertTrue(Files.exists(projectDir));
+		assertTrue(projectDir.exists());
 
-		Path buildFile = projectDir.resolve("build.gradle");
+		File buildFile = IO.getFile(projectDir, "build.gradle");
 
-		Path gradleWrapperJar = projectDir.resolve(Paths.get("gradle","wrapper","gradle-wrapper.jar"));
+		File gradleWrapperJar = IO.getFile(projectDir,  "gradle/wrapper/gradle-wrapper.jar");
 
-		Path gradleWrapperProperties = projectDir.resolve(Paths.get("gradle","wrapper","gradle-wrapper.properties"));
+		File gradleWrapperProperties = IO.getFile(projectDir, "gradle/wrapper/gradle-wrapper.properties");
 
-		Path gradleWrapperShell =projectDir.resolve("gradlew");
+		File gradleWrapperShell = IO.getFile(projectDir, "gradlew");
 
-		assertTrue(Files.exists(buildFile));
-		assertTrue(Files.exists(gradleWrapperJar));
-		assertTrue(Files.exists(gradleWrapperProperties));
-		assertTrue(Files.exists(gradleWrapperShell));
+		assertTrue(buildFile.exists());
+		assertTrue(gradleWrapperJar.exists());
+		assertTrue(gradleWrapperProperties.exists());
+		assertTrue(gradleWrapperShell.exists());
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir, "build");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir.toPath(), "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.authenticator.shiro-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectDir.toPath(), "blade.authenticator.shiro-1.0.0.jar");
 	}
 
 	@Test
 	public void testGetSampleWithGradleWrapperExisting() throws Exception {
-		String[] initArgs = {"-b", testDir.resolve(Paths.get("test","workspace")).toString(), "init"};
+		String[] initArgs = {"-b", testDir.getPath() + "/test/workspace", "init"};
 
 		new bladenofail().run(initArgs);
 
-		String[] samplesArgs = {"samples", "-d", testDir.resolve(Paths.get("test","workspace","modules")).toString(), "blade.authfailure"};
+		String[] samplesArgs = {"samples", "-d", testDir.getPath() + "/test/workspace/modules", "blade.authfailure"};
 
 		new bladenofail().run(samplesArgs);
 
-		Path projectDir = testDir.resolve(Paths.get("test","workspace","modules","blade.authfailure"));
+		File projectDir = new File(testDir, "test/workspace/modules/blade.authfailure");
 
-		assertTrue(Files.exists(projectDir));
+		assertTrue(projectDir.exists());
 
-		Path buildFile = projectDir.resolve("build.gradle");
+		File buildFile = IO.getFile(projectDir, "build.gradle");
 
-		Path gradleWrapperJar = projectDir.resolve(Paths.get("gradle","wrapper","gradle-wrapper.jar"));
+		File gradleWrapperJar = IO.getFile(projectDir,  "gradle/wrapper/gradle-wrapper.jar");
 
-		Path gradleWrapperProperties = projectDir.resolve(Paths.get("gradle","wrapper","gradle-wrapper.properties"));
+		File gradleWrapperProperties = IO.getFile(projectDir, "gradle/wrapper/gradle-wrapper.properties");
 
-		Path gradleWrapperShell = projectDir.resolve("gradlew");
+		File gradleWrapperShell = IO.getFile(projectDir, "gradlew");
 
-		assertTrue(Files.exists(buildFile));
-		assertTrue(Files.notExists(gradleWrapperJar));
-		assertTrue(Files.notExists(gradleWrapperProperties));
-		assertTrue(Files.notExists(gradleWrapperShell));
+		assertTrue(buildFile.exists());
+		assertFalse(gradleWrapperJar.exists());
+		assertFalse(gradleWrapperProperties.exists());
+		assertFalse(gradleWrapperShell.exists());
 
-		Path workspaceDir = testDir.resolve(Paths.get("test","workspace"));
+		File workspaceDir = new File(testDir, "test/workspace");
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspaceDir, "jar");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(workspaceDir.toPath(), "jar");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.authfailure-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectDir.toPath(), "blade.authfailure-1.0.0.jar");
 	}
 
 	@Test
 	public void testGetSampleWithDependencies() throws Exception {
-		String[] args = {"samples", "-d", testDir.resolve("test").toString(), "blade.rest"};
+		String[] args = {"samples", "-d", testDir.getPath() + "/test", "blade.rest"};
 
 		new bladenofail().run(args);
 
-		Path projectDir = testDir.resolve(Paths.get("test","blade.rest"));
+		File projectDir = new File(testDir, "test/blade.rest");
 
-		assertTrue(Files.exists(projectDir));
+		assertTrue(projectDir.exists());
 
-		Path buildFile = projectDir.resolve("build.gradle");
+		File buildFile = IO.getFile(projectDir, "build.gradle");
 
-		assertTrue(Files.exists(buildFile));
+		assertTrue(buildFile.exists());
 
-		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir, "build");
+		BuildTask buildtask = GradleRunnerUtil.executeGradleRunner(projectDir.toPath(), "build");
 		GradleRunnerUtil.verifyGradleRunnerOutput(buildtask);
-		GradleRunnerUtil.verifyBuildOutput(projectDir, "blade.rest-1.0.0.jar");
+		GradleRunnerUtil.verifyBuildOutput(projectDir.toPath(), "blade.rest-1.0.0.jar");
 	}
 
 	@Test

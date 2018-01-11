@@ -126,6 +126,9 @@ public class Util {
 		return p.resolve(file).toAbsolutePath();
 	}
 
+	public static void copy(InputStream in, File outputDir) throws Exception {
+		copy(in, outputDir.toPath());
+	}
 	public static void copy(InputStream in, Path outputDir) throws Exception {
 		try (Jar jar = new Jar("dot", in)) {
 			for (Entry<String, Resource> e : jar.getResources().entrySet()) {
@@ -195,6 +198,17 @@ public class Util {
 
 	}
 
+	public static Properties getGradleProperties(File dir) {
+		if (Objects.isNull(dir)) {
+			return null;			
+		}
+		else {
+			Path file = getGradlePropertiesFile(dir.toPath());
+			
+			return getProperties(file);			
+		}
+	}
+	
 	public static Properties getGradleProperties(Path dir) {
 		Path file = getGradlePropertiesFile(dir);
 
@@ -253,6 +267,12 @@ public class Util {
 			true);
 	}
 
+	public static boolean hasGradleWrapper(File dir) {
+			if (Objects.isNull(dir))
+				return false;
+			else
+				return hasGradleWrapper(dir.toPath());
+	}
 	public static boolean hasGradleWrapper(Path dir) {
 		if (Files.exists(dir.resolve("gradlew")) &&
 			Files.exists(dir.resolve("gradlew.bat"))) {
@@ -277,6 +297,10 @@ public class Util {
 		return isWorkspace(blade.getBase());
 	}
 
+	public static boolean isWorkspace(File dir) {
+		return isWorkspace(dir.toPath());
+	}
+	
 	public static boolean isWorkspace(Path dir) {
 		
 		File workspaceDir = getWorkspaceDir(dir).toFile();
@@ -328,7 +352,9 @@ public class Util {
 			blade.err().println(f);
 		}
 	}
-
+	public static String read(File file) throws IOException {
+		return read(file.toPath());
+	}
 	public static String read(Path file) throws IOException {
 		return new String(Files.readAllBytes(file));
 	}
@@ -432,6 +458,12 @@ public class Util {
 		unzip(srcFile, destDir, null);
 	}
 
+	public static void unzip(File srcFile, File destDir) throws IOException {
+		unzip(srcFile.toPath(), destDir.toPath(), null);
+	}
+	public static void unzip(File srcFile, File destDir, String entryToStart) throws IOException {
+		unzip(srcFile.toPath(), destDir.toPath(), entryToStart);
+	}
 	public static void unzip(Path srcFile, Path destDir, String entryToStart)
 		throws IOException {
 		try (final ZipFile zip = new ZipFile(srcFile.toFile())) {

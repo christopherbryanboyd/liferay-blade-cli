@@ -16,12 +16,15 @@
 
 package com.liferay.blade.cli.commands;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -65,47 +68,40 @@ public class SamplesCommand {
 	}
 
 	private void copySample(String sampleName) throws Exception {
-		final Path workDir; 
-		if (_options.getDir() == null) {
-			workDir = _blade.getBase();			
-		} else {
-			workDir = _options.getDir().toPath();
+		File workDir = _options.getDir();
+
+		if (workDir == null) {
+			workDir = _blade.getBase().toFile();
 		}
 
-		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
-		
-		Predicate<Path> isCorrectSample = (path) -> Files.isDirectory(path) && path.getFileName().toString().equals(sampleName);
+		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
 
-		Path gradleSamples = bladeRepo.resolve("gradle");
+		File gradleSamples = new File(bladeRepo, "gradle");
 
-		Files.find(gradleSamples, 999, (path, bfa) -> isCorrectSample.test(path)).forEach((path) -> copySampleFiles(workDir, path));
-	}
+		for (File file : gradleSamples.listFiles()) {
+			String fileName = file.getName();
 
-	private void copySampleFiles(final Path workDir, Path path) {
-		Path fileName = path.getFileName();
-		
-		Path dest = workDir.resolve(fileName);
+			if (file.isDirectory() && fileName.equals(sampleName)) {
+				File dest = new File(workDir, fileName);
 
-		try {
-			FileUtils.copyDirectory(path.toFile(), dest.toFile());
-			
-			updateBuildGradle(dest);
+				FileUtils.copyDirectory(file, dest);
 
-			if (!Util.hasGradleWrapper(dest)) {
-				addGradleWrapper(dest);
+				updateBuildGradle(dest);
+
+				if (!Util.hasGradleWrapper(dest)) {
+					addGradleWrapper(dest);
+				}
 			}
-			
-		} catch (Exception e) {
-			_blade.error(e.getMessage());
 		}
 	}
 
-	private void addGradleWrapper(Path dest) throws Exception {
+
+	private void addGradleWrapper(File dest) throws Exception {
 		InputStream in = SamplesCommand.class.getResourceAsStream("/wrapper.zip");
 
 		Util.copy(in, dest);
 
-		dest.resolve("gradlew").toFile().setExecutable(true);
+		new File(dest, "gradlew").setExecutable(true);
 	}
 
 	private String deindent(String s) {
@@ -113,14 +109,15 @@ public class SamplesCommand {
 	}
 
 	private boolean downloadBladeRepoIfNeeded() throws Exception {
-		Path bladeRepoArchive = 
-			_blade.getCacheDir().resolve(_BLADE_REPO_ARCHIVE_NAME);
+		File bladeRepoArchive = new File(
+			_blade.getCacheDir().toFile(), _BLADE_REPO_ARCHIVE_NAME);
 
+		Date now = new Date();
 
-		long diff = System.currentTimeMillis() - Files.getLastModifiedTime(bladeRepoArchive).toMillis();
+		long diff = now.getTime() - bladeRepoArchive.lastModified();
 
-		if (Files.notExists(bladeRepoArchive) || (diff > _FILE_EXPIRATION_TIME)) {
-			FileUtils.copyURLToFile(new URL(_BLADE_REPO_URL), bladeRepoArchive.toFile());
+		if (!bladeRepoArchive.exists() || (diff > _FILE_EXPIRATION_TIME)) {
+			FileUtils.copyURLToFile(new URL(_BLADE_REPO_URL), bladeRepoArchive);
 
 			return true;
 		}
@@ -129,31 +126,33 @@ public class SamplesCommand {
 	}
 
 	private void extractBladeRepo() throws Exception {
-		Path bladeRepoArchive = 
-			_blade.getCacheDir().resolve(_BLADE_REPO_ARCHIVE_NAME);
+		File bladeRepoArchive = new File(
+			_blade.getCacheDir().toFile(), _BLADE_REPO_ARCHIVE_NAME);
 
-		Util.unzip(bladeRepoArchive, _blade.getCacheDir(), null);
+		Util.unzip(bladeRepoArchive.toPath(), _blade.getCacheDir(), null);
 	}
 
 	private void listSamples() {
-		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
+		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
 
-		Path gradleSamples = bladeRepo.resolve("gradle");
+		File gradleSamples = new File(bladeRepo, "gradle");
 
-		List<String> samples;
-		try {
-			samples = Files.find(gradleSamples, 999, (path, bfa) -> 
-				 (Files.isDirectory(path))).map(path -> path.getFileName().toString()).filter(string -> string.startsWith("blade.")).collect(Collectors.toList());
-			_blade.out().println(
-					"Please provide the sample project name to create, " +
-						"e.g. \"blade samples blade.rest\"\n");
-				_blade.out().println("Currently available samples:");
-				_blade.out().println(
-					WordUtils.wrap(StringUtils.join(samples, ", "), 80));
-		} catch (IOException e) {
-			_blade.error(e.getMessage());
+		List<String> samples = new ArrayList<>();
+
+		for (File file : gradleSamples.listFiles()) {
+			String fileName = file.getName();
+
+			if (file.isDirectory() && fileName.startsWith("blade.")) {
+				samples.add(fileName);
+			}
 		}
 
+		_blade.out().println(
+			"Please provide the sample project name to create, " +
+				"e.g. \"blade samples blade.rest\"\n");
+		_blade.out().println("Currently available samples:");
+		_blade.out().println(
+			WordUtils.wrap(StringUtils.join(samples, ", "), 80));
 	}
 
 	private String parseGradleScript(
@@ -228,17 +227,16 @@ public class SamplesCommand {
 			section);
 	}
 
-	private void updateBuildGradle(Path dir) throws Exception {
+	private void updateBuildGradle(File dir) throws Exception {
+		File bladeRepo = new File(_blade.getCacheDir().toFile(), _BLADE_REPO_NAME);
 
-		Path bladeRepo = _blade.getCacheDir().resolve(_BLADE_REPO_NAME);
-
-		Path sampleGradleFile = dir.resolve("build.gradle");
+		File sampleGradleFile = new File(dir, "build.gradle");
 
 		String script = Util.read(sampleGradleFile);
 
 		if (!Util.isWorkspace(dir)) {
-			Path parentBuildGradleFile = 
-				bladeRepo.resolve(Paths.get("gradle", "build.gradle"));
+			File parentBuildGradleFile = new File(
+				bladeRepo, "gradle/build.gradle");
 
 			String parentBuildScript = parseGradleScript(
 				Util.read(parentBuildGradleFile), "buildscript", false);
@@ -254,7 +252,7 @@ public class SamplesCommand {
 			script = parentBuildScript + parentSubprojectsScript + script;
 		}
 
-		Files.write(sampleGradleFile, script.getBytes());
+		Files.write(sampleGradleFile.toPath(), script.getBytes());
 	}
 
 	private static final String _BLADE_REPO_ARCHIVE_NAME =
