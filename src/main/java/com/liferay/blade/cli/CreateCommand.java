@@ -85,7 +85,7 @@ public class CreateCommand {
 		if(_options.dir() != null) {
 			dir = new File(_options.dir().getAbsolutePath());
 		}
-		else if (template.equals("theme") || template.equals("layout-template")
+		else if (template.startsWith("war") || template.equals("theme") || template.equals("layout-template")
 				|| template.equals("spring-mvc-portlet")) {
 			dir = getDefaultWarsDir();
 		}
