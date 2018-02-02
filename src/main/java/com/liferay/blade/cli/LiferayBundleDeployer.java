@@ -123,7 +123,7 @@ class LiferayBundleDeployerImpl implements LiferayBundleDeployer {
 		}
 	}
 	private GogoTelnetClient getClient() throws IOException {
-		if (!client.isPresent()) {
+		if (!client.isPresent() || client.get().isClosed()) {
 			client = Optional.of(new GogoTelnetClient(host, port));
 		}
 		return client.get();
@@ -131,10 +131,24 @@ class LiferayBundleDeployerImpl implements LiferayBundleDeployer {
 
 	@Override
 	public long getBundleId(Collection<BundleDTO> bundles, String bsn) throws Exception {
+		long bundleId;
 		
-		Objects.requireNonNull(bsn);
-	
-		return bundles.stream().filter((bundle) -> Objects.equals(bundle.symbolicName, bsn)).map((bundle) -> bundle.id).findAny().orElse(-1L);
+		if (Objects.nonNull(bsn)) {
+			
+			bundleId = bundles.stream().filter(
+				Objects::nonNull
+			).filter((bundle) -> 
+				Objects.equals(bundle.symbolicName, bsn)
+			).map((bundle) -> 
+				bundle.id
+			).findAny().orElse(
+				-1L
+			);
+			
+		} else {
+			bundleId = -1L;
+		}
+		return bundleId;
 	}
 
 	@Override
