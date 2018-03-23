@@ -38,7 +38,7 @@ import java.net.Socket;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -347,6 +347,34 @@ public class Util {
 		commands.add(cmd);
 
 		processBuilder.command(commands);
+	}
+	
+	public static Path getExtensionsDirectory() {
+		try
+		{
+			Path homePath = Paths.get(System.getProperty("user.home"));
+			Path bladePath = homePath.resolve(".blade");
+			if (Files.notExists(bladePath)) {
+				Files.createDirectory(bladePath);
+			} 
+			else
+			if (!Files.isDirectory(bladePath)) {
+				throw new Exception(".blade is not a directory!");
+			}
+			Path extensionsPath = bladePath.resolve("extensions");
+			if (Files.notExists(extensionsPath)) {
+				Files.createDirectory(extensionsPath);
+			}
+			else
+			if (!Files.isDirectory(extensionsPath)) {
+				throw new Exception(".blade/extensions is not a directory!");
+			}
+			return extensionsPath;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static Process startProcess(BladeCLI blade, String command) throws Exception {
