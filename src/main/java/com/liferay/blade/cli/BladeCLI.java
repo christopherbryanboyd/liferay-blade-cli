@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Gregory Amerson
@@ -46,8 +45,6 @@ public class BladeCLI implements Runnable {
 	}
 
 	public BladeCLI() {
-		_err = System.err;
-		_out = System.out;
 	}
 
 	public void addErrors(String prefix, Collection<String> data) {
@@ -321,8 +318,6 @@ public class BladeCLI implements Runnable {
 			}
 			catch (ParameterException pe) {
 				error(pe.getClass().getName() + ": " + pe.getMessage());
-
-
 			}
 		}
 	}
@@ -337,6 +332,14 @@ public class BladeCLI implements Runnable {
 
 	public void serverStop(ServerStopCommandArgs args) throws Exception {
 		new ServerStopCommand(this, args).execute();
+	}
+
+	public void setOut(PrintStream printStream) {
+		_out = printStream;
+	}
+	
+	public void setErr(PrintStream printStream) {
+		_err = printStream;
 	}
 
 	public void sh(ShellCommandArgs args) throws Exception {
@@ -387,13 +390,13 @@ public class BladeCLI implements Runnable {
 
 		flags.addAll(addLast);
 	}
-
+	
 	private static final Formatter _tracer = new Formatter(System.out);
 
 	private String _command;
 	private BaseArgs _commandArgs;
-	protected PrintStream _err;
+	private PrintStream _err = System.err;
 	private JCommander _jcommander;
-	protected PrintStream _out;
+	private PrintStream _out = System.out;
 
 }
