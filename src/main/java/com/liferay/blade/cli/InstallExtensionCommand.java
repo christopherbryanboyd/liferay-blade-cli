@@ -17,6 +17,7 @@
 package com.liferay.blade.cli;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 import com.liferay.blade.cli.gradle.GradleExec;
@@ -44,10 +46,29 @@ public class InstallExtensionCommand {
 
 	public void execute() throws Exception {
 
+		String arg = _args.getPath();
+		
+		if (Objects.nonNull(arg) && arg.trim().length() > 0) {
+			Path pathArg = Paths.get(arg);
+			
+			if (Files.exists(pathArg)) {
+				
+			} 
+			else {
+				throw new InstallExtensionCommandException("Path to extension does not exist: " + pathArg);
+			}
+			
+		}
+		else {
+			
+		}
 
-		GradleExec gradle = new GradleExec(_blade);
+	}
+	
+	private static void _gradleDeploy(BladeCLI blade, Path pathToProject) throws Exception {
+		GradleExec gradle = new GradleExec(blade);
 
-		Set<File> outputFiles = GradleTooling.getOutputFiles(_blade.getCacheDir(), _blade.getBase());
+		Set<File> outputFiles = GradleTooling.getOutputFiles(blade.getCacheDir(), blade.getBase());
 
 		gradle.executeGradleCommand("assemble -x check");
 		
@@ -56,16 +77,31 @@ public class InstallExtensionCommand {
 			Path outputFile = i.next().toPath();
 			
 			if (Files.exists(outputFile)) {
-				Path bladeExtensionsPath = Util.getExtensionsDirectory();
-				FileSystem fileSystem = FileSystems.getDefault();
-				PathMatcher pathMatcher = fileSystem.getPathMatcher("glob:**/*.project.templates.*");
-				
+
+				if (_isTemplateMatch(outputFile)) {
+					_installTemplate(outputFile);
+				}
 			}
-			
-			
 		}
 	}
-
+	
+	private static boolean _isTemplateMatch(Path path) {
+		return _pathMatcher.matches(path);
+	}
+	
+	private static void _installTemplate(Path pathToTemplate) throws IOException {
+		Path extensionsHome = Util.getExtensionsDirectory();
+		
+		Path pathToTemplateName = pathToTemplate.getFileName();
+		
+		Path pathToTemplateNew = extensionsHome.resolve(pathToTemplateName);
+		
+		Files.copy(pathToTemplate, pathToTemplateNew);
+	}
+	
 	private final InstallExtensionCommandArgs _args;
 	private final BladeCLI _blade;
+	private static final FileSystem _fileSystem = FileSystems.getDefault();
+	private static final PathMatcher _pathMatcher = _fileSystem.getPathMatcher("glob:**/*.project.templates.*");
+	
 }
