@@ -27,10 +27,10 @@ import org.osgi.framework.Constants;
 /**
  * @author Christopher Boyd
  */
-public class VersionCommand {
+public class VersionCommand extends BaseCommand<VersionCommandArgs> {
 
 	public VersionCommand(BladeCLI blade, VersionCommandArgs options) {
-		_blade = blade;
+		super(blade, options);
 	}
 
 	public void execute() throws Exception {
@@ -59,6 +59,11 @@ public class VersionCommand {
 		}
 
 		_blade.error("Could not locate version");
+	}
+
+	@Override
+	public Class<VersionCommandArgs> getArgsClass() {
+		return VersionCommandArgs.class;
 	}
 
 	private BladeCLI _blade;

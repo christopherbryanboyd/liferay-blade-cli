@@ -43,11 +43,11 @@ import org.osgi.framework.dto.BundleDTO;
 /**
  * @author Gregory Amerson
  */
-public class DeployCommand {
+public class DeployCommand extends BaseCommand<DeployCommandArgs> {
 
 	public DeployCommand(BladeCLI blade, DeployCommandArgs args) throws Exception {
-		_blade = blade;
-		_args = args;
+		super(blade, options);
+
 
 		_host = "localhost";
 		_port = 11311;
@@ -56,6 +56,7 @@ public class DeployCommand {
 	public void execute() throws Exception {
 		if (!Util.canConnect(_host, _port)) {
 			_addError("deploy", "Unable to connect to gogo shell on " + _host + ":" + _port);
+
 
 			return;
 		}
@@ -91,6 +92,10 @@ public class DeployCommand {
 
 	private void _addError(String prefix, String msg) {
 		_blade.addErrors(prefix, Collections.singleton(msg));
+
+	}
+	public Class<DeployCommandArgs> getArgsClass() {
+		return DeployCommandArgs.class;
 	}
 
 	private void _deploy(GradleExec gradle, Set<File> outputFiles) throws Exception {
@@ -276,7 +281,6 @@ public class DeployCommand {
 	}
 
 	private final DeployCommandArgs _args;
-	private final BladeCLI _blade;
 	private final String _host;
 	private final int _port;
 

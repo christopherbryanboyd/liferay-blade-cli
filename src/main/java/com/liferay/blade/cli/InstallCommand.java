@@ -24,13 +24,13 @@ import java.util.Collections;
 /**
  * @author Gregory Amerson
  */
-public class InstallCommand {
+public class InstallCommand extends BaseCommand<InstallCommandArgs> {
 
 	public static final String DESCRIPTION = "Installs a bundle into Liferay module framework.";
 
 	public InstallCommand(BladeCLI blade, InstallCommandArgs options) throws Exception {
-		_blade = blade;
-		_args = options;
+		super(blade, options);
+
 
 		_host = options.getHost() != null ? options.getHost() : "localhost";
 		_port = options.getPort() != 0 ? options.getPort() : 11311;
@@ -39,6 +39,7 @@ public class InstallCommand {
 	public void execute() throws Exception {
 		if (!Util.canConnect(_host, _port)) {
 			_addError("Unable to connect to gogo shell on " + _host + ":" + _port);
+
 			return;
 		}
 
@@ -46,6 +47,7 @@ public class InstallCommand {
 
 		if (bundleFileName == null) {
 			_addError("Must specify bundle file to install.");
+
 			return;
 		}
 
@@ -53,6 +55,7 @@ public class InstallCommand {
 
 		if (!bundleFile.exists()) {
 			_addError(bundleFile + "doesn't exist.");
+
 			return;
 		}
 
@@ -63,6 +66,11 @@ public class InstallCommand {
 		}
 	}
 
+	@Override
+	public Class<InstallCommandArgs> getArgsClass() {
+		return InstallCommandArgs.class;
+	}
+
 	private void _addError(String msg) {
 		_addError("install", msg);
 	}
@@ -71,8 +79,6 @@ public class InstallCommand {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
 
-	private final InstallCommandArgs _args;
-	private final BladeCLI _blade;
 	private final String _host;
 	private final int _port;
 

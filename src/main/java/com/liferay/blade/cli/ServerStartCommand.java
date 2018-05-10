@@ -32,11 +32,10 @@ import java.util.stream.Stream;
 /**
  * @author David Truong
  */
-public class ServerStartCommand {
+public class ServerStartCommand extends BaseCommand<ServerStartCommandArgs> {
 
 	public ServerStartCommand(BladeCLI blade, ServerStartCommandArgs options) {
-		_blade = blade;
-		_args = options;
+		super(blade, options);
 	}
 
 	public void execute() throws Exception {
@@ -131,6 +130,11 @@ public class ServerStartCommand {
 				_blade.error("Please execute this command from a Liferay project");
 			}
 		}
+	}
+
+	@Override
+	public Class<ServerStartCommandArgs> getArgsClass() {
+		return ServerStartCommandArgs.class;
 	}
 
 	private void _commandServer(Path dir, String serverType) throws Exception {
@@ -259,8 +263,5 @@ public class ServerStartCommand {
 			tailProcess.waitFor();
 		}
 	}
-
-	private ServerStartCommandArgs _args;
-	private BladeCLI _blade;
 
 }

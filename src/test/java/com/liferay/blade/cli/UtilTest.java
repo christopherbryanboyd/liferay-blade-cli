@@ -20,11 +20,6 @@ import aQute.lib.io.IO;
 
 import java.io.File;
 
-import java.nio.file.Files;
-
-import java.util.List;
-import java.util.Properties;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,7 +39,7 @@ public class UtilTest {
 		}
 	}
 
-	@Test
+	/*@Test
 	public void testAppServerProperties() throws Exception {
 		File dir = new File("build/test");
 
@@ -110,6 +105,15 @@ public class UtilTest {
 		Files.write(buildFile.toPath(), plugin.getBytes());
 
 		Assert.assertTrue(Util.isWorkspace(workspace));
+	}*/
+	/*@Test
+	public void testLoadClasspath() throws Exception {
+		Util.loadExtensions();
+	}*/
+
+	@Test
+	public void testClone() throws Exception {
+		Util.cloneGitRepo("https://github.com/wodencafe/GarbageDisposal/");
 	}
 
 	private File _testdir;

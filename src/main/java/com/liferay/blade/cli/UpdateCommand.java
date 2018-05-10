@@ -19,10 +19,10 @@ package com.liferay.blade.cli;
 /**
  * @author Gregory Amerson
  */
-public class UpdateCommand {
+public class UpdateCommand extends BaseCommand<UpdateCommandArgs> {
 
 	public UpdateCommand(BladeCLI blade, UpdateCommandArgs args) throws Exception {
-		_blade = blade;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
@@ -45,6 +45,11 @@ public class UpdateCommand {
 				_blade.error("blade exited with code: " + errCode);
 			}
 		}
+	}
+
+	@Override
+	public Class<UpdateCommandArgs> getArgsClass() {
+		return UpdateCommandArgs.class;
 	}
 
 	private BladeCLI _blade;

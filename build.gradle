@@ -26,6 +26,12 @@ formatSource {
 	maxLineLength = 120
 }
 
+configurations {
+	customCompile
+	customCompile.transitive = false
+	compile.extendsFrom(customCompile)
+}
+
 dependencies {
 	compile group: "biz.aQute.bnd", name: "aQute.libg", version: "3.5.0"
 	compile group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"

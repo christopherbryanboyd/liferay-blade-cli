@@ -53,11 +53,10 @@ import org.w3c.dom.NodeList;
 /**
  * @author Gregory Amerson
  */
-public class ConvertCommand {
+public class ConvertCommand extends BaseCommand<ConvertCommandArgs> {
 
 	public ConvertCommand(BladeCLI blade, ConvertCommandArgs options) throws Exception {
-		_blade = blade;
-		_args = options;
+		super(blade, options);
 
 		File projectDir = Util.getWorkspaceDir(_blade);
 
@@ -260,6 +259,11 @@ public class ConvertCommand {
 				}
 			}
 		}
+	}
+
+	@Override
+	public Class<ConvertCommandArgs> getArgsClass() {
+		return ConvertCommandArgs.class;
 	}
 
 	private static String _getAttr(Node item, String attrName) {
@@ -576,8 +580,6 @@ public class ConvertCommand {
 		return pluginDir[0];
 	}
 
-	private final ConvertCommandArgs _args;
-	private final BladeCLI _blade;
 	private final File _hooksDir;
 	private final File _layouttplDir;
 	private final File _pluginsSdkDir;

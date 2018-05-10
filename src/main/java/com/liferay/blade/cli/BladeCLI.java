@@ -22,8 +22,10 @@ import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -41,6 +43,24 @@ import java.util.Scanner;
  * @author David Truong
  */
 public class BladeCLI implements Runnable {
+
+	public static Path getBladeHome() {
+		String userHome = System.getProperty("user.home");
+
+		Path bladeHome = Paths.get(userHome, ".blade");
+
+		return bladeHome;
+	}
+
+	public static Path getExtensionsPath() throws IOException {
+		Path extensionsPath = getBladeHome().resolve("extensions");
+
+		if (!Files.exists(extensionsPath)) {
+			Files.createDirectories(extensionsPath);
+		}
+
+		return extensionsPath;
+	}
 
 	public static void main(String[] args) {
 		new BladeCLI().run(args);
@@ -269,6 +289,14 @@ public class BladeCLI implements Runnable {
 						version((VersionCommandArgs)_commandArgs);
 
 						break;
+					default:
+						if (_commandArgs != null) {
+							runCustomCommand();
+						} else {
+							_jcommander.usage();
+						}
+
+						break;
 				}
 			}
 		}
@@ -286,6 +314,7 @@ public class BladeCLI implements Runnable {
 
 		System.setErr(err());
 
+		try {
 		List<String> flags = new ArrayList<>(Arrays.asList(args));
 
 		_sort(flags);
@@ -298,6 +327,12 @@ public class BladeCLI implements Runnable {
 			new OutputsCommandArgs(), new SamplesCommandArgs(), new ServerStartCommandArgs(),
 			new ServerStopCommandArgs(), new ShellCommandArgs(), new UpdateCommandArgs(), new UpgradePropsArgs(),
 			new VersionCommandArgs());
+
+		Map<BaseArgs, BaseCommand<?>> extensions = Util.getExtensions();
+
+		for (BaseArgs extArgs : extensions.keySet()) {
+			argsList.add(extArgs);
+		}
 
 		Builder builder = JCommander.newBuilder();
 
@@ -322,6 +357,7 @@ public class BladeCLI implements Runnable {
 
 				if (jcommander == null) {
 					printUsage();
+
 					return;
 				}
 
@@ -350,6 +386,9 @@ public class BladeCLI implements Runnable {
 			catch (ParameterException pe) {
 				error(_jcommander.getParsedCommand() + ": " + pe.getMessage());
 			}
+		}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -412,6 +451,17 @@ public class BladeCLI implements Runnable {
 		}
 
 		flags.addAll(addLast);
+	}
+
+	private void runCustomCommand() throws Exception {
+		Map<BaseArgs, BaseCommand<?>> extensions = Util.getExtensions();
+
+		if (extensions.containsKey(_commandArgs)) {
+			BaseCommand<?> command = extensions.get(_commandArgs);
+			command.setArgs(_commandArgs);
+			command.setBlade(this);
+			command.execute();
+		}
 	}
 
 	private static final Formatter _tracer = new Formatter(System.out);

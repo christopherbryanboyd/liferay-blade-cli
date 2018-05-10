@@ -39,16 +39,16 @@ import org.apache.commons.lang3.StringUtils;
  * @author David Truong
  * @author Christopher Boyd
  */
-public class CreateCommand {
+public class CreateCommand extends BaseCommand<CreateCommandArgs> {
 
 	public CreateCommand(BladeCLI blade, CreateCommandArgs args) {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
 		if (_args.isListTemplates()) {
 			_printTemplates();
+
 			return;
 		}
 
@@ -97,6 +97,7 @@ public class CreateCommand {
 
 		if (Util.isEmpty(name)) {
 			_addError("Create", "SYNOPSIS\n\t create [options] <[name]>");
+
 			return;
 		}
 
@@ -153,10 +154,17 @@ public class CreateCommand {
 		_blade.out("Successfully created project " + projectTemplatesArgs.getName() + " in " + dir.getAbsolutePath());
 	}
 
-	protected CreateCommand(BladeCLI blade) {
-		_blade = blade;
+	@Override
+	public Class<CreateCommandArgs> getArgsClass() {
 
-		_args = null;
+		// TODO Auto-generated method stub
+
+		return CreateCommandArgs.class;
+	}
+
+	protected CreateCommand(BladeCLI blade) {
+		super(blade, null);
+
 	}
 
 	protected void execute(ProjectTemplatesArgs projectTemplatesArgs) throws Exception {
@@ -306,8 +314,5 @@ public class CreateCommand {
 			_blade.out(templates.get(name));
 		}
 	}
-
-	private final CreateCommandArgs _args;
-	private final BladeCLI _blade;
 
 }

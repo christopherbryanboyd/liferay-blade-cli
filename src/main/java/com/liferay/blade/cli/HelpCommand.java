@@ -21,11 +21,10 @@ import java.util.Objects;
 /**
  * @author Christopher Bryan Boyd
  */
-public class HelpCommand {
+public class HelpCommand extends BaseCommand<HelpCommandArgs> {
 
 	public HelpCommand(BladeCLI blade, HelpCommandArgs args) throws Exception {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
@@ -39,7 +38,9 @@ public class HelpCommand {
 		}
 	}
 
-	private HelpCommandArgs _args;
-	private BladeCLI _blade;
+	@Override
+	public Class<HelpCommandArgs> getArgsClass() {
+		return HelpCommandArgs.class;
+	}
 
 }
