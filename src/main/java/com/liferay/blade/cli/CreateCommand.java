@@ -18,13 +18,17 @@ package com.liferay.blade.cli;
 
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.ProjectTemplatesArgs;
+import com.liferay.project.templates.internal.util.FileUtil;
 
 import java.io.File;
 import java.io.PrintStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,16 +43,16 @@ import org.apache.commons.lang3.StringUtils;
  * @author David Truong
  * @author Christopher Boyd
  */
-public class CreateCommand {
+public class CreateCommand extends BaseCommand<CreateCommandArgs> {
 
 	public CreateCommand(BladeCLI blade, CreateCommandArgs args) {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
 		if (_args.isListTemplates()) {
 			_printTemplates();
+
 			return;
 		}
 
@@ -97,6 +101,7 @@ public class CreateCommand {
 
 		if (Util.isEmpty(name)) {
 			_addError("Create", "SYNOPSIS\n\t create [options] <[name]>");
+
 			return;
 		}
 
@@ -142,7 +147,9 @@ public class CreateCommand {
 		projectTemplatesArgs.setPackageName(_args.getPackageName());
 		projectTemplatesArgs.setService(_args.getService());
 		projectTemplatesArgs.setTemplate(template);
-
+		projectTemplatesArgs.getArchetypesDirs().add(FileUtil.getJarFile(ProjectTemplates.class));
+		projectTemplatesArgs.getArchetypesDirs().add(Util.getTemplatesDirectory().toFile());
+		
 		boolean mavenBuild = "maven".equals(_args.getBuild());
 
 		projectTemplatesArgs.setGradle(!mavenBuild);
@@ -153,10 +160,15 @@ public class CreateCommand {
 		_blade.out("Successfully created project " + projectTemplatesArgs.getName() + " in " + dir.getAbsolutePath());
 	}
 
-	protected CreateCommand(BladeCLI blade) {
-		_blade = blade;
+	@Override
+	public Class<CreateCommandArgs> getArgsClass() {
 
-		_args = null;
+		return CreateCommandArgs.class;
+	}
+
+	protected CreateCommand(BladeCLI blade) {
+		super(blade, null);
+
 	}
 
 	protected void execute(ProjectTemplatesArgs projectTemplatesArgs) throws Exception {
@@ -196,15 +208,7 @@ public class CreateCommand {
 
 		return currentPath.startsWith(parentPath);
 	}
-
-	private static String[] _getTemplateNames() throws Exception {
-		Map<String, String> templates = ProjectTemplates.getTemplates();
-
-		Set<String> keySet = templates.keySet();
-
-		return keySet.toArray(new String[0]);
-	}
-
+	
 	private void _addError(String prefix, String msg) {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
@@ -270,44 +274,33 @@ public class CreateCommand {
 	}
 
 	private boolean _isExistingTemplate(String templateName) throws Exception {
-		String[] templates = _getTemplateNames();
-
-		for (String template : templates) {
-			if (templateName.equals(template)) {
-				return true;
-			}
-		}
-
-		return false;
+		return Util.getTemplateNames().contains(templateName);
 	}
 
 	private void _printTemplates() throws Exception {
-		Map<String, String> templates = ProjectTemplates.getTemplates();
 
-		List<String> templateNames = new ArrayList<>(templates.keySet());
+		Map<String, String> templates = Util.getTemplates();
+		
+		List<String> templateNames = new ArrayList<>(Util.getTemplateNames());
 
 		Collections.sort(templateNames);
 
 		Comparator<String> compareLength = Comparator.comparingInt(String::length);
 
-		Stream<String> stream = templateNames.stream();
-
-		String longestString = stream.max(
+		String longestString = templateNames.stream().max(
 			compareLength
 		).get();
 
 		int padLength = longestString.length() + 2;
 
+		PrintStream out = _blade.out();
+
 		for (String name : templateNames) {
-			PrintStream out = _blade.out();
 
 			out.print(StringUtils.rightPad(name, padLength));
 
 			_blade.out(templates.get(name));
 		}
 	}
-
-	private final CreateCommandArgs _args;
-	private final BladeCLI _blade;
 
 }

@@ -16,31 +16,19 @@
 
 package com.liferay.blade.cli;
 
-import java.util.Objects;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
 /**
  * @author Christopher Bryan Boyd
  */
-public class HelpCommand extends BaseCommand<HelpCommandArgs> {
+@Parameters(commandDescription = InstallTemplateCommand.DESCRIPTION, commandNames = {"template install"})
+public class InstallTemplateCommandArgs extends BaseArgs {
 
-	public HelpCommand(BladeCLI blade, HelpCommandArgs args) throws Exception {
-		super(blade, args);
+	@Parameter(description = "The path to the template to install")
+	private String _path;
+
+	public String getPath() {
+		return _path;
 	}
-
-	public void execute() throws Exception {
-		String commandName = _args.getName();
-
-		if (Objects.nonNull(commandName) && (commandName.length() > 0)) {
-			_blade.printUsage(commandName);
-		}
-		else {
-			_blade.printUsage();
-		}
-	}
-
-	@Override
-	public Class<HelpCommandArgs> getArgsClass() {
-		return HelpCommandArgs.class;
-	}
-
 }

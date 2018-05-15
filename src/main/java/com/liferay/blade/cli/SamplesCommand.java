@@ -41,11 +41,10 @@ import org.apache.commons.io.FileUtils;
 /**
  * @author David Truong
  */
-public class SamplesCommand {
+public class SamplesCommand extends BaseCommand<SamplesCommandArgs> {
 
 	public SamplesCommand(BladeCLI blade, SamplesCommandArgs args) throws Exception {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
@@ -61,6 +60,11 @@ public class SamplesCommand {
 		else {
 			_copySample(sampleName);
 		}
+	}
+
+	@Override
+	public Class<SamplesCommandArgs> getArgsClass() {
+		return SamplesCommandArgs.class;
 	}
 
 	private void _addGradleWrapper(File dest) throws Exception {
@@ -295,8 +299,5 @@ public class SamplesCommand {
 
 	private static final Collection<String> _topLevelFolders = Arrays.asList(
 		"apps", "extensions", "overrides", "themes");
-
-	private final SamplesCommandArgs _args;
-	private final BladeCLI _blade;
 
 }

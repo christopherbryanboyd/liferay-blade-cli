@@ -20,6 +20,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.Parameters;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +43,14 @@ import java.util.Scanner;
  * @author David Truong
  */
 public class BladeCLI implements Runnable {
+
+	public static Path getBladeHome() {
+		String userHome = System.getProperty("user.home");
+
+		Path bladeHome = Paths.get(userHome, ".blade");
+
+		return bladeHome;
+	}
 
 	public static void main(String[] args) {
 		new BladeCLI().run(args);
@@ -269,6 +279,14 @@ public class BladeCLI implements Runnable {
 						version((VersionCommandArgs)_commandArgs);
 
 						break;
+					default:
+						if (_commandArgs != null) {
+							runCustomCommand();
+						} else {
+							_jcommander.usage();
+						}
+
+						break;
 				}
 			}
 		}
@@ -280,29 +298,67 @@ public class BladeCLI implements Runnable {
 			e.printStackTrace(err());
 		}
 	}
+	
+	private <T extends BaseArgs> String[] getCommandNames(Class<T> argsClass) {
+		try
+		{
+			Parameters annotation = argsClass.getAnnotation(Parameters.class);
+			if (Objects.nonNull(annotation)) {
+				return annotation.commandNames();
+			}
+		}
+		catch (Exception e)
+		{
+			error(e.getMessage());
+		}
+		return null;
+	}
 
 	public void run(String[] args) {
 		System.setOut(out());
 
 		System.setErr(err());
 
+		try {
 		List<String> flags = new ArrayList<>(Arrays.asList(args));
 
 		_sort(flags);
 
 		args = flags.toArray(new String[0]);
 
-		List<Object> argsList = Arrays.asList(
+		List<BaseArgs> argsList = Arrays.asList(
 			new CreateCommandArgs(), new ConvertCommandArgs(), new DeployCommandArgs(), new GradleCommandArgs(),
 			new HelpCommandArgs(), new InitCommandArgs(), new InstallCommandArgs(), new OpenCommandArgs(),
 			new OutputsCommandArgs(), new SamplesCommandArgs(), new ServerStartCommandArgs(),
 			new ServerStopCommandArgs(), new ShellCommandArgs(), new UpdateCommandArgs(), new UpgradePropsArgs(),
 			new VersionCommandArgs());
+		
+		Map<String, BaseArgs> argsMap = new HashMap<>();
+		
+		Collection<BaseArgs> extensionsList = Util.getExtensions().keySet();
+
+		for (BaseArgs arg : extensionsList) {
+			String[] commandNames = getCommandNames(arg.getClass());
+			if (commandNames != null && commandNames.length > 0) {
+				for (String commandName : commandNames) {
+					argsMap.putIfAbsent(commandName, arg);
+				}
+			}
+		}
+		
+		for (BaseArgs arg : argsList) {
+			String[] commandNames = getCommandNames(arg.getClass());
+			if (commandNames != null && commandNames.length > 0) {
+				for (String commandName : commandNames) {
+					argsMap.putIfAbsent(commandName, arg);
+				}
+			}
+		}
 
 		Builder builder = JCommander.newBuilder();
 
-		for (Object o : argsList) {
-			builder.addCommand(o);
+		for (BaseArgs arg : argsMap.values()) {
+			builder.addCommand(arg);
 		}
 
 		_jcommander = builder.build();
@@ -322,6 +378,7 @@ public class BladeCLI implements Runnable {
 
 				if (jcommander == null) {
 					printUsage();
+
 					return;
 				}
 
@@ -350,6 +407,9 @@ public class BladeCLI implements Runnable {
 			catch (ParameterException pe) {
 				error(_jcommander.getParsedCommand() + ": " + pe.getMessage());
 			}
+		}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -412,6 +472,17 @@ public class BladeCLI implements Runnable {
 		}
 
 		flags.addAll(addLast);
+	}
+
+	private void runCustomCommand() throws Exception {
+		Map<BaseArgs, BaseCommand<?>> extensions = Util.getExtensions();
+
+		if (extensions.containsKey(_commandArgs)) {
+			BaseCommand<?> command = extensions.get(_commandArgs);
+			command.setArgs(_commandArgs);
+			command.setBlade(this);
+			command.execute();
+		}
 	}
 
 	private static final Formatter _tracer = new Formatter(System.out);

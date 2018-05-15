@@ -25,11 +25,10 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Gregory Amerson
  */
-public class ShellCommand {
+public class ShellCommand extends BaseCommand<ShellCommandArgs> {
 
 	public ShellCommand(BladeCLI blade, ShellCommandArgs options) throws Exception {
-		_blade = blade;
-		_options = options;
+		super(blade, options);
 
 		_host = options.getHost() != null ? options.getHost() : "localhost";
 		_port = options.getPort() != 0 ? options.getPort() : 11311;
@@ -42,9 +41,14 @@ public class ShellCommand {
 			return;
 		}
 
-		String gogoCommand = StringUtils.join(_options.getArgs(), " ");
+		String gogoCommand = StringUtils.join(_args.getArgs(), " ");
 
 		_executeCommand(gogoCommand);
+	}
+
+	@Override
+	public Class<ShellCommandArgs> getArgsClass() {
+		return ShellCommandArgs.class;
 	}
 
 	private void _addError(String prefix, String msg) {
@@ -59,9 +63,7 @@ public class ShellCommand {
 		}
 	}
 
-	private final BladeCLI _blade;
 	private final String _host;
-	private final ShellCommandArgs _options;
 	private final int _port;
 
 }

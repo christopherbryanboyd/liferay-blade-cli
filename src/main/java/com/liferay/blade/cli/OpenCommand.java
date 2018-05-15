@@ -25,11 +25,10 @@ import java.util.Collections;
 /**
  * @author Gregory Amerson
  */
-public class OpenCommand {
+public class OpenCommand extends BaseCommand<OpenCommandArgs> {
 
 	public OpenCommand(BladeCLI blade, OpenCommandArgs args) throws Exception {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
@@ -37,6 +36,7 @@ public class OpenCommand {
 
 		if (!fileName.exists()) {
 			_addError("open", "Unable to find specified file " + fileName.getAbsolutePath());
+
 			return;
 		}
 
@@ -47,16 +47,19 @@ public class OpenCommand {
 
 			if (retval != null) {
 				_addError("open", retval.toString());
+
 				return;
 			}
 		}
 	}
 
+	@Override
+	public Class<OpenCommandArgs> getArgsClass() {
+		return OpenCommandArgs.class;
+	}
+
 	private void _addError(String prefix, String msg) {
 		_blade.addErrors(prefix, Collections.singleton(msg));
 	}
-
-	private final OpenCommandArgs _args;
-	private final BladeCLI _blade;
 
 }

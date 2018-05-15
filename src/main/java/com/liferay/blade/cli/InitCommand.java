@@ -43,11 +43,10 @@ import java.util.Properties;
  * @author Gregory Amerson
  * @author Terry Jia
  */
-public class InitCommand {
+public class InitCommand extends BaseCommand<InitCommandArgs> {
 
 	public InitCommand(BladeCLI blade, InitCommandArgs args) throws Exception {
-		_blade = blade;
-		_args = args;
+		super(blade, args);
 	}
 
 	public void execute() throws Exception {
@@ -63,6 +62,7 @@ public class InitCommand {
 
 		if (destDir.exists() && !destDir.isDirectory()) {
 			_addError(destDir.getAbsolutePath() + " is not a directory.");
+
 			return;
 		}
 
@@ -74,6 +74,7 @@ public class InitCommand {
 					if (_args.isUpgrade()) {
 						if (mavenBuild) {
 							_addError("Upgrading Plugins SDK in Liferay Maven Workspace not supported.");
+
 							return;
 						}
 
@@ -93,6 +94,7 @@ public class InitCommand {
 						_addError(
 							"Unable to run blade init in Plugins SDK 6.2, please add -u (--upgrade) if you want to " +
 								"upgrade to 7.0");
+
 						return;
 					}
 				}
@@ -117,6 +119,7 @@ public class InitCommand {
 							destDir.getAbsolutePath() +
 								" contains files, please move them before continuing or use -f (--force) option to " +
 									"init workspace.");
+
 						return;
 					}
 				}
@@ -172,6 +175,11 @@ public class InitCommand {
 
 			IO.deleteWithException(temp);
 		}
+	}
+
+	@Override
+	public Class<InitCommandArgs> getArgsClass() {
+		return InitCommandArgs.class;
 	}
 
 	private void _addError(String msg) {
@@ -304,8 +312,5 @@ public class InitCommand {
 		"app-servers.gradle", "build.gradle", "build-plugins.gradle", "build-themes.gradle", "sdk.gradle",
 		"settings.gradle", "util.gradle", "versions.gradle"
 	};
-
-	private final InitCommandArgs _args;
-	private final BladeCLI _blade;
 
 }

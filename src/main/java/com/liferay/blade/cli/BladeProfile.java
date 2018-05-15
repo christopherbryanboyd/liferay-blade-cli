@@ -16,31 +16,17 @@
 
 package com.liferay.blade.cli;
 
-import java.util.Objects;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Christopher Bryan Boyd
  */
-public class HelpCommand extends BaseCommand<HelpCommandArgs> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface BladeProfile {
 
-	public HelpCommand(BladeCLI blade, HelpCommandArgs args) throws Exception {
-		super(blade, args);
-	}
-
-	public void execute() throws Exception {
-		String commandName = _args.getName();
-
-		if (Objects.nonNull(commandName) && (commandName.length() > 0)) {
-			_blade.printUsage(commandName);
-		}
-		else {
-			_blade.printUsage();
-		}
-	}
-
-	@Override
-	public Class<HelpCommandArgs> getArgsClass() {
-		return HelpCommandArgs.class;
-	}
-
+	String value();
 }

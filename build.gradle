@@ -26,10 +26,16 @@ formatSource {
 	maxLineLength = 120
 }
 
+configurations {
+	customCompile
+	customCompile.transitive = false
+	compile.extendsFrom(customCompile)
+}
+
 dependencies {
 	compile group: "biz.aQute.bnd", name: "aQute.libg", version: "3.5.0"
 	compile group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"
-	compile group: "com.liferay", name: "com.liferay.project.templates", version: "4.0.0"
+	compile group: "com.liferay", name: "com.liferay.project.templates", version: "4.0.1"
 	compile group: "commons-io", name: "commons-io", version: "2.5"
 	compile group: "org.apache.commons", name: "commons-lang3", version: "3.4"
 	compile group: "org.apache.maven", name: "maven-aether-provider", version: "3.3.9"
@@ -80,6 +86,8 @@ repositories {
 	maven {
 		url "https://repo.gradle.org/gradle/libs-releases"
 	}
+	
+	mavenLocal()
 }
 
 task createDepsZip(type:Zip) {
