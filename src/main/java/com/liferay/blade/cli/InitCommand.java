@@ -25,6 +25,7 @@ import com.liferay.project.templates.internal.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -175,7 +176,10 @@ public class InitCommand extends BaseCommand<InitCommandArgs> {
 
 			IO.deleteWithException(temp);
 		}
+		
+		Util.createWorkspaceMetadata(destDir, _args.getBuild());
 	}
+	
 
 	@Override
 	public Class<InitCommandArgs> getArgsClass() {

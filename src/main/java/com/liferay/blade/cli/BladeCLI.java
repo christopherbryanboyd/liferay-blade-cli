@@ -20,8 +20,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.JCommander.Builder;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-
 import java.io.File;
 import java.io.PrintStream;
 
@@ -36,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Scanner;
 
 /**
@@ -141,6 +140,14 @@ public class BladeCLI implements Runnable {
 		new InstallCommand(this, args).execute();
 	}
 
+	public void installExtension(InstallExtensionCommandArgs args) throws Exception {
+		new InstallExtensionCommand(this, args).execute();
+	}
+
+	public void listExtensions(ListExtensionsCommandArgs args) throws Exception {
+		new ListExtensionsCommand(this, args).execute();
+	}
+
 	public void open(OpenCommandArgs args) throws Exception {
 		new OpenCommand(this, args).execute();
 	}
@@ -235,6 +242,16 @@ public class BladeCLI implements Runnable {
 
 						break;
 
+					case "extension install":
+						installExtension((InstallExtensionCommandArgs)_commandArgs);
+
+						break;
+
+					case "extension list":
+						listExtensions((ListExtensionsCommandArgs)_commandArgs);
+
+						break;
+
 					case "open":
 						open((OpenCommandArgs)_commandArgs);
 
@@ -298,21 +315,7 @@ public class BladeCLI implements Runnable {
 			e.printStackTrace(err());
 		}
 	}
-	
-	private <T extends BaseArgs> String[] getCommandNames(Class<T> argsClass) {
-		try
-		{
-			Parameters annotation = argsClass.getAnnotation(Parameters.class);
-			if (Objects.nonNull(annotation)) {
-				return annotation.commandNames();
-			}
-		}
-		catch (Exception e)
-		{
-			error(e.getMessage());
-		}
-		return null;
-	}
+
 
 	public void run(String[] args) {
 		System.setOut(out());
@@ -328,7 +331,8 @@ public class BladeCLI implements Runnable {
 
 		List<BaseArgs> argsList = Arrays.asList(
 			new CreateCommandArgs(), new ConvertCommandArgs(), new DeployCommandArgs(), new GradleCommandArgs(),
-			new HelpCommandArgs(), new InitCommandArgs(), new InstallCommandArgs(), new OpenCommandArgs(),
+			new HelpCommandArgs(), new InitCommandArgs(), new InstallCommandArgs(), new InstallExtensionCommandArgs(), 
+			new ListExtensionsCommandArgs(), new OpenCommandArgs(),
 			new OutputsCommandArgs(), new SamplesCommandArgs(), new ServerStartCommandArgs(),
 			new ServerStopCommandArgs(), new ShellCommandArgs(), new UpdateCommandArgs(), new UpgradePropsArgs(),
 			new VersionCommandArgs());
@@ -338,16 +342,31 @@ public class BladeCLI implements Runnable {
 		Collection<BaseArgs> extensionsList = Util.getExtensions().keySet();
 
 		for (BaseArgs arg : extensionsList) {
-			String[] commandNames = getCommandNames(arg.getClass());
+			String[] commandNames = Util.getCommandNames(arg.getClass());
 			if (commandNames != null && commandNames.length > 0) {
-				for (String commandName : commandNames) {
-					argsMap.putIfAbsent(commandName, arg);
+				boolean useProfile = false;
+				Collection<String> bladeProfiles = Util.getProfileNames(arg.getClass());
+				if (bladeProfiles.size() == 0) {
+					useProfile = true;
+				} else if (bladeProfiles.contains("gradle")) {
+					useProfile = true;
+					
+				} else if (Util.isWorkspace(this)) {
+					File workspaceDir = Util.getWorkspaceDir(this); 
+					Properties metadata = Util.getWorkspaceMetadata(workspaceDir);
+					String workspaceProfileName = metadata.getProperty("profile.name");
+					useProfile = bladeProfiles.contains(workspaceProfileName);
+				}
+				if (useProfile) {
+					for (String commandName : commandNames) {
+						argsMap.put(commandName, arg);
+					}
 				}
 			}
 		}
 		
 		for (BaseArgs arg : argsList) {
-			String[] commandNames = getCommandNames(arg.getClass());
+			String[] commandNames = Util.getCommandNames(arg.getClass());
 			if (commandNames != null && commandNames.length > 0) {
 				for (String commandName : commandNames) {
 					argsMap.putIfAbsent(commandName, arg);
@@ -468,6 +487,17 @@ public class BladeCLI implements Runnable {
 
 				flags.set(x, serverCommand);
 				flags.remove(next);
+			}
+			else if (s.equals("extension")) {
+				int next = x + 1;
+				if (flags.size() > next) {
+					String nextCommand = flags.get(next);
+					if (Objects.equals(nextCommand, "list") || Objects.equals(nextCommand, "install")) {
+						String fullCommand = s + " " + nextCommand;
+						flags.set(x, fullCommand);
+						flags.remove(next);					
+					}
+				}
 			}
 		}
 

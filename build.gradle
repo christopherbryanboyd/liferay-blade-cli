@@ -33,6 +33,7 @@ configurations {
 }
 
 dependencies {
+	compile group: 'de.vandermeer', name: 'asciitable', version: '0.3.2'
 	compile group: "biz.aQute.bnd", name: "aQute.libg", version: "3.5.0"
 	compile group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"
 	compile group: "com.liferay", name: "com.liferay.project.templates", version: "4.0.0"

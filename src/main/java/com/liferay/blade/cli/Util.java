@@ -25,7 +25,9 @@ import aQute.lib.io.IO;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,7 +35,10 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -41,14 +46,17 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -60,6 +68,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.beust.jcommander.Parameters;
+import com.liferay.blade.cli.util.LinkDownloader;
 import com.liferay.project.templates.ProjectTemplates;
 
 /**
@@ -113,7 +123,21 @@ public class Util {
 		int exitCode = process.waitFor();
 		assert exitCode == 0;
 	}
-
+	public static void main(String[] args) throws URISyntaxException, MalformedURLException {
+		String link =
+		         "http://github.com/downloads/TheHolyWaffle/ChampionHelper/" +
+		         "ChampionHelper-4.jar";
+		URL url = new URL(link);
+		
+		Path path = Paths.get(url.getFile());
+		System.out.println(path.getFileName());
+	}
+	
+	public static void downloadLink(String link, Path target) {
+		LinkDownloader downloader = new LinkDownloader(link, target);
+		downloader.run();
+	}
+	
 	public static void copy(InputStream in, File outputDir) throws Exception {
 		try (Jar jar = new Jar("dot", in)) {
 			Map<String, Resource> resources = jar.getResources();
@@ -222,6 +246,16 @@ public class Util {
 			return null;
 		}
 	}
+	
+	public static boolean isValidURL(String urlString) {
+        try {
+            new URL(urlString).toURI();
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+	}
 
 	public static File getWorkspaceDir(BladeCLI blade) {
 		return getWorkspaceDir(blade.getBase());
@@ -229,6 +263,28 @@ public class Util {
 
 	public static File getWorkspaceDir(File dir) {
 		return findParentFile(dir, new String[] {_SETTINGS_GRADLE_FILE_NAME, _GRADLE_PROPERTIES_FILE_NAME}, true);
+	}
+	
+	public static void createWorkspaceMetadata(File workspace, String profileName) throws IOException {
+		if (workspace.isDirectory()) {
+			Properties bladeProperties = new Properties();
+			String metadataKeyString = "profile.name";
+			File bladePropertiesFile = new File(workspace, "blade.properties");
+			String dateTimeString = _getDateTimeString();
+			bladeProperties.setProperty(metadataKeyString, profileName);
+			bladeProperties.store(new FileWriter(bladePropertiesFile), "Workspace Metadata generated at " + dateTimeString);
+		}
+	}
+	
+	public static Properties getWorkspaceMetadata(File workspace) throws FileNotFoundException, IOException {
+		Properties bladeProperties = new Properties();
+		File bladePropertiesFile = new File(workspace, "blade.properties");
+		bladeProperties.load(new FileInputStream(bladePropertiesFile));
+		return bladeProperties;
+	}
+	
+	private static String _getDateTimeString() {
+		return _SIMPLE_DATE_FORMAT.format(new Date());
 	}
 
 	public static boolean hasGradleWrapper(File dir) {
@@ -343,6 +399,39 @@ public class Util {
 		}
 	}
 
+	public static <T extends BaseArgs>  String[] getCommandNames(Class<T> argsClass) {
+		try
+		{
+			Parameters annotation = argsClass.getAnnotation(Parameters.class);
+			if (Objects.nonNull(annotation)) {
+				return annotation.commandNames();
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	public static <T extends BaseArgs> Collection<String> getProfileNames(Class<T> argsClass) {
+		Collection<String> profiles = new HashSet<>();
+		try
+		{
+			BladeProfile[] annotations = argsClass.getAnnotationsByType(BladeProfile.class);
+			if (Objects.nonNull(annotations)) {
+				for (BladeProfile annotation : annotations) {
+					profiles.add(annotation.value());
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return profiles;
+	}
+	
+	
 	public static void loadExtensionsFromClasspath() throws Exception {
 		getExtensions().clear();
 		URL[] urls = getJarUrls(getExtensionsDirectory());
@@ -628,8 +717,11 @@ public class Util {
 		"build." + System.getenv("COMPUTERNAME") + ".properties", "build." + System.getenv("HOST") + ".properties",
 		"build." + System.getenv("HOSTNAME") + ".properties", "build.properties"
 	};
+	
 
 	private static final String _BUILD_GRADLE_FILE_NAME = "build.gradle";
+
+	private static final String _DATE_TIME_PATTERN = "EEEEE MMMMM yyyy HH:mm:ss.SSSZ";
 
 	private static final String _GRADLE_PROPERTIES_FILE_NAME = "gradle.properties";
 
@@ -638,6 +730,8 @@ public class Util {
 	private static final String _GRADLEW_WINDOWS_FILE_NAME = "gradlew.bat";
 
 	private static final String _SETTINGS_GRADLE_FILE_NAME = "settings.gradle";
+	
+	private static final SimpleDateFormat _SIMPLE_DATE_FORMAT = new SimpleDateFormat(_DATE_TIME_PATTERN);
 
 	private static Map<BaseArgs, BaseCommand<?>> extensions;
 	private static boolean extensionsLoaded = false;

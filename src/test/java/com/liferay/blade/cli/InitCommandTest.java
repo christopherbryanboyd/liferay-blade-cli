@@ -273,10 +273,18 @@ public class InitCommandTest {
 		}
 
 		new BladeNoFail().run(args);
+		
+		File workspaceProjectDir = new File(_workspaceDir, "newproject");
 
-		Assert.assertTrue(new File(_workspaceDir, "newproject/build.gradle").exists());
+		Assert.assertTrue(new File(workspaceProjectDir, "build.gradle").exists());
 
-		Assert.assertTrue(new File(_workspaceDir, "newproject/modules").exists());
+		Assert.assertTrue(new File(workspaceProjectDir, "modules").exists());
+		
+		File bladePropertiesFile = new File(workspaceProjectDir, "blade.properties");
+		
+		Assert.assertTrue(bladePropertiesFile.exists());
+		
+		Assert.assertEquals(Util.getWorkspaceMetadata(workspaceProjectDir).getProperty("profile.name"), "gradle");
 	}
 
 	@Test
