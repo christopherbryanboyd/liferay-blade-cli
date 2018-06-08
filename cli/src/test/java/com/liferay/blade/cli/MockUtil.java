@@ -49,7 +49,6 @@ public class MockUtil {
 
 	public static void stubDeployCommand() throws Exception {
 		PowerMock.mockStaticPartialNice(BladeUtil.class, "canConnect");
-		PowerMock.mockStaticPartialNice(Extensions.class, "getCommands");
 
 		IExpectationSetters<Boolean> canConnect = EasyMock.expect(
 			BladeUtil.canConnect(EasyMock.anyString(), EasyMock.anyInt()));
@@ -60,9 +59,11 @@ public class MockUtil {
 
 		map.put("deploy", new DeployCommand());
 
-		EasyMock.expect(new Extensions().getCommands()).andStubReturn(map);
+		Extensions extensions = EasyMock.createNiceMock(Extensions.class);
 
-		PowerMock.replay(Extensions.class);
+		EasyMock.expect(extensions.getCommands()).andStubReturn(map);
+
+		PowerMock.replay(Extensions.class, BladeUtil.class);
 	}
 
 	public static void stubDomain(boolean returnBsn, boolean returnFragment) throws IOException {
