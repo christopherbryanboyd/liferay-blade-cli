@@ -130,14 +130,18 @@ public class BladeUtil {
 		downloadLink(zipUrl, target);
 	}
 
-	public static void downloadLink(String link, Path target) throws IOException {
-		if (_isURLAvailable(link)) {
-			LinkDownloader downloader = new LinkDownloader(link, target);
-
-			downloader.run();
-		}
-		else {
-			throw new RuntimeException("url '" + link + "' is not accessible.");
+	public static void downloadLink(String link, Path target) {
+		try {
+			if (_isURLAvailable(link)) {
+				LinkDownloader downloader = new LinkDownloader(link, target);
+	
+				downloader.run();
+			}
+			else {
+				throw new RuntimeException("url '" + link + "' is not accessible.");
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
