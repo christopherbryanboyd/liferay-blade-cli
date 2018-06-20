@@ -34,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
@@ -86,9 +86,19 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 						if (_isGradleBuild(directory)) {
 							bladeCLI.out("Building extension...");
 
-							Path extensionPath = _gradleAssemble(directory);
+							Set<Path> extensionPaths = _gradleAssemble(directory);
+							
+							if(extensionPaths.size() > 0) {
+								
+								for (Path extensionPath : extensionPaths) {
+									
+									_installExtension(extensionPath);
+								}
+							}
+							else {
 
-							_installExtension(extensionPath);
+								bladeCLI.err("No extensions to install in " + directory);
+							}
 						}
 						else {
 							bladeCLI.err("Path not a gradle build " + directory);
@@ -123,7 +133,10 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 				);
 
 				if (gradleBuildPath != null) {
-					path = _gradleAssemble(path);
+					Set<Path> paths = _gradleAssemble(path);
+					if (paths.size() > 0) {
+						path = paths.iterator().next();
+					}
 				}
 			}
 
@@ -189,7 +202,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 		}
 	}
 
-	private Path _gradleAssemble(Path projectPath) throws Exception {
+	private Set<Path> _gradleAssemble(Path projectPath) throws Exception {
 		BladeCLI bladeCLI = getBladeCLI();
 
 		GradleExec gradle = new GradleExec(bladeCLI);
@@ -198,6 +211,8 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 
 		gradle.executeGradleCommand("assemble -x check", projectPath.toFile());
 
+		Set<Path> extensionFiles = new HashSet<>();
+		
 		Iterator<File> i = outputFiles.iterator();
 
 		if (i.hasNext()) {
@@ -206,11 +221,11 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 			Path outputPath = next.toPath();
 
 			if (Files.exists(outputPath)) {
-				return outputPath;
+				extensionFiles.add(outputPath);
 			}
 		}
 
-		return null;
+		return extensionFiles;
 	}
 
 	private void _installExtension(Path extensionPath) throws IOException {
