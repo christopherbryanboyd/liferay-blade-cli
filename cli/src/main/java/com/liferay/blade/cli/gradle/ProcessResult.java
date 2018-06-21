@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package com.liferay.extensions.sample.command;
-
-import com.liferay.blade.cli.command.BaseCommand;
-import com.liferay.extensions.sample.command.util.HelloUtil;
+package com.liferay.blade.cli.gradle;
 
 /**
- * @author Liferay
+ * @author Christopher Bryan Boyd
  */
-public class Hello extends BaseCommand<HelloArgs> {
+public class ProcessResult {
 
-	@Override
-	public void execute() throws Exception {
-		HelloArgs helloArgs = getArgs();
-
-		getBladeCLI().out(HelloUtil.getHello(helloArgs));
+	public ProcessResult(int returnCode, String output) {
+		_returnCode = returnCode;
+		_output = output;
 	}
 
-	@Override
-	public Class<HelloArgs> getArgsClass() {
-		return HelloArgs.class;
+	public String getOutput() {
+		return _output;
 	}
+
+	public int getResultCode() {
+		return _returnCode;
+	}
+
+	private final String _output;
+	private final int _returnCode;
 
 }
