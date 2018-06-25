@@ -24,6 +24,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -31,106 +32,133 @@ import java.util.function.Supplier;
  * @author Christopher Bryan Boyd
  */
 public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
-	private boolean changed = false;
-	private boolean closed = false;
-    private final WatchService watchService;
-	private WatchKey watchKey;
-	private Path pathFileName;
+
 	public PathChangeWatcher(Path path) {
 		try {
-			watchService = FileSystems.getDefault().newWatchService();
+			_watchService = FileSystems.getDefault().newWatchService();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
-		Path pathToWatch;
-		
-		if (!Files.isDirectory(path)) {
-			pathToWatch = path.getParent();
-		}
-		else {
-			pathToWatch = path;
-		}
-		
-		pathFileName = path.getFileName();
+
+		Path pathToWatch = _getPathToWatch(path);
+
+		_pathFileName = path.getFileName();
+
 		try {
-			watchKey = 
-			        pathToWatch.register(
-			                watchService, 
-			                  StandardWatchEventKinds.ENTRY_CREATE, 
-			                    StandardWatchEventKinds.ENTRY_DELETE, 
-			                      StandardWatchEventKinds.ENTRY_MODIFY);
+			_watchKey = pathToWatch.register(
+				_watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
+				StandardWatchEventKinds.ENTRY_MODIFY);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
 	}
 
 	@Override
 	public void close() throws Exception {
-		if (!closed) {
-			closed = true;
-			if (watchKey.isValid()) {
-				watchKey.cancel();
+		if (!_closed) {
+			_closed = true;
+
+			if (_watchKey.isValid()) {
+				_watchKey.cancel();
 			}
-			watchService.close();
+
+			_watchService.close();
 		}
-	}
-	
-	public boolean isClosed() {
-		return closed;
 	}
 
 	@Override
 	public Boolean get() {
-		if (changed) {
-			return changed;
-		} else if (closed) {
-			return false;
-		} else {
-			WatchKey key = null;
-			try {
-				while (!closed && !changed && (key = watchService.poll(100, TimeUnit.MILLISECONDS)) != null) {
-
-					for (WatchEvent<?> event : key.pollEvents()) {
-
-						final Path changedPath = (Path) event.context();
-						if (pathFileName.equals(changedPath.getFileName())) {
-							changed = true;
-							close();
-							break;
-						}
-					}
-					if (!closed) {
-						key.reset();
-					}
-				}
-				return changed;
-			} 
-			catch (ClosedWatchServiceException e) {
-
-				if (!closed) {
-					try {
-						close();
-					} 
-					catch (Exception ignored) {
-					}
-				}
-			}
-			catch (Exception e) {
-
-				if (!closed) {
-					try {
-						close();
-					} 
-					catch (Exception ignored) {
-					}
-				}
-				throw new RuntimeException(e);
-			} 
+		if (_changed) {
+			return _changed;
+		}
+		else if (_closed) {
 			return false;
 		}
+		else {
+			return _getPathChanged();
+		}
 	}
+
+	public boolean isClosed() {
+		return _closed;
+	}
+
+	private boolean _getPathChanged() {
+		try {
+			_processWatchKeys();
+
+			return _changed;
+		}
+		catch (ClosedWatchServiceException cwse) {
+			_safeClose();
+		}
+		catch (Exception e) {
+			_safeClose();
+
+			throw new RuntimeException(e);
+		}
+
+		return false;
+	}
+
+	private Path _getPathToWatch(Path path) {
+		if (!Files.isDirectory(path)) {
+			return path.getParent();
+		}
+		else {
+			return path;
+		}
+	}
+
+	private void _processWatchKeyPollEvents(WatchKey key) throws Exception {
+		for (WatchEvent<?> event : key.pollEvents()) {
+			final Path changedPath = (Path)event.context();
+
+			if (_pathFileName.equals(changedPath.getFileName())) {
+				_changed = true;
+				close();
+
+				break;
+			}
+		}
+	}
+
+	private void _processWatchKeys() throws ClosedWatchServiceException {
+		WatchKey key = null;
+
+		try {
+			while (!_closed && !_changed && (key = _watchService.poll(100, TimeUnit.MILLISECONDS)) != null) {
+				_processWatchKeyPollEvents(key);
+
+				if (!_closed) {
+					key.reset();
+				}
+			}
+		}
+		catch (ClosedWatchServiceException cwse) {
+			throw cwse;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void _safeClose() {
+		if (!_closed) {
+			try {
+				close();
+			}
+			catch (Exception ignored) {
+			}
+		}
+	}
+
+	private boolean _changed = false;
+	private boolean _closed = false;
+	private Path _pathFileName;
+	private WatchKey _watchKey;
+	private final WatchService _watchService;
+
 }

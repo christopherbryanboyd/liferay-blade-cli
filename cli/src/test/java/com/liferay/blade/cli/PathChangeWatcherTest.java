@@ -28,22 +28,22 @@ import org.junit.rules.TemporaryFolder;
  */
 public class PathChangeWatcherTest {
 
-	@Rule
-	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-	
 	@Test
 	public void testPathChangeWatcher() throws Exception {
 		File fileToWatch = new File(temporaryFolder.getRoot(), "foo.bar");
-		
+
 		fileToWatch.createNewFile();
-		
-		try(PathChangeWatcher watcher = new PathChangeWatcher(fileToWatch.toPath())) {
-			
+
+		try (PathChangeWatcher watcher = new PathChangeWatcher(fileToWatch.toPath())) {
 			Assert.assertFalse("File should not have been modified", watcher.get());
-			
+
 			fileToWatch.setLastModified(System.currentTimeMillis());
-			
+
 			Assert.assertTrue("File should have been modified", watcher.get());
 		}
 	}
+
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
 }

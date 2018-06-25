@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
@@ -238,26 +239,33 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 			Path newExtensionPath = extensionsHome.resolve(extensionName);
 
 			boolean extensionExists = Files.exists(newExtensionPath);
-			
+
 			boolean doInstall = true;
-			
+
 			String newVersion = BladeUtil.getBundleVersion(extensionPath);
-			
+
 			if (extensionExists) {
-				String installedVersion=BladeUtil.getBundleVersion(newExtensionPath);
+				String installedVersion = BladeUtil.getBundleVersion(newExtensionPath);
 				getBladeCLI().out("The extension " + extensionName + " already exists in blade extensions.");
 				getBladeCLI().out("Installed version: " + installedVersion);
 				getBladeCLI().out("New version: " + newVersion);
-				doInstall = PromptUtil.askBoolean("Overwrite existing extension?", System.in, getBladeCLI().out(), false);
+
+				doInstall = PromptUtil.askBoolean(
+					"Overwrite existing extension?", System.in, getBladeCLI().out(), false);
+
 				if (doInstall) {
-					getBladeCLI().out("Overwriting " + extensionName + ":" + installedVersion + " with " + extensionName + ":" + newVersion);
+					getBladeCLI().out(
+						"Overwriting " + extensionName + ":" + installedVersion + " with " + extensionName + ":" +
+							newVersion);
 					Files.delete(newExtensionPath);
 				}
- 			}
+			}
+
 			if (doInstall) {
 				Files.copy(extensionPath, newExtensionPath);
-				
-				getBladeCLI().out("The extension " + extensionName + ":" + newVersion + " has been installed successfully.");
+
+				getBladeCLI().out(
+					"The extension " + extensionName + ":" + newVersion + " has been installed successfully.");
 			}
 		}
 		else {
