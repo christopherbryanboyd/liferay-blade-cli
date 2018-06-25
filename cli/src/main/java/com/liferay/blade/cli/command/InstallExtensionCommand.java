@@ -22,6 +22,7 @@ import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
 import com.liferay.blade.cli.util.BladeUtil;
 import com.liferay.blade.cli.util.FileUtil;
+import com.liferay.blade.cli.util.PromptUtil;
 import com.liferay.blade.cli.util.StringUtil;
 
 import java.io.File;
@@ -34,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
@@ -237,13 +237,27 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 
 			Path newExtensionPath = extensionsHome.resolve(extensionName);
 
-			if (Files.exists(newExtensionPath)) {
+			boolean extensionExists = Files.exists(newExtensionPath);
+			
+			boolean doInstall = true;
+			
+			String newVersion = BladeUtil.getBundleVersion(extensionPath);
+			
+			if (extensionExists) {
+				String installedVersion=BladeUtil.getBundleVersion(newExtensionPath);
 				getBladeCLI().out("The extension " + extensionName + " already exists in blade extensions.");
-			}
-			else {
+				getBladeCLI().out("Installed version: " + installedVersion);
+				getBladeCLI().out("New version: " + newVersion);
+				doInstall = PromptUtil.askBoolean("Overwrite existing extension?", System.in, getBladeCLI().out(), false);
+				if (doInstall) {
+					getBladeCLI().out("Overwriting " + extensionName + ":" + installedVersion + " with " + extensionName + ":" + newVersion);
+					Files.delete(newExtensionPath);
+				}
+ 			}
+			if (doInstall) {
 				Files.copy(extensionPath, newExtensionPath);
-
-				getBladeCLI().out("The extension " + extensionName + " has been installed successfully.");
+				
+				getBladeCLI().out("The extension " + extensionName + ":" + newVersion + " has been installed successfully.");
 			}
 		}
 		else {

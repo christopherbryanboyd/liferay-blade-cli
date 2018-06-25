@@ -17,14 +17,16 @@
 package com.liferay.blade.cli.command;
 
 import com.liferay.blade.cli.Extensions;
+import com.liferay.blade.cli.PathChangeWatcher;
 import com.liferay.blade.cli.TestUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,18 +65,95 @@ public class InstallExtensionCommandTest {
 
 	@Test
 	public void testInstallCustomExtensionTwice() throws Exception {
+		
+		String jarName = _sampleCommandJarFile.getName();
+		
+		File extensionsFolder = temporaryFolder.newFolder(".blade", "extensions");
+		
+		File extensionJar = new File(extensionsFolder, jarName);
+		
 		String[] args = {"extension install", _sampleCommandJarFile.getAbsolutePath()};
 
-		String output = TestUtil.runBlade(args);
+		String output;
+		
+		try (PathChangeWatcher watcher = new PathChangeWatcher(extensionJar.toPath())) {
+
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+			
+			output = TestUtil.runBlade(args);
+
+			Assert.assertTrue("Existing extension \"" + jarName + "\" should have been modified", watcher.get());
+		}
 
 		Assert.assertTrue("Expected output to contain \"successful\"\n" + output, output.contains(" successful"));
 
-		Assert.assertTrue(output.contains(_sampleCommandJarFile.getName()));
+		Assert.assertTrue("Expected output to contain \"" + jarName + "\"\n" + output, output.contains(jarName));
 
-		output = TestUtil.runBlade(args);
+		String data = "y";
+		
+		try (PathChangeWatcher watcher = new PathChangeWatcher(extensionJar.toPath())) {
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+			
+			output = testBladeWithInteractive(args, data);
+
+			Assert.assertTrue("Existing extension \"" + jarName + "\" should have been modified", watcher.get());
+		}
+		
+		Assert.assertTrue(
+				"Expected output to contain \"already exists\"\n" + output, output.contains(" already exists"));
+		Assert.assertTrue(
+				"Expected output to contain \"Overwriting\"\n" + output, output.contains("Overwriting"));
+		Assert.assertTrue(
+				"Expected output to contain \"installed successfully\"\n" + output, output.contains(" installed successfully"));
+		
+		data = "n";
+		
+		try (PathChangeWatcher watcher = new PathChangeWatcher(extensionJar.toPath())) {
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+			
+			output = testBladeWithInteractive(args, data);
+
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+		}
 
 		Assert.assertTrue(
-			"Expected output to contain \"already exists\"\n" + output, output.contains(" already exists"));
+				"Expected output to contain \"already exists\"\n" + output, output.contains(" already exists"));
+		Assert.assertFalse(
+				"Expected output to not contain \"Overwriting\"\n" + output, output.contains("Overwriting"));
+		Assert.assertFalse(
+				"Expected output to not contain \"installed successfully\"\n" + output, output.contains(" installed successfully"));
+
+		data = "foobar";
+		
+		try (PathChangeWatcher watcher = new PathChangeWatcher(extensionJar.toPath())) {
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+			
+			output = testBladeWithInteractive(args, data);
+
+			Assert.assertFalse("Existing extension \"" + jarName + "\" should not have been modified",  watcher.get());
+		}
+		
+		Assert.assertTrue(
+				"Expected output to contain \"already exists\"\n" + output, output.contains(" already exists"));
+		Assert.assertFalse(
+				"Expected output to not contain \"Overwriting\"\n" + output, output.contains("Overwriting"));
+		Assert.assertFalse(
+				"Expected output to not contain \"installed successfully\"\n" + output, output.contains(" installed successfully"));
+		
+	}
+
+	private String testBladeWithInteractive(String[] args, String data) throws UnsupportedEncodingException, Exception {
+		String output;
+		InputStream testInput = new ByteArrayInputStream( data.getBytes("UTF-8") );
+		InputStream old = System.in;
+		try {
+		    System.setIn( testInput );
+
+		    output = TestUtil.runBlade(args);
+		} finally {
+		    System.setIn( old );
+		}
+		return output;
 	}
 
 	@Test
