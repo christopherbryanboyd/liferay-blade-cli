@@ -35,7 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
@@ -257,15 +257,24 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					getBladeCLI().out(
 						"Overwriting " + extensionName + ":" + installedVersion + " with " + extensionName + ":" +
 							newVersion);
-					Files.delete(newExtensionPath);
 				}
 			}
 
 			if (doInstall) {
-				Files.copy(extensionPath, newExtensionPath);
+				
+				try {
+					getBladeCLI().getExtensions().close();
 
-				getBladeCLI().out(
-					"The extension " + extensionName + ":" + newVersion + " has been installed successfully.");
+					if (Files.exists(newExtensionPath)) {
+						Files.move(newExtensionPath, Paths.get(newExtensionPath.toString() + "2"));
+					}
+					Files.copy(extensionPath, newExtensionPath, StandardCopyOption.REPLACE_EXISTING);
+					getBladeCLI().out(
+							"The extension " + extensionName + ":" + newVersion + " has been installed successfully.");
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+				
 			}
 		}
 		else {

@@ -22,6 +22,7 @@ import com.beust.jcommander.Parameters;
 import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BaseCommand;
 import com.liferay.blade.cli.command.BladeProfile;
+import com.liferay.blade.cli.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +53,7 @@ import java.util.stream.Stream;
  * @author Christopher Bryan Boyd
  * @author Gregory Amerson
  */
-public class Extensions {
+public class Extensions implements AutoCloseable {
 
 	public static Collection<String> getBladeProfiles(Class<?> commandClass) {
 		return Stream.of(
@@ -331,9 +332,7 @@ public class Extensions {
 		if (_commands == null) {
 			_commands = new HashMap<>();
 
-			URL[] jarUrls = _getJarUrls(getDirectory());
-
-			ClassLoader serviceLoaderClassLoader = new URLClassLoader(jarUrls, getClass().getClassLoader());
+			ClassLoader serviceLoaderClassLoader = getServiceClassLoader();
 
 			@SuppressWarnings("rawtypes")
 			ServiceLoader<BaseCommand> serviceLoader = ServiceLoader.load(BaseCommand.class, serviceLoaderClassLoader);
@@ -379,10 +378,43 @@ public class Extensions {
 
 		return _commands;
 	}
+	private URLClassLoader getServiceClassLoader() {
+		if (serviceLoaderClassLoader == null) {
+
+			URL[] jarUrls;
+			try {
+				Path tempBladeExtensionsDirectory = Files.createTempDirectory("bladeCache");
+				
+				FileUtil.copyDirRecursive(getDirectory(), tempBladeExtensionsDirectory);
+				
+				jarUrls = _getJarUrls(tempBladeExtensionsDirectory);
+				serviceLoaderClassLoader = new URLClassLoader(jarUrls, getClass().getClassLoader());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		return serviceLoaderClassLoader;
+	}
+	
+	
+	private URLClassLoader serviceLoaderClassLoader = null;
 
 	private static final File _USER_HOME_DIR = new File(System.getProperty("user.home"));
 
 	private final BladeSettings _bladeSettings;
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
+	
+	public boolean isClosed() {
+		return serviceLoaderClassLoader == null;
+	}
+	@Override
+	public void close() throws Exception {
+		if (serviceLoaderClassLoader != null) {
+			getServiceClassLoader().close();	
+			System.gc();
+		}
+	}
 
 }

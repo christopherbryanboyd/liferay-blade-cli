@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli;
 
+import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -24,7 +25,10 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -33,30 +37,33 @@ import java.util.function.Supplier;
  */
 public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 
-	public PathChangeWatcher(Path path) {
-		try {
-			_watchService = FileSystems.getDefault().newWatchService();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-
-		Path pathToWatch = _getPathToWatch(path);
-
-		_pathFileName = path.getFileName();
-
-		try {
-			_watchKey = pathToWatch.register(
-				_watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
-				StandardWatchEventKinds.ENTRY_MODIFY);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+	public PathChangeWatcher(Path path) throws InterruptedException, ExecutionException {
+		_executor.submit(() -> {
+			try {
+				_watchService = FileSystems.getDefault().newWatchService();
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+	
+			Path pathToWatch = _getPathToWatch(path);
+	
+			_pathFileName = path.getFileName();
+	
+			try {
+				_watchKey = pathToWatch.register(
+					_watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
+					StandardWatchEventKinds.ENTRY_MODIFY);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}).get();
 	}
 
 	@Override
 	public void close() throws Exception {
+		_executor.submit(() -> {
 		if (!_closed) {
 			_closed = true;
 
@@ -64,8 +71,13 @@ public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 				_watchKey.cancel();
 			}
 
-			_watchService.close();
+			try {
+				_watchService.close();
+			} catch (IOException e) {
+				
+			}
 		}
+		}).get();
 	}
 
 	@Override
@@ -77,7 +89,11 @@ public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 			return false;
 		}
 		else {
-			return _getPathChanged();
+			try {
+				return CompletableFuture.supplyAsync(() -> _getPathChanged()).get();
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
@@ -118,7 +134,7 @@ public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 
 			if (_pathFileName.equals(changedPath.getFileName())) {
 				_changed = true;
-				close();
+				_safeClose();
 
 				break;
 			}
@@ -147,11 +163,12 @@ public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 
 	private void _safeClose() {
 		if (!_closed) {
-			try {
-				close();
-			}
-			catch (Exception ignored) {
-			}
+			CompletableFuture.runAsync(() -> {
+				try {
+					close();
+				} catch (Exception e) {
+				}
+			});
 		}
 	}
 
@@ -159,6 +176,7 @@ public class PathChangeWatcher implements AutoCloseable, Supplier<Boolean> {
 	private boolean _closed = false;
 	private Path _pathFileName;
 	private WatchKey _watchKey;
-	private final WatchService _watchService;
+	private WatchService _watchService;
+	private ExecutorService _executor = Executors.newSingleThreadExecutor();
 
 }
