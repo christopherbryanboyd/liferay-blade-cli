@@ -213,65 +213,72 @@ public class BladeCLI implements Runnable {
 
 		System.setErr(err());
 
-		_commands = new Extensions(getSettings()).getCommands();
-
-		args = Extensions.sortArgs(_commands, args);
-
-		Builder builder = JCommander.newBuilder();
-
-		for (Entry<String, BaseCommand<? extends BaseArgs>> e : _commands.entrySet()) {
-			BaseCommand<? extends BaseArgs> value = e.getValue();
-
-			builder.addCommand(e.getKey(), value.getArgs());
-		}
-
-		_jCommander = builder.build();
-
-		if ((args.length == 1) && args[0].equals("--help")) {
-			printUsage();
-		}
-		else {
-			try {
-				_jCommander.parse(args);
-
-				String command = _jCommander.getParsedCommand();
-
-				Map<String, JCommander> jCommands = _jCommander.getCommands();
-
-				JCommander jCommander = jCommands.get(command);
-
-				if (jCommander == null) {
-					printUsage();
-
-					return;
-				}
-
-				List<Object> objects = jCommander.getObjects();
-
-				Object commandArgs = objects.get(0);
-
-				_command = command;
-
-				_commandArgs = (BaseArgs)commandArgs;
-
-				run();
+		try { 
+			_extensions = new Extensions(getSettings());
+			
+			_commands = _extensions.getCommands();
+			
+			args = Extensions.sortArgs(_commands, args);
+			
+			Builder builder = JCommander.newBuilder();
+			
+			for (Entry<String, BaseCommand<? extends BaseArgs>> e : _commands.entrySet()) {
+				BaseCommand<? extends BaseArgs> value = e.getValue();
+				
+				builder.addCommand(e.getKey(), value.getArgs());
 			}
-			catch (MissingCommandException mce) {
-				error("Error");
-
-				StringBuilder stringBuilder = new StringBuilder("0. No such command");
-
-				for (String arg : args) {
-					stringBuilder.append(" " + arg);
-				}
-
-				error(stringBuilder.toString());
-
+			
+			_jCommander = builder.build();
+			
+			if ((args.length == 1) && args[0].equals("--help")) {
 				printUsage();
 			}
-			catch (ParameterException pe) {
-				error(_jCommander.getParsedCommand() + ": " + pe.getMessage());
+			else {
+				try {
+					_jCommander.parse(args);
+					
+					String command = _jCommander.getParsedCommand();
+					
+					Map<String, JCommander> jCommands = _jCommander.getCommands();
+					
+					JCommander jCommander = jCommands.get(command);
+					
+					if (jCommander == null) {
+						printUsage();
+						
+						return;
+					}
+					
+					List<Object> objects = jCommander.getObjects();
+					
+					Object commandArgs = objects.get(0);
+					
+					_command = command;
+					
+					_commandArgs = (BaseArgs)commandArgs;
+					
+					run();
+				}
+				catch (MissingCommandException mce) {
+					error("Error");
+					
+					StringBuilder stringBuilder = new StringBuilder("0. No such command");
+					
+					for (String arg : args) {
+						stringBuilder.append(" " + arg);
+					}
+					
+					error(stringBuilder.toString());
+					
+					printUsage();
+				}
+				catch (ParameterException pe) {
+					error(_jCommander.getParsedCommand() + ": " + pe.getMessage());
+				}
 			}
+		}
+		finally {
+			_extensions.close();
 		}
 	}
 
@@ -333,10 +340,15 @@ public class BladeCLI implements Runnable {
 			printUsage();
 		}
 	}
+	
+	public Extensions getExtensions() {
+		return _extensions;
+	}
 
 	private static final Formatter _tracer = new Formatter(System.out);
 
 	private Path _basePath = Paths.get(".");
+	private Extensions _extensions;
 	private String _command;
 	private BaseArgs _commandArgs;
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
