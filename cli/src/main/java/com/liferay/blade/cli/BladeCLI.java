@@ -118,6 +118,10 @@ public class BladeCLI implements Runnable {
 		return cacheDir.toFile();
 	}
 
+	public Extensions getExtensions() {
+		return _extensions;
+	}
+
 	public BladeSettings getSettings() throws IOException {
 		final File settingsFile;
 
@@ -127,7 +131,7 @@ public class BladeCLI implements Runnable {
 			settingsFile = new File(workspaceDir, ".blade/settings.properties");
 		}
 		else {
-			File homeDir = Extensions._USER_HOME_DIR;
+			File homeDir = Extensions.USER_HOME_DIR;
 
 			settingsFile = new File(homeDir, ".blade/settings.properties");
 		}
@@ -213,63 +217,63 @@ public class BladeCLI implements Runnable {
 
 		System.setErr(err());
 
-		try { 
+		try {
 			_extensions = new Extensions(getSettings());
-			
+
 			_commands = _extensions.getCommands();
-			
+
 			args = Extensions.sortArgs(_commands, args);
-			
+
 			Builder builder = JCommander.newBuilder();
-			
+
 			for (Entry<String, BaseCommand<? extends BaseArgs>> e : _commands.entrySet()) {
 				BaseCommand<? extends BaseArgs> value = e.getValue();
-				
+
 				builder.addCommand(e.getKey(), value.getArgs());
 			}
-			
+
 			_jCommander = builder.build();
-			
+
 			if ((args.length == 1) && args[0].equals("--help")) {
 				printUsage();
 			}
 			else {
 				try {
 					_jCommander.parse(args);
-					
+
 					String command = _jCommander.getParsedCommand();
-					
+
 					Map<String, JCommander> jCommands = _jCommander.getCommands();
-					
+
 					JCommander jCommander = jCommands.get(command);
-					
+
 					if (jCommander == null) {
 						printUsage();
-						
+
 						return;
 					}
-					
+
 					List<Object> objects = jCommander.getObjects();
-					
+
 					Object commandArgs = objects.get(0);
-					
+
 					_command = command;
-					
+
 					_commandArgs = (BaseArgs)commandArgs;
-					
+
 					run();
 				}
 				catch (MissingCommandException mce) {
 					error("Error");
-					
+
 					StringBuilder stringBuilder = new StringBuilder("0. No such command");
-					
+
 					for (String arg : args) {
 						stringBuilder.append(" " + arg);
 					}
-					
+
 					error(stringBuilder.toString());
-					
+
 					printUsage();
 				}
 				catch (ParameterException pe) {
@@ -340,19 +344,15 @@ public class BladeCLI implements Runnable {
 			printUsage();
 		}
 	}
-	
-	public Extensions getExtensions() {
-		return _extensions;
-	}
 
 	private static final Formatter _tracer = new Formatter(System.out);
 
 	private Path _basePath = Paths.get(".");
-	private Extensions _extensions;
 	private String _command;
 	private BaseArgs _commandArgs;
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
 	private final PrintStream _err;
+	private Extensions _extensions;
 	private JCommander _jCommander;
 	private final PrintStream _out;
 

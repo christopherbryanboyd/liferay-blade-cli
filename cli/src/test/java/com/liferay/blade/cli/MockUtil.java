@@ -62,7 +62,7 @@ public class MockUtil {
 
 		Extensions extensions = EasyMock.createNiceMock(Extensions.class);
 
-		//EasyMock.expect(extensions.getCommands()).andStubReturn(map);
+		EasyMock.expect(extensions.getCommands()).andStubReturn(map);
 
 		PowerMock.replay(Extensions.class, BladeUtil.class);
 	}
