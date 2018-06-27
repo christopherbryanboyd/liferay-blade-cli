@@ -29,16 +29,13 @@ import java.nio.file.attribute.BasicFileAttributes;
  * @author Gregory Amerson
  */
 public class FileUtil {
-	
+
 	public static void copyDirRecursive(Path source, Path target) throws IOException {
 		if (!Files.exists(target)) {
 			Files.createDirectories(target);
 		}
-		
-		Files.walkFileTree(
-			source,
-			new CopyDirVisitor(source, target, StandardCopyOption.REPLACE_EXISTING));
 
+		Files.walkFileTree(source, new CopyDirVisitor(source, target, StandardCopyOption.REPLACE_EXISTING));
 	}
 
 	public static void deleteDir(Path dirPath) throws IOException {

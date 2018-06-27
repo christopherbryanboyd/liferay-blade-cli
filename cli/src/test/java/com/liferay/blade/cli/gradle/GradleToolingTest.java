@@ -62,15 +62,16 @@ public class GradleToolingTest {
 	@Test
 	public void testGetPluginClassNames() throws Exception {
 		try {
-		Set<String> pluginClassNames = GradleTooling.getPluginClassNames(
-			new File(temporaryFolder.getRoot(), "build"),
-			new File(temporaryFolder.getRoot(), "build/testws1/modules/testportlet"));
+			Set<String> pluginClassNames = GradleTooling.getPluginClassNames(
+				new File(temporaryFolder.getRoot(), "build"),
+				new File(temporaryFolder.getRoot(), "build/testws1/modules/testportlet"));
 
-		Assert.assertNotNull(pluginClassNames);
-		Assert.assertTrue(pluginClassNames.contains("com.liferay.gradle.plugins.LiferayOSGiPlugin"));
+			Assert.assertNotNull(pluginClassNames);
+			Assert.assertTrue(pluginClassNames.contains("com.liferay.gradle.plugins.LiferayOSGiPlugin"));
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+
 			throw e;
 		}
 	}
