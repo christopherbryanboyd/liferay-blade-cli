@@ -56,15 +56,15 @@ public class MockUtil {
 
 		canConnect.andStubReturn(true);
 
-		Map<String, BaseCommand<? extends BaseArgs>> map = new HashMap<>();
+		//Map<String, BaseCommand<? extends BaseArgs>> map = new HashMap<>();
 
-		map.put("deploy", new DeployCommand());
+		//map.put("deploy", new DeployCommand());
 
-		Extensions extensions = EasyMock.createNiceMock(Extensions.class);
+		//Extensions extensions = EasyMock.createNiceMock(Extensions.class);
 
-		EasyMock.expect(extensions.getCommands()).andStubReturn(map);
+		//EasyMock.expect(extensions.getCommands()).andStubReturn(map);
 
-		PowerMock.replay(Extensions.class, BladeUtil.class);
+		PowerMock.replay(/*Extensions.class, */BladeUtil.class);
 	}
 
 	public static void stubDomain(boolean returnBsn, boolean returnFragment) throws IOException {
