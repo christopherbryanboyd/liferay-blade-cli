@@ -19,9 +19,6 @@ package com.liferay.blade.cli;
 import aQute.bnd.header.Attrs;
 import aQute.bnd.osgi.Domain;
 
-import com.liferay.blade.cli.command.BaseArgs;
-import com.liferay.blade.cli.command.BaseCommand;
-import com.liferay.blade.cli.command.DeployCommand;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
 import com.liferay.blade.cli.gradle.ProcessResult;
@@ -32,9 +29,7 @@ import java.io.IOException;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 

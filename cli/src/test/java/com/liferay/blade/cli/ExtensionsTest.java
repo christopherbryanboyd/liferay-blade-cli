@@ -60,16 +60,17 @@ public class ExtensionsTest {
 
 		try (Extensions extensions = new Extensions(bladeTest.getSettings())) {
 			Map<String, BaseCommand<? extends BaseArgs>> commands = extensions.getCommands();
+
 			String[] sortedArgs = Extensions.sortArgs(commands, args);
-	
+
 			boolean correctSort = false;
-	
+
 			for (String arg : sortedArgs) {
 				if (Objects.equals(arg, "extension install")) {
 					correctSort = true;
 				}
 			}
-	
+
 			Assert.assertTrue(correctSort);
 		}
 	}
@@ -79,11 +80,10 @@ public class ExtensionsTest {
 		BladeTest bladeTest = new BladeTest();
 
 		try (Extensions extensions = new Extensions(bladeTest.getSettings())) {
-	
 			Map<String, BaseCommand<? extends BaseArgs>> commands = extensions.getCommands();
-	
+
 			Assert.assertNotNull(commands);
-	
+
 			Assert.assertEquals(commands.toString(), _NUM_BUILTIN_COMMANDS, commands.size());
 		}
 	}
@@ -95,11 +95,10 @@ public class ExtensionsTest {
 		BladeTest bladeTest = new BladeTest();
 
 		try (Extensions extensions = new Extensions(bladeTest.getSettings())) {
-	
 			Map<String, BaseCommand<? extends BaseArgs>> commands = extensions.getCommands();
 
 			Assert.assertNotNull(commands);
-	
+
 			Assert.assertEquals(commands.toString(), _NUM_BUILTIN_COMMANDS + 1, commands.size());
 		}
 	}
