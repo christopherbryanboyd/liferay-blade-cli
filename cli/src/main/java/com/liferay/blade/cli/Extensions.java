@@ -401,7 +401,7 @@ public class Extensions implements AutoCloseable {
 	
 	private URLClassLoader serviceLoaderClassLoader = null;
 
-	private static final File _USER_HOME_DIR = new File(System.getProperty("user.home"));
+	public static final File _USER_HOME_DIR = new File(System.getProperty("user.home"));
 
 	private final BladeSettings _bladeSettings;
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
