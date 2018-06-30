@@ -40,6 +40,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Christopher Bryan Boyd
@@ -225,14 +226,15 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 				"Gradle command returned error code " + processResult.getResultCode() + "\n " + sb.toString());
 		}
 		else {
-			return outputFiles.stream().
-				map(
-					File::toPath
-				).filter(
-					Files::exists
-				).collect(
-					Collectors.toSet()
-				);
+			Stream<File> stream = outputFiles.stream();
+
+			return stream.map(
+				File::toPath
+			).filter(
+				Files::exists
+			).collect(
+				Collectors.toSet()
+			);
 		}
 	}
 
