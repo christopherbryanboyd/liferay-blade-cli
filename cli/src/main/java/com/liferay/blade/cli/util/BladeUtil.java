@@ -16,10 +16,6 @@
 
 package com.liferay.blade.cli.util;
 
-import aQute.bnd.osgi.Jar;
-import aQute.bnd.osgi.Processor;
-import aQute.bnd.osgi.Resource;
-
 import aQute.lib.io.IO;
 
 import com.liferay.blade.cli.BladeCLI;
@@ -53,7 +49,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -61,6 +56,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author Gregory Amerson
@@ -79,27 +75,49 @@ public class BladeUtil {
 		return _canConnect(localAddress, remoteAddress);
 	}
 
-	public static void copy(InputStream in, File outputDir) throws Exception {
-		try (Jar jar = new Jar("dot", in)) {
-			Map<String, Resource> resources = jar.getResources();
+	public static void unzipStream(InputStream in, File outputDir) throws Exception {
+		unzipStream(in, outputDir, true);
+	}
 
-			for (Entry<String, Resource> e : resources.entrySet()) {
-				String path = e.getKey();
+	public static void unzipStream(InputStream in, File outputDir, boolean preserveNewerFiles) throws Exception {
+		try(ZipInputStream stream = new ZipInputStream(in)) {
+			
+            ZipEntry entry;
+            
+            Path outputPath = outputDir.toPath();
+            		
+			  while((entry = stream.getNextEntry())!=null)
+	          {
 
-				Resource r = e.getValue();
-
-				File dest = Processor.getFile(outputDir, path);
-
-				if ((dest.lastModified() < r.lastModified()) || (r.lastModified() <= 0)) {
-					File dp = dest.getParentFile();
-
-					if (!dp.exists() && !dp.mkdirs()) {
-						throw new Exception("Could not create directory " + dp);
+	                Path filePath = outputPath.resolve(entry.getName());
+	                
+					if (!_isSafelyRelative(filePath.toFile(), outputDir)) {
+						throw new ZipException(
+							"Entry " + filePath.getFileName() + " is outside of the target destination: " + outputDir);
 					}
+	                
+					if (preserveNewerFiles && Files.exists(filePath) && 
+						(Files.getLastModifiedTime(filePath).toMillis() >= entry.getTime())) {
+	                	continue;
+	                }
 
-					IO.copy(r.openInputStream(), dest);
-				}
-			}
+	                Path parentPath = filePath.getParent();
+	                
+	                if (!Files.exists(parentPath)) {
+	                	Files.createDirectories(parentPath);
+	                }
+	                
+                	if (!Files.exists(parentPath)) {
+						throw new Exception("Could not create directory " + parentPath);
+                	}
+	                if (entry.isDirectory()) {
+	                	Files.createDirectory(filePath);
+	                }
+	                else {
+	                	Files.copy(stream, filePath);	                	
+	                }
+	                
+	          }
 		}
 	}
 
