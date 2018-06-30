@@ -36,10 +36,10 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Christopher Bryan Boyd
@@ -224,22 +224,16 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 			throw new RuntimeException(
 				"Gradle command returned error code " + processResult.getResultCode() + "\n " + sb.toString());
 		}
-
-		Set<Path> extensionPaths = new HashSet<>();
-
-		Iterator<File> i = outputFiles.iterator();
-
-		if (i.hasNext()) {
-			File next = i.next();
-
-			Path outputPath = next.toPath();
-
-			if (Files.exists(outputPath)) {
-				extensionPaths.add(outputPath);
-			}
+		else {
+			return outputFiles.stream().
+				map(
+					File::toPath
+				).filter(
+					Files::exists
+				).collect(
+					Collectors.toSet()
+				);
 		}
-
-		return extensionPaths;
 	}
 
 	private void _installExtension(Path extensionPath) throws IOException {
