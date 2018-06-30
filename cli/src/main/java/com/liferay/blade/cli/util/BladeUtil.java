@@ -41,6 +41,7 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,52 +74,6 @@ public class BladeUtil {
 		InetSocketAddress remoteAddress = new InetSocketAddress(host, Integer.valueOf(port));
 
 		return _canConnect(localAddress, remoteAddress);
-	}
-
-	public static void unzipStream(InputStream in, File outputDir) throws Exception {
-		unzipStream(in, outputDir, true);
-	}
-
-	public static void unzipStream(InputStream in, File outputDir, boolean preserveNewerFiles) throws Exception {
-		try(ZipInputStream stream = new ZipInputStream(in)) {
-			
-            ZipEntry entry;
-            
-            Path outputPath = outputDir.toPath();
-            		
-			  while((entry = stream.getNextEntry())!=null)
-	          {
-
-	                Path filePath = outputPath.resolve(entry.getName());
-	                
-					if (!_isSafelyRelative(filePath.toFile(), outputDir)) {
-						throw new ZipException(
-							"Entry " + filePath.getFileName() + " is outside of the target destination: " + outputDir);
-					}
-	                
-					if (preserveNewerFiles && Files.exists(filePath) && 
-						(Files.getLastModifiedTime(filePath).toMillis() >= entry.getTime())) {
-	                	continue;
-	                }
-
-	                Path parentPath = filePath.getParent();
-	                
-	                if (!Files.exists(parentPath)) {
-	                	Files.createDirectories(parentPath);
-	                }
-	                
-                	if (!Files.exists(parentPath)) {
-						throw new Exception("Could not create directory " + parentPath);
-                	}
-	                if (entry.isDirectory()) {
-	                	Files.createDirectory(filePath);
-	                }
-	                else {
-	                	Files.copy(stream, filePath);	                	
-	                }
-	                
-	          }
-		}
 	}
 
 	public static void downloadGithubProject(String url, Path target) throws IOException {
@@ -576,6 +531,54 @@ public class BladeUtil {
 					}
 
 					out.flush();
+				}
+			}
+		}
+	}
+
+	public static void unzipStream(InputStream in, File outputDir) throws Exception {
+		unzipStream(in, outputDir, true);
+	}
+
+	public static void unzipStream(InputStream in, File outputDir, boolean preserveNewerFiles) throws Exception {
+		try (ZipInputStream stream = new ZipInputStream(in)) {
+			ZipEntry entry;
+
+			Path outputPath = outputDir.toPath();
+
+			while ((entry = stream.getNextEntry()) != null)
+			{
+
+				Path filePath = outputPath.resolve(entry.getName());
+
+				if (!_isSafelyRelative(filePath.toFile(), outputDir)) {
+					throw new ZipException(
+						"Entry " + filePath.getFileName() + " is outside of the target destination: " + outputDir);
+				}
+
+				if (preserveNewerFiles && Files.exists(filePath)) {
+					FileTime fileTime = Files.getLastModifiedTime(filePath);
+
+					if (fileTime.toMillis() >= entry.getTime()) {
+						continue;
+					}
+				}
+
+				Path parentPath = filePath.getParent();
+
+				if (!Files.exists(parentPath)) {
+					Files.createDirectories(parentPath);
+				}
+
+				if (!Files.exists(parentPath)) {
+					throw new Exception("Could not create directory " + parentPath);
+				}
+
+				if (entry.isDirectory()) {
+					Files.createDirectory(filePath);
+				}
+				else {
+					Files.copy(stream, filePath);
 				}
 			}
 		}
