@@ -252,8 +252,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 				getBladeCLI().out("Installed version: " + installedVersion);
 				getBladeCLI().out("New version: " + newVersion);
 
-				doInstall = PromptUtil.askBoolean(
-					"Overwrite existing extension?", System.in, getBladeCLI().out(), false);
+				doInstall = PromptUtil.askBoolean("Overwrite existing extension?", System.in, getBladeCLI().out(), "n");
 
 				if (doInstall) {
 					getBladeCLI().out(

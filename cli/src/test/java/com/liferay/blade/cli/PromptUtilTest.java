@@ -57,11 +57,11 @@ public class PromptUtilTest {
 		correctAnswerDefaultFalseTests.put("y", true);
 		correctAnswerDefaultFalseTests.put("y ", true);
 
-		Optional<Boolean> trueDefaultAnswer = Optional.of(true);
+		Optional<String> trueDefaultAnswer = Optional.of("y");
 
 		_testAnswers(correctAnswerDefaultTrueTests, trueDefaultAnswer);
 
-		Optional<Boolean> falseDefaultAnswer = Optional.of(false);
+		Optional<String> falseDefaultAnswer = Optional.of("n");
 
 		_testAnswers(correctAnswerDefaultFalseTests, falseDefaultAnswer);
 	}
@@ -92,26 +92,23 @@ public class PromptUtilTest {
 	public void testAskBooleanQuestionsOutput() throws Exception {
 		String answer = "y";
 
-		String correctResult = _question + " [y/n]";
+		String correctResult = _question + " [ y / n ]";
 
 		String output = _ask(_question, answer).getValue();
 
 		Assert.assertEquals(output.trim(), correctResult);
 
-		Map<String, Optional<Boolean>> correctEndingOutputTests = new HashMap<>();
+		Map<String, Optional<String>> correctEndingOutputTests = new HashMap<>();
 
-		correctEndingOutputTests.put("[Y/n]", Optional.of(true));
-		correctEndingOutputTests.put("[y/N]", Optional.of(false));
-		correctEndingOutputTests.put("[y/n]", Optional.empty());
+		correctEndingOutputTests.put("Default Answer is: [ n ]", Optional.of("n"));
+		correctEndingOutputTests.put("Default Answer is: [ y ]", Optional.of("y"));
 
-		for (Entry<String, Optional<Boolean>> entry : correctEndingOutputTests.entrySet()) {
+		for (Entry<String, Optional<String>> entry : correctEndingOutputTests.entrySet()) {
 			String receivedOutput = _ask(_question, answer, entry.getValue()).getValue();
 
 			receivedOutput = receivedOutput.trim();
 
-			correctResult = _question + " " + entry.getKey();
-
-			boolean assertBoolean = Objects.equals(receivedOutput, correctResult);
+			boolean assertBoolean = receivedOutput.endsWith(entry.getKey());
 
 			Assert.assertTrue(assertBoolean);
 		}
@@ -123,7 +120,7 @@ public class PromptUtilTest {
 		return _ask(question, answerString, Optional.empty());
 	}
 
-	private static Entry<Boolean, String> _ask(String question, String answerString, Optional<Boolean> defaultAnswer)
+	private static Entry<Boolean, String> _ask(String question, String answerString, Optional<String> defaultAnswer)
 		throws UnsupportedEncodingException {
 
 		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
@@ -139,7 +136,7 @@ public class PromptUtilTest {
 		return new SimpleEntry<>(answer, outString);
 	}
 
-	private void _testAnswer(String answerString, Boolean correctAnswerValue, Optional<Boolean> defaultAnswer)
+	private void _testAnswer(String answerString, Boolean correctAnswerValue, Optional<String> defaultAnswer)
 		throws UnsupportedEncodingException {
 
 		Boolean receivedAnswer = _ask(_question, answerString, defaultAnswer).getKey();
@@ -153,7 +150,7 @@ public class PromptUtilTest {
 		_testAnswers(correctAnswerTestMap, Optional.empty());
 	}
 
-	private void _testAnswers(Map<String, Boolean> correctAnswerTestMap, Optional<Boolean> defaultAnswer)
+	private void _testAnswers(Map<String, Boolean> correctAnswerTestMap, Optional<String> defaultAnswer)
 		throws UnsupportedEncodingException {
 
 		for (Entry<String, Boolean> entry : correctAnswerTestMap.entrySet()) {
