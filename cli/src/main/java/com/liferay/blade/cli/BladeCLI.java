@@ -16,12 +16,23 @@
 
 package com.liferay.blade.cli;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.JCommander.Builder;
+import com.beust.jcommander.MissingCommandException;
+import com.beust.jcommander.ParameterException;
+
+import com.liferay.blade.cli.command.BaseArgs;
+import com.liferay.blade.cli.command.BaseCommand;
+import com.liferay.blade.cli.util.BladeUtil;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
@@ -32,14 +43,6 @@ import java.util.Scanner;
 import java.util.stream.IntStream;
 
 import org.fusesource.jansi.AnsiConsole;
-
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.JCommander.Builder;
-import com.beust.jcommander.MissingCommandException;
-import com.beust.jcommander.ParameterException;
-import com.liferay.blade.cli.command.BaseArgs;
-import com.liferay.blade.cli.command.BaseCommand;
-import com.liferay.blade.cli.util.BladeUtil;
 
 /**
  * @author Gregory Amerson
@@ -69,10 +72,6 @@ public class BladeCLI implements Runnable {
 
 		_out = out;
 		_err = err;
-	}
-	
-	protected void setUserHomeDir(File dir) {
-		userHomeDir = dir;
 	}
 
 	public void addErrors(String prefix, Collection<String> data) {
@@ -142,11 +141,11 @@ public class BladeCLI implements Runnable {
 	}
 
 	public File getUserHomeDir() {
-		if (userHomeDir == null) {
-			userHomeDir = new File(System.getProperty("user.home"));
+		if (_userHomeDir == null) {
+			_userHomeDir = new File(System.getProperty("user.home"));
 		}
 
-		return userHomeDir;
+		return _userHomeDir;
 	}
 
 	public PrintStream out() {
@@ -306,7 +305,9 @@ public class BladeCLI implements Runnable {
 		}
 	}
 
-	private File userHomeDir = null;
+	protected void setUserHomeDir(File dir) {
+		_userHomeDir = dir;
+	}
 
 	private static String _extractBasePath(String[] args) {
 		String defaultBasePath = ".";
@@ -365,5 +366,6 @@ public class BladeCLI implements Runnable {
 	private final PrintStream _err;
 	private JCommander _jCommander;
 	private final PrintStream _out;
+	private File _userHomeDir = null;
 
 }

@@ -16,6 +16,10 @@
 
 package com.liferay.blade.cli.command;
 
+import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.TestUtil;
+import com.liferay.blade.cli.util.FileUtil;
+
 import java.io.File;
 
 import org.junit.Assert;
@@ -24,10 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.TestUtil;
-import com.liferay.blade.cli.util.FileUtil;
-
 /**
  * @author Christopher Bryan Boyd
  */
@@ -35,11 +35,10 @@ public class HelpCommandTest {
 
 	@Before
 	public void setUp() throws Exception {
-
 		BladeTest bladeTest = new BladeTest();
 
 		bladeTest.setUserHomeDir(temporaryFolder.getRoot());
-		
+
 		File cacheDir = bladeTest.getCacheDir();
 
 		if (cacheDir.exists()) {

@@ -16,27 +16,6 @@
 
 package com.liferay.blade.cli.command;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import com.liferay.blade.cli.BladeTest;
 import com.liferay.blade.cli.StringTestUtil;
 import com.liferay.blade.cli.TestUtil;
@@ -45,8 +24,33 @@ import com.liferay.blade.cli.util.FileUtil;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import net.diibadaaba.zipdiff.DifferenceCalculator;
 import net.diibadaaba.zipdiff.Differences;
+
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Christopher Bryan Boyd
@@ -104,7 +108,7 @@ public class InstallExtensionCommandTest {
 		Assert.assertTrue(output.contains(jarName));
 
 		File tempDir = temporaryFolder.newFolder("overwrite");
-		
+
 		Path tempPath = tempDir.toPath();
 
 		output = TestUtil.runBlade(temporaryFolder.getRoot(), args);
@@ -146,7 +150,7 @@ public class InstallExtensionCommandTest {
 	@Test
 	public void testInstallCustomExtensionTwiceOverwrite() throws Exception {
 		File tempRoot = temporaryFolder.getRoot();
-		
+
 		String jarName = _sampleCommandJarFile.getName();
 
 		File extensionsFolder = temporaryFolder.newFolder(".blade", "extensions");
