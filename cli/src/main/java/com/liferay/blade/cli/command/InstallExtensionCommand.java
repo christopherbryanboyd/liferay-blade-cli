@@ -245,9 +245,21 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 	}
 
 	private void _installExtension(Path extensionPath) throws IOException {
-		Path extensionName = extensionPath.getFileName();
 
 		if (_isExtension(extensionPath)) {
+
+			Path extensionsHome = Extensions.getDirectory();
+			Path extensionName = extensionPath.getFileName();
+			Path newExtensionPath = extensionsHome.resolve(extensionName);
+			boolean extensionExists = Files.exists(newExtensionPath);
+			
+			boolean doInstall = true;
+
+			String newVersion = BladeUtil.getBundleVersion(extensionPath);
+
+			if (extensionExists) {
+				String installedVersion = BladeUtil.getBundleVersion(newExtensionPath);
+				
 			Path extensionsHome = Extensions.getDirectory();
 
 			Path extensionInstallPath = extensionsHome.resolve(extensionName);
