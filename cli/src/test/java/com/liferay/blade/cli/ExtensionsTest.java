@@ -38,7 +38,6 @@ import org.junit.rules.TemporaryFolder;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
-import org.powermock.reflect.Whitebox;
 
 /**
  * @author Christopher Bryan Boyd
@@ -49,18 +48,18 @@ public class ExtensionsTest {
 
 	@Before
 	public void setUp() throws Exception {
-		Whitebox.setInternalState(BladeCLI.class, "USER_HOME_DIR", temporaryFolder.getRoot());
+		_bladeTest = new BladeTest();
+
+		_bladeTest.setUserHomeDir(temporaryFolder.getRoot());
 	}
 
 	@Test
 	public void testArgsSort() throws Exception {
 		String[] args = {"--base", "/foo/bar/dir/", "--flag1", "extension", "install", "/path/to/jar.jar", "--flag2"};
 
-		BladeTest bladeTest = new BladeTest();
-
 		Map<String, BaseCommand<? extends BaseArgs>> commands;
 
-		try (Extensions extensions = new Extensions(bladeTest.getSettings())) {
+		try (Extensions extensions = new Extensions(_bladeTest, _bladeTest.getSettings())) {
 			commands = extensions.getCommands();
 		}
 
@@ -79,9 +78,8 @@ public class ExtensionsTest {
 
 	@Test
 	public void testLoadCommandsBuiltIn() throws Exception {
-		BladeTest bladeTest = new BladeTest();
-
-		Map<String, BaseCommand<? extends BaseArgs>> commands = new Extensions(bladeTest.getSettings()).getCommands();
+		Map<String, BaseCommand<? extends BaseArgs>> commands = new Extensions(
+			_bladeTest, _bladeTest.getSettings()).getCommands();
 
 		Assert.assertNotNull(commands);
 
@@ -92,9 +90,8 @@ public class ExtensionsTest {
 	public void testLoadCommandsWithCustomExtension() throws Exception {
 		_setupTestExtensions();
 
-		BladeTest bladeTest = new BladeTest();
-
-		Map<String, BaseCommand<? extends BaseArgs>> commands = new Extensions(bladeTest.getSettings()).getCommands();
+		Map<String, BaseCommand<? extends BaseArgs>> commands = new Extensions(
+			_bladeTest, _bladeTest.getSettings()).getCommands();
 
 		Assert.assertNotNull(commands);
 
@@ -103,7 +100,7 @@ public class ExtensionsTest {
 
 	@Test
 	public void testProjectTemplatesBuiltIn() throws Exception {
-		Map<String, String> templates = BladeUtil.getTemplates();
+		Map<String, String> templates = BladeUtil.getTemplates(_bladeTest);
 
 		Assert.assertNotNull(templates);
 
@@ -114,7 +111,7 @@ public class ExtensionsTest {
 	public void testProjectTemplatesWithCustom() throws Exception {
 		_setupTestExtensions();
 
-		Map<String, String> templates = BladeUtil.getTemplates();
+		Map<String, String> templates = BladeUtil.getTemplates(_bladeTest);
 
 		Assert.assertNotNull(templates);
 
@@ -167,5 +164,7 @@ public class ExtensionsTest {
 	private static final int _NUM_BUILTIN_COMMANDS = 17;
 
 	private static final int _NUM_BUILTIN_TEMPLATES = 37;
+
+	private BladeTest _bladeTest;
 
 }
