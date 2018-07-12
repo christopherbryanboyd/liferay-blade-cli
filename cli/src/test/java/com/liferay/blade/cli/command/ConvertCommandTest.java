@@ -33,7 +33,6 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Gregory Amerson
  */
-//@RunWith(ParallelRunner.class)
 public class ConvertCommandTest {
 
 	@Test

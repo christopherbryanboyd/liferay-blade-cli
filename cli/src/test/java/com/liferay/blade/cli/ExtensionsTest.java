@@ -36,14 +36,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 /**
  * @author Christopher Bryan Boyd
  * @author Gregory Amerson
  */
-@PrepareForTest(Extensions.class)
 public class ExtensionsTest {
 
 	@Before

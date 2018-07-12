@@ -16,8 +16,6 @@
 
 package com.liferay.blade.cli.command;
 
-import com.googlecode.junittoolbox.ParallelRunner;
-
 import com.liferay.blade.cli.BladeTest;
 import com.liferay.blade.cli.TestUtil;
 
@@ -32,12 +30,10 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 
 /**
  * @author David Truong
  */
-@RunWith(ParallelRunner.class)
 public class ConvertThemeCommandTest {
 
 	@Test

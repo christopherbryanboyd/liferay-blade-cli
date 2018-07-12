@@ -18,8 +18,6 @@ package com.liferay.blade.cli.command;
 
 import aQute.lib.io.IO;
 
-import com.googlecode.junittoolbox.ParallelRunner;
-
 import com.liferay.blade.cli.BladeTest;
 import com.liferay.blade.cli.util.BladeUtil;
 
@@ -31,12 +29,10 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 
 /**
  * @author Terry Jia
  */
-@RunWith(ParallelRunner.class)
 public class ConvertServiceBuilderCommandTest {
 
 	public static final String SB_PROJECT_NAME = "sample-service-builder-portlet";

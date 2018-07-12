@@ -16,13 +16,29 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.header.Parameters;
+import aQute.bnd.osgi.Domain;
+import aQute.bnd.osgi.Jar;
+
+import aQute.lib.io.IO;
+
+import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.GradleRunnerUtil;
+import com.liferay.blade.cli.MavenRunnerUtil;
+import com.liferay.blade.cli.TestUtil;
+import com.liferay.blade.cli.util.BladeUtil;
+import com.liferay.blade.cli.util.FileUtil;
+import com.liferay.project.templates.ProjectTemplates;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Writer;
+
 import java.nio.file.Paths;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,32 +48,18 @@ import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+
 import org.gradle.testkit.runner.BuildTask;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-
-import com.googlecode.junittoolbox.ParallelRunner;
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.GradleRunnerUtil;
-import com.liferay.blade.cli.MavenRunnerUtil;
-import com.liferay.blade.cli.TestUtil;
-import com.liferay.blade.cli.util.BladeUtil;
-import com.liferay.blade.cli.util.FileUtil;
-import com.liferay.project.templates.ProjectTemplates;
-
-import aQute.bnd.header.Parameters;
-import aQute.bnd.osgi.Domain;
-import aQute.bnd.osgi.Jar;
-import aQute.lib.io.IO;
 
 /**
  * @author Gregory Amerson
  */
-@RunWith(ParallelRunner.class)
 public class CreateCommandTest {
 
 	@Before

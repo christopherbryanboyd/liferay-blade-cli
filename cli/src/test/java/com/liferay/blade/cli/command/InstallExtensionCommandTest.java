@@ -16,8 +16,6 @@
 
 package com.liferay.blade.cli.command;
 
-import com.googlecode.junittoolbox.ParallelRunner;
-
 import com.liferay.blade.cli.StringTestUtil;
 import com.liferay.blade.cli.TestUtil;
 
@@ -49,13 +47,11 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 
 /**
  * @author Christopher Bryan Boyd
  * @author Gregory Amerson
  */
-@RunWith(ParallelRunner.class)
 public class InstallExtensionCommandTest {
 
 	@Test
