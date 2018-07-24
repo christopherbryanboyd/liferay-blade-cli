@@ -16,21 +16,19 @@
 
 package com.liferay.blade.cli.gradle;
 
-import com.liferay.blade.cli.LiferayBundleDeployer;
-import com.liferay.gogo.shell.client.GogoShellClient;
-
+import java.io.File;
 import java.io.IOException;
-
+import java.io.PrintStream;
 import java.net.URI;
-
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +37,13 @@ import java.util.stream.Stream;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.dto.BundleDTO;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.LiferayBundleDeployer;
+import com.liferay.gogo.shell.client.GogoShellClient;
+
+import aQute.bnd.header.Attrs;
+import aQute.bnd.osgi.Domain;
 
 /**
  * @author Christopher Bryan Boyd
@@ -274,6 +279,126 @@ public class LiferayBundleDeployerImpl implements LiferayBundleDeployer {
 		}
 	}
 
+	private static void _deployBundle(File file, BladeCLI bladeCLI, LiferayBundleDeployer client, Domain bundle, Entry<String, Attrs> bsn)
+		throws Exception {
+
+		Entry<String, Attrs> fragmentHost = bundle.getFragmentHost();
+
+		String hostBsn = null;
+
+		if (fragmentHost != null) {
+			hostBsn = fragmentHost.getKey();
+		}
+
+		Collection<BundleDTO> bundles = client.getBundles();
+
+		long existingId = client.getBundleId(bundles, bsn.getKey());
+
+		long hostId = client.getBundleId(bundles, hostBsn);
+
+		URI uri = file.toURI();
+
+		if (existingId > 0) {
+			_reloadExistingBundle(bladeCLI, client, fragmentHost, existingId, hostId, uri);
+		}
+		else {
+			_installNewBundle(bladeCLI, client, bsn, fragmentHost, hostId, uri);
+		}
+	}
+
+	private static final void _reloadExistingBundle(BladeCLI bladeCLI, 
+			LiferayBundleDeployer client, Entry<String, Attrs> fragmentHost, long existingId, long hostId, URI uri)
+		throws Exception {
+
+		if ((fragmentHost != null) && (hostId > 0)) {
+			client.reloadFragment(existingId, hostId, uri);
+		}
+		else {
+			client.reloadBundle(existingId, uri);
+		}
+
+		PrintStream out = bladeCLI.out();
+
+		out.println("Updated bundle " + existingId);
+	}
+	private static void _installNewBundle(BladeCLI bladeCLI, 
+			LiferayBundleDeployer client, Entry<String, Attrs> bsn, Entry<String, Attrs> fragmentHost, long hostId,
+			URI uri)
+		throws Exception {
+
+		PrintStream out = bladeCLI.out();
+
+		long installedId = client.install(uri);
+
+		out.println("Installed bundle " + installedId);
+
+		if ((fragmentHost != null) && (hostId > 0)) {
+			client.refresh(hostId);
+
+			out.println("Deployed fragment bundle " + installedId);
+		}
+		else {
+			long existingId = client.getBundleId(bsn.getKey());
+
+			try {
+				if (!Objects.equals(installedId, existingId)) {
+					out.println("Error: Bundle IDs do not match.");
+				}
+				else {
+					if (existingId > 1) {
+						client.start(existingId);
+
+						out.println("Started bundle " + installedId);
+					}
+					else {
+						out.println("Error: bundle failed to start: " + bsn);
+					}
+				}
+			}
+			catch (Exception e) {
+				String exceptionMessage = e.getMessage() == null ? "" : (System.lineSeparator() + e.getMessage());
+
+				String message = "Error: Bundle Deployment failed: " + bsn + exceptionMessage;
+
+				bladeCLI.addErrors("deploy watch", Collections.singleton(message));
+
+				PrintStream err = bladeCLI.err();
+
+				e.printStackTrace(err);
+			}
+		}
+	}
+	public static void installOrUpdate(File file, BladeCLI bladeCLI, String host, int port) throws IOException, Exception {
+		try (LiferayBundleDeployer client = LiferayBundleDeployer.newInstance(host, port)) {
+			String name = file.getName();
+
+			name = name.toLowerCase();
+
+			Domain bundle = Domain.domain(file);
+
+			Entry<String, Attrs> bsn = bundle.getBundleSymbolicName();
+
+			if (bsn != null) {
+				_deployBundle(file, bladeCLI, client, bundle, bsn);
+			}
+			else if (name.endsWith(".war")) {
+				_deployWar(file, client);
+			}
+		}
+	}
+
+	private static void _deployWar(File file, LiferayBundleDeployer deployer) throws Exception {
+		URI uri = file.toURI();
+
+		long bundleId = deployer.install(uri);
+
+		if (bundleId > 0) {
+			deployer.start(bundleId);
+		}
+		else {
+			throw new Exception("Failed to deploy war: " + file.getAbsolutePath());
+		}
+	}
 	private String _sendGogo(String data) throws Exception {
 		return _client.send(data);
 	}

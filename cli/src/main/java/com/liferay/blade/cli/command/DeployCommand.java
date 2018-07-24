@@ -16,35 +16,24 @@
 
 package com.liferay.blade.cli.command;
 
-import aQute.bnd.header.Attrs;
-import aQute.bnd.osgi.Domain;
-
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.LiferayBundleDeployer;
-import com.liferay.blade.cli.gradle.GradleExec;
-import com.liferay.blade.cli.gradle.GradleTooling;
-import com.liferay.blade.cli.gradle.ProcessResult;
-import com.liferay.blade.cli.util.BladeUtil;
-import com.liferay.blade.cli.util.FileWatcher;
-import com.liferay.blade.cli.util.FileWatcher.Consumer;
-
 import java.io.File;
 import java.io.PrintStream;
-
 import java.net.ConnectException;
-import java.net.URI;
-
 import java.nio.file.Path;
-
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.osgi.framework.dto.BundleDTO;
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.gradle.GradleExec;
+import com.liferay.blade.cli.gradle.GradleTooling;
+import com.liferay.blade.cli.gradle.LiferayBundleDeployerImpl;
+import com.liferay.blade.cli.gradle.ProcessResult;
+import com.liferay.blade.cli.util.BladeUtil;
+import com.liferay.blade.cli.util.FileWatcher;
+import com.liferay.blade.cli.util.FileWatcher.Consumer;
 
 /**
  * @author Gregory Amerson
@@ -98,18 +87,6 @@ public class DeployCommand extends BaseCommand<DeployArgs> {
 		return DeployArgs.class;
 	}
 
-	private static void _deployWar(File file, LiferayBundleDeployer deployer) throws Exception {
-		URI uri = file.toURI();
-
-		long bundleId = deployer.install(uri);
-
-		if (bundleId > 0) {
-			deployer.start(bundleId);
-		}
-		else {
-			throw new Exception("Failed to deploy war: " + file.getAbsolutePath());
-		}
-	}
 
 	private void _addError(String msg) {
 		getBladeCLI().addErrors("deploy", Collections.singleton(msg));
@@ -166,33 +143,6 @@ public class DeployCommand extends BaseCommand<DeployArgs> {
 				}
 			}
 		);
-	}
-
-	private void _deployBundle(File file, LiferayBundleDeployer client, Domain bundle, Entry<String, Attrs> bsn)
-		throws Exception {
-
-		Entry<String, Attrs> fragmentHost = bundle.getFragmentHost();
-
-		String hostBsn = null;
-
-		if (fragmentHost != null) {
-			hostBsn = fragmentHost.getKey();
-		}
-
-		Collection<BundleDTO> bundles = client.getBundles();
-
-		long existingId = client.getBundleId(bundles, bsn.getKey());
-
-		long hostId = client.getBundleId(bundles, hostBsn);
-
-		URI uri = file.toURI();
-
-		if (existingId > 0) {
-			_reloadExistingBundle(client, fragmentHost, existingId, hostId, uri);
-		}
-		else {
-			_installNewBundle(client, bsn, fragmentHost, hostId, uri);
-		}
 	}
 
 	private void _deployWatch(final GradleExec gradleExec, final Set<File> outputFiles, String host, int port)
@@ -269,91 +219,14 @@ public class DeployCommand extends BaseCommand<DeployArgs> {
 		new FileWatcher(base.toPath(), true, consumer);
 	}
 
-	private void _installNewBundle(
-			LiferayBundleDeployer client, Entry<String, Attrs> bsn, Entry<String, Attrs> fragmentHost, long hostId,
-			URI uri)
-		throws Exception {
 
-		BladeCLI bladeCLI = getBladeCLI();
-
-		PrintStream out = bladeCLI.out();
-
-		long installedId = client.install(uri);
-
-		out.println("Installed bundle " + installedId);
-
-		if ((fragmentHost != null) && (hostId > 0)) {
-			client.refresh(hostId);
-
-			out.println("Deployed fragment bundle " + installedId);
-		}
-		else {
-			long existingId = client.getBundleId(bsn.getKey());
-
-			try {
-				if (!Objects.equals(installedId, existingId)) {
-					out.println("Error: Bundle IDs do not match.");
-				}
-				else {
-					if (existingId > 1) {
-						client.start(existingId);
-
-						out.println("Started bundle " + installedId);
-					}
-					else {
-						out.println("Error: bundle failed to start: " + bsn);
-					}
-				}
-			}
-			catch (Exception e) {
-				String exceptionMessage = e.getMessage() == null ? "" : (System.lineSeparator() + e.getMessage());
-
-				String message = "Error: Bundle Deployment failed: " + bsn + exceptionMessage;
-
-				_addError("deploy watch", message);
-
-				PrintStream err = bladeCLI.err();
-
-				e.printStackTrace(err);
-			}
-		}
-	}
 
 	private void _installOrUpdate(File file, String host, int port) throws Exception {
 		file = file.getAbsoluteFile();
 
-		try (LiferayBundleDeployer client = LiferayBundleDeployer.newInstance(host, port)) {
-			String name = file.getName();
-
-			name = name.toLowerCase();
-
-			Domain bundle = Domain.domain(file);
-
-			Entry<String, Attrs> bsn = bundle.getBundleSymbolicName();
-
-			if (bsn != null) {
-				_deployBundle(file, client, bundle, bsn);
-			}
-			else if (name.endsWith(".war")) {
-				_deployWar(file, client);
-			}
-		}
+		LiferayBundleDeployerImpl.installOrUpdate(file, getBladeCLI(), host, port);
 	}
 
-	private final void _reloadExistingBundle(
-			LiferayBundleDeployer client, Entry<String, Attrs> fragmentHost, long existingId, long hostId, URI uri)
-		throws Exception {
 
-		if ((fragmentHost != null) && (hostId > 0)) {
-			client.reloadFragment(existingId, hostId, uri);
-		}
-		else {
-			client.reloadBundle(existingId, uri);
-		}
-
-		PrintStream out = getBladeCLI().out();
-
-		out.println("Updated bundle " + existingId);
-	}
 
 }

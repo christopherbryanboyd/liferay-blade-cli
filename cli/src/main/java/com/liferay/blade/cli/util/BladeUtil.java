@@ -16,17 +16,6 @@
 
 package com.liferay.blade.cli.util;
 
-import aQute.bnd.osgi.Jar;
-import aQute.bnd.osgi.Processor;
-import aQute.bnd.osgi.Resource;
-
-import aQute.lib.io.IO;
-
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.Extensions;
-import com.liferay.blade.cli.WorkspaceConstants;
-import com.liferay.project.templates.ProjectTemplates;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,16 +25,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
+import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -60,10 +48,21 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.Extensions;
+import com.liferay.blade.cli.WorkspaceConstants;
+import com.liferay.project.templates.ProjectTemplates;
+
+import aQute.bnd.osgi.Jar;
+import aQute.bnd.osgi.Processor;
+import aQute.bnd.osgi.Resource;
+import aQute.lib.io.IO;
 
 /**
  * @author Gregory Amerson
@@ -154,17 +153,17 @@ public class BladeUtil {
 	public static List<Properties> getAppServerProperties(File dir) {
 		File projectRoot = findParentFile(dir, _APP_SERVER_PROPERTIES_FILE_NAMES, true);
 
-		List<Properties> properties = new ArrayList<>();
-
-		for (String fileName : _APP_SERVER_PROPERTIES_FILE_NAMES) {
-			File file = new File(projectRoot, fileName);
-
-			if (file.exists()) {
-				properties.add(getProperties(file));
-			}
-		}
-
-		return properties;
+		return Stream.of(
+				_APP_SERVER_PROPERTIES_FILE_NAMES
+			).map(
+				x -> new File(projectRoot, x)
+			).filter(
+				File::exists
+			).map(
+				BladeUtil::getProperties
+			).collect(
+				Collectors.toList()
+			);
 	}
 
 	public static String getBundleVersion(Path pathToJar) throws IOException {
@@ -437,7 +436,48 @@ public class BladeUtil {
 
 		return false;
 	}
-
+	public static Path getMavenOutputFile(Path projectDir) {
+				Path outputPath = null;
+				
+				Path targetPath = projectDir.resolve("target");
+				
+				if (Files.exists(targetPath) && Files.isDirectory(targetPath)) {
+					
+					PathMatcher matcher =
+						    FileSystems.getDefault().getPathMatcher("glob:*.{jar,war}");
+		
+					try (Stream<Path> stream = Files.list(targetPath)) {
+						Collection<Path> paths = stream.collect(Collectors.toSet());
+						
+						for (Path path : paths) {
+							Path fileName = path.getFileName();
+							if (matcher.matches(fileName))  {
+								outputPath = path;
+								break;
+							}
+						}
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				return outputPath;
+			}
+		
+			public static File getMavenWrapper(File dir) {
+				File gradleRoot = findParentFile(dir, new String[] {_MAVENW_UNIX_FILE_NAME, _MAVENW_WINDOWS_FILE_NAME}, true);
+		
+				if (gradleRoot != null) {
+					if (isWindows()) {
+						return new File(gradleRoot, _MAVENW_WINDOWS_FILE_NAME);
+					}
+					else {
+						return new File(gradleRoot, _MAVENW_UNIX_FILE_NAME);
+					}
+				}
+		
+				return null;
+			}
 	public static void setShell(ProcessBuilder processBuilder, String cmd) {
 		Map<String, String> env = processBuilder.environment();
 
@@ -457,6 +497,23 @@ public class BladeUtil {
 		commands.add(cmd);
 
 		processBuilder.command(commands);
+	}
+
+	public static Process startProcessAsync(
+			BladeCLI blade, String command)
+		throws Exception {
+
+		ProcessBuilder processBuilder = new ProcessBuilder();
+
+		if ((blade.getBase() != null) && blade.getBase().exists()) {
+			processBuilder.directory(blade.getBase());
+		}
+
+		setShell(processBuilder, command);
+
+		Process process = processBuilder.start();
+
+		return process;
 	}
 
 	public static Process startProcess(BladeCLI blade, String command) throws Exception {
@@ -658,6 +715,18 @@ public class BladeUtil {
 		return false;
 	}
 
+	public static boolean isProjectMaven(final Path directory) {
+		Path buildScriptPath = directory.resolve("pom.xml");
+		
+		return Files.exists(buildScriptPath);
+	}
+	
+	public static boolean isProjectGradle(final Path directory) {
+		Path buildScriptPath = directory.resolve("build.gradle");
+		
+		return Files.exists(buildScriptPath);
+	}
+
 	private static final String[] _APP_SERVER_PROPERTIES_FILE_NAMES = {
 		"app.server." + System.getProperty("user.name") + ".properties",
 		"app.server." + System.getenv("COMPUTERNAME") + ".properties",
@@ -677,5 +746,8 @@ public class BladeUtil {
 	private static final String _GRADLEW_WINDOWS_FILE_NAME = "gradlew.bat";
 
 	private static final String _SETTINGS_GRADLE_FILE_NAME = "settings.gradle";
-
+	
+	private static final String _MAVENW_UNIX_FILE_NAME = "mvnw";
+	
+	private static final String _MAVENW_WINDOWS_FILE_NAME = "mvnw.cmd";
 }

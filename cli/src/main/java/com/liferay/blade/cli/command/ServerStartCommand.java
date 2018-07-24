@@ -16,22 +16,21 @@
 
 package com.liferay.blade.cli.command;
 
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.WorkspaceConstants;
-import com.liferay.blade.cli.util.BladeUtil;
-
 import java.io.File;
-
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.WorkspaceConstants;
+import com.liferay.blade.cli.util.BladeUtil;
 
 /**
  * @author David Truong
@@ -45,6 +44,21 @@ public class ServerStartCommand extends BaseCommand<ServerStartArgs> {
 	public void execute() throws Exception {
 		BladeCLI blade = getBladeCLI();
 
+		File rootDir = getRootDir(blade);
+
+		execute(rootDir);
+	}
+	
+	protected void execute(File rootDir) throws Exception {
+		if (BladeUtil.isWorkspace(rootDir)) {
+			executeWithWorkspace(rootDir);
+		}
+		else {
+			executeWithoutWorkspace(rootDir);
+		}
+	}
+
+	protected File getRootDir(BladeCLI blade) {
 		File gradleWrapperFile = BladeUtil.getGradleWrapper(blade.getBase());
 
 		Path gradleWrapperPath = gradleWrapperFile.toPath();
@@ -52,91 +66,107 @@ public class ServerStartCommand extends BaseCommand<ServerStartArgs> {
 		Path parent = gradleWrapperPath.getParent();
 
 		File rootDir = parent.toFile();
+		return rootDir;
+	}
 
-		String serverType = null;
+	private void executeWithoutWorkspace(File rootDir) {
+		
+		BladeCLI blade = getBladeCLI();
+		
+		
+		try {
+			Path rootDirPath = rootDir.toPath().toRealPath();
+			List<Properties> propertiesList = BladeUtil.getAppServerProperties(rootDir);
 
-		Path rootDirPath = rootDir.toPath();
+			String appServerParentDir = "";
+			String serverType = null;
+			for (Properties properties : propertiesList) {
+				if (appServerParentDir.equals("")) {
+					appServerParentDir = getAppServerParentDir(rootDirPath, appServerParentDir, properties);
+				}
 
-		if (BladeUtil.isWorkspace(rootDir)) {
-			Properties properties = BladeUtil.getGradleProperties(rootDir);
+				if ((serverType == null) || serverType.equals("")) {
+					String serverTypeTemp = properties.getProperty(BladeUtil.APP_SERVER_TYPE_PROPERTY);
 
-			String liferayHomePath = properties.getProperty(WorkspaceConstants.DEFAULT_LIFERAY_HOME_DIR_PROPERTY);
-
-			if ((liferayHomePath == null) || liferayHomePath.equals("")) {
-				liferayHomePath = WorkspaceConstants.DEFAULT_LIFERAY_HOME_DIR;
+					if ((serverTypeTemp != null) && !serverTypeTemp.equals("")) {
+						serverType = serverTypeTemp;
+					}
+				}
 			}
 
-			serverType = properties.getProperty(WorkspaceConstants.DEFAULT_BUNDLE_ARTIFACT_NAME_PROPERTY);
-
-			if (serverType == null) {
-				serverType = WorkspaceConstants.DEFAULT_BUNDLE_ARTIFACT_NAME;
-			}
-
-			if (serverType.contains("jboss")) {
-				serverType = "jboss";
-			}
-			else if (serverType.contains("wildfly")) {
-				serverType = "wildfly";
-			}
-			else if (serverType.contains("tomcat")) {
-				serverType = "tomcat";
-			}
-
-			Path liferayHomeDir = null;
-			Path tempLiferayHome = Paths.get(liferayHomePath);
-
-			if (tempLiferayHome.isAbsolute()) {
-				liferayHomeDir = tempLiferayHome.normalize();
+			if (appServerParentDir.startsWith("/") || appServerParentDir.contains(":")) {
+				_commandServer(Paths.get(appServerParentDir), serverType);
 			}
 			else {
-				Path tempFile = rootDirPath.resolve(liferayHomePath);
-
-				liferayHomeDir = tempFile.normalize();
+				_commandServer(rootDirPath.resolve(appServerParentDir), serverType);
 			}
+		}
+		catch (Exception e) {
+			blade.error("Please execute this command from a Liferay project");
+		}
+	}
 
-			_commandServer(liferayHomeDir, serverType);
+	private String getAppServerParentDir(Path rootDirPath, String appServerParentDir, Properties properties)
+			throws IOException {
+		String appServerParentDirTemp = properties.getProperty(
+			BladeUtil.APP_SERVER_PARENT_DIR_PROPERTY);
+
+		if ((appServerParentDirTemp != null) && !appServerParentDirTemp.equals("")) {
+
+			appServerParentDirTemp = appServerParentDirTemp.replace(
+				"${project.dir}", rootDirPath.toString());
+
+			appServerParentDir = appServerParentDirTemp;
+		}
+		return appServerParentDir;
+	}
+
+	private void executeWithWorkspace(File rootDir) throws Exception {
+		
+		Path rootDirPath = rootDir.toPath();
+		
+		Properties properties = BladeUtil.getGradleProperties(rootDir);
+
+		String liferayHomePath = properties.getProperty(WorkspaceConstants.DEFAULT_LIFERAY_HOME_DIR_PROPERTY);
+
+		if ((liferayHomePath == null) || liferayHomePath.equals("")) {
+			liferayHomePath = WorkspaceConstants.DEFAULT_LIFERAY_HOME_DIR;
+		}
+
+		String serverType = getServerTypeWithinWorkspace(properties);
+
+		Path liferayHomeDir = null;
+		Path tempLiferayHome = Paths.get(liferayHomePath);
+
+		if (tempLiferayHome.isAbsolute()) {
+			liferayHomeDir = tempLiferayHome.normalize();
 		}
 		else {
-			try {
-				List<Properties> propertiesList = BladeUtil.getAppServerProperties(rootDir);
+			Path tempFile = rootDirPath.resolve(liferayHomePath);
 
-				String appServerParentDir = "";
-
-				for (Properties properties : propertiesList) {
-					if (appServerParentDir.equals("")) {
-						String appServerParentDirTemp = properties.getProperty(
-							BladeUtil.APP_SERVER_PARENT_DIR_PROPERTY);
-
-						if ((appServerParentDirTemp != null) && !appServerParentDirTemp.equals("")) {
-							Path rootDirRealPath = rootDirPath.toRealPath();
-
-							appServerParentDirTemp = appServerParentDirTemp.replace(
-								"${project.dir}", rootDirRealPath.toString());
-
-							appServerParentDir = appServerParentDirTemp;
-						}
-					}
-
-					if ((serverType == null) || serverType.equals("")) {
-						String serverTypeTemp = properties.getProperty(BladeUtil.APP_SERVER_TYPE_PROPERTY);
-
-						if ((serverTypeTemp != null) && !serverTypeTemp.equals("")) {
-							serverType = serverTypeTemp;
-						}
-					}
-				}
-
-				if (appServerParentDir.startsWith("/") || appServerParentDir.contains(":")) {
-					_commandServer(Paths.get(appServerParentDir), serverType);
-				}
-				else {
-					_commandServer(rootDirPath.resolve(appServerParentDir), serverType);
-				}
-			}
-			catch (Exception e) {
-				blade.error("Please execute this command from a Liferay project");
-			}
+			liferayHomeDir = tempFile.normalize();
 		}
+
+		_commandServer(liferayHomeDir, serverType);
+	}
+
+	protected String getServerTypeWithinWorkspace(Properties properties) {
+		String serverType = properties.getProperty(WorkspaceConstants.DEFAULT_BUNDLE_ARTIFACT_NAME_PROPERTY);
+
+		if (serverType == null) {
+			serverType = WorkspaceConstants.DEFAULT_BUNDLE_ARTIFACT_NAME;
+		}
+
+		if (serverType.contains("jboss")) {
+			serverType = "jboss";
+		}
+		else if (serverType.contains("wildfly")) {
+			serverType = "wildfly";
+		}
+		else if (serverType.contains("tomcat")) {
+			serverType = "tomcat";
+		}
+		return serverType;
 	}
 
 	@Override

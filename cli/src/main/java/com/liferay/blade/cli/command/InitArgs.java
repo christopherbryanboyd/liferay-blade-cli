@@ -64,6 +64,10 @@ public class InitArgs extends BaseArgs {
 	)
 	private String _liferayVersion = "7.1";
 
+	public void setBuild(String build) {
+		_build = build;
+	}
+
 	@Parameter(description = "[name]")
 	private String _name;
 

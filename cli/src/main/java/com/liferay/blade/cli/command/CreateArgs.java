@@ -16,10 +16,10 @@
 
 package com.liferay.blade.cli.command;
 
+import java.io.File;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-
-import java.io.File;
 
 /**
  * @author Gregory Amerson
@@ -80,6 +80,10 @@ public class CreateArgs extends BaseArgs {
 
 	public void setName(String name) {
 		_name = name;
+	}
+
+	public void setBuild(String build) {
+		_build = build;
 	}
 
 	@Parameter(
