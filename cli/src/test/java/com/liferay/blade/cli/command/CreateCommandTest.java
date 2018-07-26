@@ -16,29 +16,13 @@
 
 package com.liferay.blade.cli.command;
 
-import aQute.bnd.header.Parameters;
-import aQute.bnd.osgi.Domain;
-import aQute.bnd.osgi.Jar;
-
-import aQute.lib.io.IO;
-
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.GradleRunnerUtil;
-import com.liferay.blade.cli.MavenRunnerUtil;
-import com.liferay.blade.cli.TestUtil;
-import com.liferay.blade.cli.util.BladeUtil;
-import com.liferay.blade.cli.util.FileUtil;
-import com.liferay.project.templates.ProjectTemplates;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Writer;
-
 import java.nio.file.Paths;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,15 +32,26 @@ import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.tooling.internal.consumer.ConnectorServices;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.GradleRunnerUtil;
+import com.liferay.blade.cli.MavenRunnerUtil;
+import com.liferay.blade.cli.TestUtil;
+import com.liferay.blade.cli.util.BladeUtil;
+import com.liferay.blade.cli.util.FileUtil;
+import com.liferay.project.templates.ProjectTemplates;
+
+import aQute.bnd.header.Parameters;
+import aQute.bnd.osgi.Domain;
+import aQute.bnd.osgi.Jar;
+import aQute.lib.io.IO;
 
 /**
  * @author Gregory Amerson
@@ -74,9 +69,6 @@ public class CreateCommandTest {
 
 		String[] gradleArgs = {"create", "-d", tempRoot.getAbsolutePath(), "-t", "activator", "bar-activator"};
 
-		String[] mavenArgs =
-			{"create", "-d", tempRoot.getAbsolutePath(), "-b", "maven", "-t", "activator", "bar-activator"};
-
 		String projectPath = new File(tempRoot, "bar-activator").getAbsolutePath();
 
 		new BladeTest().run(gradleArgs);
@@ -91,21 +83,6 @@ public class CreateCommandTest {
 
 		_verifyImportPackage(new File(projectPath, "build/libs/bar.activator-1.0.0.jar"));
 
-		FileUtil.deleteDir(Paths.get(projectPath));
-
-		new BladeTest().run(mavenArgs);
-
-		_checkMavenBuildFiles(projectPath);
-
-		_contains(
-			_checkFileExists(projectPath + "/src/main/java/bar/activator/BarActivator.java"),
-			".*^public class BarActivator implements BundleActivator.*$");
-
-		MavenRunnerUtil.executeGoals(projectPath, new String[] {"clean", "package"});
-
-		MavenRunnerUtil.verifyBuildOutput(projectPath, "bar-activator-1.0.0.jar");
-
-		_verifyImportPackage(new File(projectPath, "target/bar-activator-1.0.0.jar"));
 	}
 
 	@Test
@@ -113,8 +90,6 @@ public class CreateCommandTest {
 		File tempRoot = temporaryFolder.getRoot();
 
 		String[] gradleArgs = {"create", "-d", tempRoot.getAbsolutePath(), "-t", "api", "foo"};
-
-		String[] mavenArgs = {"create", "-d", tempRoot.getAbsolutePath(), "-b", "maven", "-t", "api", "foo"};
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
@@ -136,29 +111,6 @@ public class CreateCommandTest {
 			Assert.assertEquals("foo.api;version=\"1.0.0\"", mainAttributes.getValue("Export-Package"));
 		}
 
-		FileUtil.deleteDir(Paths.get(projectPath));
-
-		new BladeTest().run(mavenArgs);
-
-		_checkMavenBuildFiles(projectPath);
-
-		_contains(_checkFileExists(projectPath + "/src/main/java/foo/api/Foo.java"), ".*^public interface Foo.*");
-
-		_contains(_checkFileExists(projectPath + "/src/main/resources/foo/api/packageinfo"), "version 1.0.0");
-
-		MavenRunnerUtil.executeGoals(projectPath, new String[] {"clean", "package"});
-
-		MavenRunnerUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
-
-		_verifyImportPackage(new File(projectPath, "target/foo-1.0.0.jar"));
-
-		try (Jar jar = new Jar(new File(projectPath, "target/foo-1.0.0.jar"))) {
-			Manifest manifest = jar.getManifest();
-
-			Attributes mainAttributes = manifest.getMainAttributes();
-
-			Assert.assertEquals("foo.api;version=\"1.0.0\"", mainAttributes.getValue("Export-Package"));
-		}
 	}
 
 	@Test

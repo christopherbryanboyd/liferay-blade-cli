@@ -22,7 +22,13 @@ checkSourceFormatting {
 
 dependencies {
 	compileOnly group: "com.beust", name: "jcommander", version: "1.72"
-	compileOnly project(":cli")
+	compile project(":cli")
+	
+	compile group: "biz.aQute.bnd", name: "aQute.libg", version: "3.5.0"
+	compile group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"
+	testCompile gradleTestKit()
+	testCompile group: "junit", name: "junit", version: "4.12"
+	compile project(":cli").sourceSets.test.output
 }
 
 formatSource {
