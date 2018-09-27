@@ -35,6 +35,8 @@ public class InitCommandMaven extends InitCommand {
 		InitArgs initArgs = getArgs();
 
 		initArgs.setBuild("maven");
+		
+		super.execute();
 	}
 
 }
