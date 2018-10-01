@@ -36,7 +36,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Gregory Amerson
  */
-public class InitCommandTest {
+public class InitCommandMavenTest {
 
 	@Before
 	public void setUp() throws Exception {
