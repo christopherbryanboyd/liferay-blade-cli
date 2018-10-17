@@ -16,40 +16,97 @@
 
 package com.liferay.extensions.maven.profile;
 
-import com.liferay.blade.cli.TestUtil;
-
 import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.zeroturnaround.process.PidProcess;
+import org.zeroturnaround.process.PidUtil;
+import org.zeroturnaround.process.Processes;
+
+import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.StringPrintStream;
+import com.liferay.blade.cli.TestUtil;
+import com.liferay.blade.cli.command.ServerStartCommand;
 
 /**
  * @author Christopher Bryan Boyd
  */
 public class ServerCommandsMavenTest {
 
+	@Before
+	public void setUp() throws Exception {
+		_workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
+	}
+	
 	@Test
-	public void testServerInit() throws Exception {
-		File workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
+	public void testServerCommands() throws Exception {
+		TestUtil.runBlade(new String[] {"--base", _workspaceDir.getPath(), "init", "-v", "7.1"});
 
-		String[] args = {"--base", workspaceDir.getPath(), "init", "-p", "maven"};
+		TestUtil.runBlade(new String[] {"--base", _workspaceDir.getPath(), "server", "init"});
 
-		TestUtil.runBlade(args);
+		_testServerStart();
+	}
+	
+	private void _testServerStart() throws Exception {
+		String[] args = {"--base", _workspaceDir.getPath(), "server", "start"};
 
-		args = new String[] {"--base", workspaceDir.getPath(), "server", "init"};
+		StringPrintStream outputPrintStream = StringPrintStream.newInstance();
 
-		File bundlesDir = new File(workspaceDir.getPath(), "bundles");
+		StringPrintStream errorPrintStream = StringPrintStream.newInstance();
 
-		Assert.assertFalse(bundlesDir.exists());
+		BladeTest bladeTest = new BladeTest(outputPrintStream, errorPrintStream);
 
-		TestUtil.runBlade(args);
+		Thread thread = new Thread() {
 
-		Assert.assertTrue(bundlesDir.exists());
+			@Override
+			public void run() {
+				try {
+					bladeTest.run(args);
+				}
+				catch (Exception e) {
+				}
+			}
+
+		};
+
+		thread.setDaemon(true);
+
+		thread.run();
+
+		Thread.sleep(1);
+
+		ServerStartCommand serverStartCommand = (ServerStartCommand)bladeTest.getCommand();
+
+		Collection<Process> processes = serverStartCommand.getProcesses();
+
+		Assert.assertFalse("Expected server start process to have started.", processes.isEmpty());
+
+		Iterator<Process> iterator = processes.iterator();
+
+		Process process = iterator.next();
+
+		Assert.assertTrue("Expected server start process to be alive.", process.isAlive());
+
+		int pid = PidUtil.getPid(process);
+
+		PidProcess pidProcess = Processes.newPidProcess(pid);
+
+		pidProcess.destroyForcefully();
+
+		pidProcess.waitFor(5, TimeUnit.SECONDS);
+
+		Assert.assertFalse("Expected server start process to be destroyed.", pidProcess.isAlive());
 	}
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+	private File _workspaceDir = null;
 }
