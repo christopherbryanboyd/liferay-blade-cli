@@ -311,7 +311,9 @@ public class Extensions implements AutoCloseable {
 
 		String[] commandNames = parameters.commandNames();
 
-		map.putIfAbsent(commandNames[0], baseCommand);
+		for (String commandName : commandNames) {
+			map.putIfAbsent(commandName, baseCommand);
+		}
 	}
 
 	private Map<String, BaseCommand<? extends BaseArgs>> _getCommands(String profileName) throws Exception {

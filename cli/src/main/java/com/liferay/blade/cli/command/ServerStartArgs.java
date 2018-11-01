@@ -23,7 +23,9 @@ import com.beust.jcommander.Parameters;
  * @author Gregory Amerson
  * @author Simon Jiang
  */
-@Parameters(commandDescription = "Start server defined by your Liferay project", commandNames = "server start")
+@Parameters(
+	commandDescription = "Start server defined by your Liferay project", commandNames = {"server start", "server run"}
+)
 public class ServerStartArgs extends BaseArgs {
 
 	public boolean isBackground() {

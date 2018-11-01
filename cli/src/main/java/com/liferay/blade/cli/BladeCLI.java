@@ -104,6 +104,10 @@ public class BladeCLI implements Runnable {
 		error.printStackTrace(err());
 	}
 
+	public String[] getArgs() {
+		return _args;
+	}
+
 	public BaseArgs getBladeArgs() {
 		return _commandArgs;
 	}
@@ -265,6 +269,8 @@ public class BladeCLI implements Runnable {
 
 		args = Extensions.sortArgs(_commands, args);
 
+		_args = args;
+
 		Builder builder = JCommander.newBuilder();
 
 		for (Entry<String, BaseCommand<? extends BaseArgs>> e : _commands.entrySet()) {
@@ -398,6 +404,7 @@ public class BladeCLI implements Runnable {
 
 	private static final Formatter _tracer = new Formatter(System.out);
 
+	private String[] _args;
 	private BaseCommand<?> _baseCommand;
 	private String _command;
 	private BaseArgs _commandArgs = new BaseArgs();

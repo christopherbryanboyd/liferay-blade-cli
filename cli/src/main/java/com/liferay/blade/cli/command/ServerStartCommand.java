@@ -49,7 +49,15 @@ public class ServerStartCommand extends BaseCommand<ServerStartArgs> {
 	public void execute() throws Exception {
 		BladeCLI bladeCLI = getBladeCLI();
 
-		BaseArgs baseArgs = bladeCLI.getBladeArgs();
+		String[] args = bladeCLI.getArgs();
+
+		ServerStartArgs baseArgs = getArgs();
+
+		for (String arg : args) {
+			if (arg.equals("server start")) {
+				baseArgs.setBackground(true);
+			}
+		}
 
 		File baseDir = new File(baseArgs.getBase());
 
