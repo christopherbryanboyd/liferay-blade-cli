@@ -16,28 +16,16 @@
 
 package com.liferay.blade.cli;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-
-import com.liferay.blade.cli.command.BaseArgs;
-import com.liferay.blade.cli.command.BaseCommand;
-import com.liferay.blade.cli.command.BladeProfile;
-import com.liferay.blade.cli.util.FileUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import java.lang.reflect.Field;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,6 +38,13 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+import com.liferay.blade.cli.command.BaseArgs;
+import com.liferay.blade.cli.command.BaseCommand;
+import com.liferay.blade.cli.command.BladeProfile;
+import com.liferay.blade.cli.util.FileUtil;
 
 /**
  * @author Christopher Bryan Boyd
@@ -230,8 +225,13 @@ public class Extensions implements AutoCloseable {
 			_getServiceClassLoader().close();
 		}
 
-		if (_tempExtensionsDirectory != null) {
-			FileUtil.deleteDirIfExists(_tempExtensionsDirectory);
+		if (_tempExtensionsDirectory != null && Files.exists(_tempExtensionsDirectory)) {
+			try {
+				FileUtil.deleteDirIfExists(_tempExtensionsDirectory);
+			}
+			catch (IOException ioe) {
+
+			}
 		}
 	}
 
@@ -388,12 +388,14 @@ public class Extensions implements AutoCloseable {
 			_tempExtensionsDirectory = Files.createTempDirectory("extensions");
 
 			FileUtil.copyDir(getPath(), _tempExtensionsDirectory);
+			
+			try (InputStream inputStream = Extensions.class.getResourceAsStream("/maven-profile.jar")) {
 
-			InputStream inputStream = Extensions.class.getResourceAsStream("/maven-profile.jar");
-
-			Path mavenProfilePath = _tempExtensionsDirectory.resolve("maven-profile.jar");
-
-			Files.copy(inputStream, mavenProfilePath, StandardCopyOption.REPLACE_EXISTING);
+				Path mavenProfilePath = _tempExtensionsDirectory.resolve("maven-profile.jar");
+	
+				Files.copy(inputStream, mavenProfilePath, StandardCopyOption.REPLACE_EXISTING);
+			
+			}
 
 			URL[] jarUrls = _getJarUrls(_tempExtensionsDirectory);
 
