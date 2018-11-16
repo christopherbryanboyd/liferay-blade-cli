@@ -130,22 +130,22 @@ public class ServerStartCommand extends AbstractServerCommand<ServerStartArgs> {
 
 		processes.add(process);
 
-		Runtime runtime = Runtime.getRuntime();
+		/*Runtime runtime = Runtime.getRuntime();
 
 		runtime.addShutdownHook(
 			new Thread() {
 
 				@Override
 				public void run() {
-					try {
+					try {*/
 						process.waitFor();
-					}
+					/*}
 					catch (InterruptedException ie) {
 						bladeCLI.error("Could not wait for process to end before shutting down");
 					}
 				}
 
-			});
+			});*/
 	}
 
 	private void _commmandTomcat(Path dir) throws Exception {

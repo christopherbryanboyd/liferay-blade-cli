@@ -16,10 +16,6 @@
 
 package com.liferay.blade.cli.util;
 
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.project.templates.ProjectTemplates;
-import com.liferay.project.templates.internal.util.ProjectTemplatesUtil;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,16 +25,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
-
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,6 +49,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.project.templates.ProjectTemplates;
+import com.liferay.project.templates.internal.util.ProjectTemplatesUtil;
 
 /**
  * @author Gregory Amerson
@@ -354,11 +351,16 @@ public class BladeUtil {
 	}
 
 	public static void readProcessStream(final InputStream inputStream, final PrintStream printStream) {
+		final StackTraceElement[] stes = Thread.currentThread().getStackTrace();
+		Exception e = new Exception("readProcessStream");
 		Thread t = new Thread(
 			new Runnable() {
 
 				@Override
 				public void run() {
+					final StackTraceElement[] innerstes = stes;
+					e.printStackTrace();
+					
 					try (Scanner scanner = new Scanner(inputStream)) {
 						while (scanner.hasNextLine()) {
 							String line = scanner.nextLine();
