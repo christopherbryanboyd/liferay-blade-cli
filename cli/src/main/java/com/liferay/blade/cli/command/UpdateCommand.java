@@ -16,18 +16,10 @@
 
 package com.liferay.blade.cli.command;
 
-import aQute.bnd.version.Version;
-
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.util.BladeUtil;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +30,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+
+import com.liferay.blade.cli.BladeCLI;
+
+import aQute.bnd.version.Version;
 
 /**
  * @author Gregory Amerson
@@ -201,6 +197,13 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 
 	@Override
 	public void execute() {
+		try {
+			Process process = Runtime.getRuntime().exec("cmd /c start \"\" rake.bat");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/*
 		BladeCLI bladeCLI = getBladeCLI();
 
 		UpdateArgs updateArgs = getArgs();
@@ -314,7 +317,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 			else {
 				bladeCLI.error("For more information run update with '--trace' option.");
 			}
-		}
+		}*/
 	}
 
 	@Override
