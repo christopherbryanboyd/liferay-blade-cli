@@ -251,22 +251,17 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 			String url = getUpdateJarUrl(snapshots);
 
 			if (shouldUpdate) {
-				bladeCLI.out("Updating from: " + url);
 
 				if (BladeUtil.isWindows()) {
-					try {
-						Process process = Runtime.getRuntime().exec("cmd /c start \"\" PAUSE && jpm install -f " + url);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+
+					Runtime.getRuntime().exec("cmd /c start \"\" echo. && echo Updating from: " + url + " && echo. && jpm install -f " + url + " && echo. && echo Update complete! && echo. && PAUSE");
 					
-					//bladeCLI.out(
-					//	"blade update cannot execute successfully because of Windows file locking.  Please use the " +
-					//		"following command:");
-					//bladeCLI.out("\tjpm install -f " + url);
+					bladeCLI.out(
+						"Please use the external command prompt to complete blade update.");
 				}
 				else {
+					bladeCLI.out("Updating from: " + url);
+
 					BaseArgs baseArgs = bladeCLI.getBladeArgs();
 
 					File baseDir = new File(baseArgs.getBase());
