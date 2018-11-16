@@ -16,18 +16,11 @@
 
 package com.liferay.blade.cli.command;
 
-import aQute.bnd.version.Version;
-
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.util.BladeUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +31,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.util.BladeUtil;
+
+import aQute.bnd.version.Version;
 
 /**
  * @author Gregory Amerson
@@ -256,7 +254,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 				if (BladeUtil.isWindows()) {
 					Runtime runtime = Runtime.getRuntime();
 
-					runtime.exec("cmd /c start \"\" jpm install -f " + url + " && exit");
+					runtime.exec("cmd /c start \"\" jpm install -f " + url + " && exit; echo \"some useful message\"");
 				}
 				else {
 					BaseArgs baseArgs = bladeCLI.getBladeArgs();
