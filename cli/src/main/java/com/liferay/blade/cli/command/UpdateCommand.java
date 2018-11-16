@@ -18,6 +18,7 @@ package com.liferay.blade.cli.command;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.util.BladeUtil;
 
 import aQute.bnd.version.Version;
 
@@ -197,13 +199,8 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 
 	@Override
 	public void execute() {
-		try {
-			Process process = Runtime.getRuntime().exec("cmd /c start \"\" rake.bat");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		/*
+
+		
 		BladeCLI bladeCLI = getBladeCLI();
 
 		UpdateArgs updateArgs = getArgs();
@@ -257,10 +254,17 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 				bladeCLI.out("Updating from: " + url);
 
 				if (BladeUtil.isWindows()) {
-					bladeCLI.out(
-						"blade update cannot execute successfully because of Windows file locking.  Please use the " +
-							"following command:");
-					bladeCLI.out("\tjpm install -f " + url);
+					try {
+						Process process = Runtime.getRuntime().exec("cmd /c start \"\" PAUSE && jpm install -f " + url);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					//bladeCLI.out(
+					//	"blade update cannot execute successfully because of Windows file locking.  Please use the " +
+					//		"following command:");
+					//bladeCLI.out("\tjpm install -f " + url);
 				}
 				else {
 					BaseArgs baseArgs = bladeCLI.getBladeArgs();
@@ -317,7 +321,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 			else {
 				bladeCLI.error("For more information run update with '--trace' option.");
 			}
-		}*/
+		}
 	}
 
 	@Override
