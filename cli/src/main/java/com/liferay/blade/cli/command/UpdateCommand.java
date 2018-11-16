@@ -254,7 +254,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 				if (BladeUtil.isWindows()) {
 					Runtime runtime = Runtime.getRuntime();
 
-					runtime.exec("cmd /c start \"\" jpm install -f " + url + " && exit; echo \"some useful message\"");
+					runtime.exec("cmd /c start \"\" jpm install -f " + url + " && exit; echo \"some useful message\" && PAUSE");
 				}
 				else {
 					BaseArgs baseArgs = bladeCLI.getBladeArgs();
