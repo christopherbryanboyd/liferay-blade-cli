@@ -254,7 +254,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 
 				if (BladeUtil.isWindows()) {
 
-					Runtime.getRuntime().exec("cmd /c start \"\" echo. && echo Updating from: " + url + " && echo. && jpm install -f " + url + " && echo. && echo Update complete! && echo. && PAUSE");
+					Runtime.getRuntime().exec("cmd /c start \"\" echo; && echo Updating from: " + url + " && echo; && jpm install -f " + url + " && echo; && echo Update complete! && echo; && PAUSE");
 					
 					bladeCLI.out(
 						"Please use the external command prompt to complete blade update.");
