@@ -16,8 +16,9 @@
 
 package com.liferay.blade.gradle.tooling;
 
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.File;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -95,6 +96,8 @@ public class ProjectInfoPlugin implements Plugin<Project> {
 
 			ConfigurationContainer configurations = project.getConfigurations();
 
+			String liferayHome = getLiferayHome(project);
+
 			try {
 				Configuration archivesConfiguration = configurations.getByName(Dependency.ARCHIVES_CONFIGURATION);
 
@@ -111,7 +114,36 @@ public class ProjectInfoPlugin implements Plugin<Project> {
 			catch (Exception e) {
 			}
 
-			return new DefaultModel(pluginClassNames, projectOutputFiles);
+			return new DefaultModel(pluginClassNames, projectOutputFiles, liferayHome);
+		}
+		
+		private String getLiferayHome(Project project) {
+
+			Object liferayExtension = project.getExtensions().findByName("liferay");
+
+			String liferayHome = null;
+
+			if (liferayExtension != null) {
+			
+			Class<?> aclass = liferayExtension.getClass();
+			
+			try {
+				for (PropertyDescriptor pd : Introspector.getBeanInfo(aclass).getPropertyDescriptors()) {
+					String pdName = pd.getName();
+
+					if (pd.getReadMethod() != null && "liferayHome".equals(pdName)) {
+						Object value = pd.getReadMethod().invoke(liferayExtension);
+
+						liferayHome = String.valueOf(value);
+
+						break;
+					}
+				}
+			} catch (Exception e) {
+			}
+			}
+			
+			return liferayHome;
 		}
 
 		@Override

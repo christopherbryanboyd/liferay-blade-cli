@@ -16,10 +16,6 @@
 
 package com.liferay.blade.cli.util;
 
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.project.templates.ProjectTemplates;
-import com.liferay.project.templates.internal.util.ProjectTemplatesUtil;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,16 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,6 +48,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.project.templates.ProjectTemplates;
+import com.liferay.project.templates.internal.util.ProjectTemplatesUtil;
 
 /**
  * @author Gregory Amerson
@@ -90,7 +87,8 @@ public class BladeUtil {
 		}
 	}
 
-	public static File findParentFile(File dir, String[] fileNames, boolean checkParents) {
+	@SafeVarargs
+	public static File findParentFile(File dir, String[] fileNames, boolean checkParents, Predicate<File>... predicates ) {
 		if (dir == null) {
 			return null;
 		}
@@ -106,13 +104,20 @@ public class BladeUtil {
 		for (String fileName : fileNames) {
 			File file = new File(dir, fileName);
 
-			if (file.exists()) {
-				return dir;
+			if (predicates != null && predicates.length > 0) {
+				if (file.exists()) {
+					for (Predicate<File> predicate : predicates) {
+						if (predicate.test(file)) {
+							return dir;
+						}
+					}
+				}
 			}
+
 		}
 
 		if (checkParents) {
-			return findParentFile(dir.getParentFile(), fileNames, checkParents);
+			return findParentFile(dir.getParentFile(), fileNames, checkParents, predicates);
 		}
 
 		return null;
