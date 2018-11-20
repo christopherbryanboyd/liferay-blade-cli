@@ -32,4 +32,8 @@ public interface ProjectInfo {
 
 	public boolean isLiferayProject();
 
+	default public String getLiferayHome() {
+		return null;
+	}
+
 }
