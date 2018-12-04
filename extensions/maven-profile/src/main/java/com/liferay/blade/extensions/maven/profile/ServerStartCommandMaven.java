@@ -16,6 +16,9 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
+import com.liferay.blade.cli.BladeCLI;
+import java.util.Properties;
+
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.LocalServer;
 import com.liferay.blade.cli.command.ServerStartCommand;
@@ -24,7 +27,6 @@ import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 import java.io.File;
 
 import java.util.Properties;
-
 /**
  * @author David Truong
  * @author Simon Jiang
@@ -35,7 +37,7 @@ public class ServerStartCommandMaven extends ServerStartCommand {
 	@Override
 	protected LocalServer newLocalServer(File baseDir) {
 		return new LocalServer(baseDir) {
-
+	
 			@Override
 			protected Properties getWorkspaceProperties(File baseDir) {
 				return MavenUtil.getMavenProperties(baseDir);

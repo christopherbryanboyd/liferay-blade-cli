@@ -16,16 +16,15 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
+import java.io.File;
+import java.util.Properties;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.CreateArgs;
 import com.liferay.blade.cli.command.CreateCommand;
 import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
-
-import java.io.File;
-
-import java.util.Properties;
 
 /**
  * @author Gregory Amerson
@@ -54,9 +53,8 @@ public class CreateCommandMaven extends CreateCommand {
 
 	@Override
 	protected Properties getWorkspaceProperties() {
-		BladeCLI bladeCLI = getBladeCLI();
 
-		BaseArgs baseArgs = bladeCLI.getArgs();
+		BaseArgs baseArgs = getArgs();
 
 		File baseDir = new File(baseArgs.getBase());
 

@@ -16,30 +16,15 @@
 
 package com.liferay.blade.cli;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.JCommander.Builder;
-import com.beust.jcommander.MissingCommandException;
-import com.beust.jcommander.ParameterException;
-
-import com.liferay.blade.cli.command.BaseArgs;
-import com.liferay.blade.cli.command.BaseCommand;
-import com.liferay.blade.cli.command.UpdateCommand;
-import com.liferay.blade.cli.command.VersionCommand;
-import com.liferay.blade.cli.util.CombinedClassLoader;
-import com.liferay.blade.cli.util.WorkspaceUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.List;
@@ -51,6 +36,17 @@ import java.util.Scanner;
 import java.util.stream.IntStream;
 
 import org.fusesource.jansi.AnsiConsole;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.JCommander.Builder;
+import com.beust.jcommander.MissingCommandException;
+import com.beust.jcommander.ParameterException;
+import com.liferay.blade.cli.command.BaseArgs;
+import com.liferay.blade.cli.command.BaseCommand;
+import com.liferay.blade.cli.command.UpdateCommand;
+import com.liferay.blade.cli.command.VersionCommand;
+import com.liferay.blade.cli.util.CombinedClassLoader;
+import com.liferay.blade.cli.util.WorkspaceUtil;
 
 /**
  * @author Gregory Amerson
@@ -261,6 +257,14 @@ public class BladeCLI {
 		System.setErr(error());
 
 		BladeSettings bladeSettings = getBladeSettings();
+		
+		if (!WorkspaceUtil.isWorkspace(this)) {
+			File pomFile = new File(baseDir, "pom.xml");
+			
+			if (pomFile.exists()) {
+				bladeSettings.setProfileName("maven");
+			}
+		}
 
 		bladeSettings.migrateWorkspaceIfNecessary();
 
