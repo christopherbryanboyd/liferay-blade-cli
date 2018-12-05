@@ -16,20 +16,18 @@
 
 package com.liferay.blade.cli.command;
 
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.util.BladeUtil;
-
 import java.io.File;
 import java.io.OutputStream;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.util.BladeUtil;
 
 /**
  * @author David Truong
@@ -40,16 +38,21 @@ public class ServerStartCommand extends BaseCommand<ServerStartArgs> {
 
 	public ServerStartCommand() {
 	}
+	
+	protected LocalServer getLocalServer() {
+		
+		BaseArgs args = getArgs();
+		
+		File baseDir = new File(args.getBase());
+		
+		return new LocalServer(baseDir);
+	}
 
 	@Override
 	public void execute() throws Exception {
 		BladeCLI bladeCLI = getBladeCLI();
 
-		BaseArgs args = bladeCLI.getArgs();
-
-		File baseDir = new File(args.getBase());
-
-		LocalServer localServer = newLocalServer(baseDir);
+		LocalServer localServer = getLocalServer();
 
 		Path liferayHomePath = localServer.getLiferayHomePath();
 

@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
+import java.util.Properties;
 
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.command.BladeProfile;
@@ -51,8 +52,14 @@ public class DeployCommandMaven extends DeployCommand {
 		} else {
 
 
-			//_deployStandalone(gradleExec, projectInfo);
+			_deployStandalone(baseDir);
 		}
+	}
+
+	private void _deployStandalone(File baseDir) {
+		Properties properties = MavenUtil.getMavenProperties(baseDir);
+		
+		System.out.println(properties);
 	}
 
 	@Override
