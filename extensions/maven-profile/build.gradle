@@ -16,7 +16,10 @@ apply plugin: "maven-publish"
 
 dependencies {
 	compile group: "com.liferay.blade", name: "com.liferay.blade.cli", version: "latest.integration"
-
+	// https://mvnrepository.com/artifact/commons-logging/commons-logging
+	compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
+	
+	compile group: 'net.jmatrix', name: 'jproperties', version: '1.0.6'
 	compileOnly group: "com.beust", name: "jcommander", version: "1.72"
 
 	testCompile gradleTestKit()
@@ -37,6 +40,8 @@ publishing {
 }
 
 repositories {
+	mavenLocal()
+	
 	maven {
 		url	"https://repository-cdn.liferay.com/nexus/content/repositories/liferay-public-snapshots/"
 	}
@@ -46,4 +51,4 @@ repositories {
 	}
 }
 
-version = "1.0.1-SNAPSHOT"
+version = "1.0.2-SNAPSHOT"

@@ -19,9 +19,12 @@ package com.liferay.blade.extensions.maven.profile.internal;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
@@ -48,6 +51,8 @@ import org.w3c.dom.NodeList;
 
 import com.liferay.blade.cli.gradle.ProcessResult;
 import com.liferay.blade.cli.util.WorkspaceUtil;
+
+import net.jmatrix.jproperties.JProperties;
 
 /**
  * @author Christopher Bryan Boyd
@@ -155,7 +160,16 @@ public class MavenUtil {
 
 	public static Properties getMavenProperties(File baseDir) {
 		try {
-			Properties properties = new Properties();
+			
+			File absoluteBaseDir = baseDir.getAbsoluteFile();
+			
+			Path absoluteBasePath = absoluteBaseDir.toPath();
+			
+			absoluteBasePath = absoluteBasePath.normalize();
+			
+			JProperties jproperties = new JProperties();
+			
+			jproperties.put("project.basedir", absoluteBasePath.toString());
 
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 
@@ -180,11 +194,26 @@ public class MavenUtil {
 					Node sNode = nodeList.item(nodeInt);
 
 					if (sNode.getNodeType() == Node.ELEMENT_NODE) {
-						properties.put(sNode.getNodeName(), sNode.getTextContent());
+						jproperties.put(sNode.getNodeName(), sNode.getTextContent());
 					}
 				}
 			}
-
+			Set<Entry<String, Object>> entrySet = jproperties.entrySet();
+			
+			Iterator<Entry<String, Object>> iterator = entrySet.iterator();
+			
+			Properties properties = new Properties();
+			
+			while (iterator.hasNext()) {
+				Entry<String, Object> entry = iterator.next();
+				
+				String key = entry.getKey();
+				
+				Object value = entry.getValue();
+				
+				properties.put(key, value);
+			}
+			
 			return properties;
 		}
 		catch (Throwable th) {

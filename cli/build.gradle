@@ -175,6 +175,8 @@ publishing {
 }
 
 repositories {
+	mavenLocal()
+	
 	maven {
 		url "https://repo.gradle.org/gradle/libs-releases"
 	}
@@ -260,4 +262,4 @@ unzipPortal {
 	into buildDir
 }
 
-version = "3.4.0-SNAPSHOT"
+version = "3.4.1-SNAPSHOT"

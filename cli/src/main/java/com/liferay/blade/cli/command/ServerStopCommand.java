@@ -33,21 +33,16 @@ public class ServerStopCommand extends BaseCommand<ServerStopArgs> {
 
 	public ServerStopCommand() {
 	}
-	
-	protected LocalServer getLocalServer() {
-		
-		BaseArgs args = getArgs();
-		
-		File baseDir = new File(args.getBase());
-		
-		return new LocalServer(baseDir);
-	}
 
 	@Override
 	public void execute() throws Exception {
 		BladeCLI bladeCLI = getBladeCLI();
+		
+		BaseArgs args = bladeCLI.getArgs();
 
-		LocalServer localServer = getLocalServer();
+		File baseDir = new File(args.getBase());
+
+		LocalServer localServer = newLocalServer(baseDir);
 
 		Path liferayHomePath = localServer.getLiferayHomePath();
 

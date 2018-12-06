@@ -19,10 +19,17 @@ package com.liferay.blade.extensions.maven.profile;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.DeployArgs;
 import com.liferay.blade.cli.command.DeployCommand;
@@ -32,6 +39,7 @@ import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 
 /**
  * @author Gregory Amerson
+ * @author Christopher Bryan Boyd
  */
 @BladeProfile("maven")
 public class DeployCommandMaven extends DeployCommand {
@@ -59,7 +67,84 @@ public class DeployCommandMaven extends DeployCommand {
 	private void _deployStandalone(File baseDir) {
 		Properties properties = MavenUtil.getMavenProperties(baseDir);
 		
-		System.out.println(properties);
+		if (!properties.containsKey("liferay.home")) {
+			throw new NoSuchElementException("\"liferay.home\" not defined in pom.xml, cannot deploy.");
+		}
+		
+		String liferayHome = properties.getProperty("liferay.home");
+		
+		Path liferayHomePath = Paths.get(liferayHome);
+		
+		if (!Files.exists(liferayHomePath)) {
+			IOException ioException = new IOException(liferayHome + " does not exist, cannot deploy.");
+			throw new RuntimeException(ioException);
+		}
+		
+		Path deployPath = liferayHomePath.resolve("deploy");
+
+		if (!Files.exists(deployPath)) {
+			IOException ioException = new IOException(deployPath + " does not exist, cannot deploy.");
+			throw new RuntimeException(ioException);
+		}
+		
+		String[] goals = {"clean", "package"};
+
+		ProcessResult processResult = MavenUtil.executeGoals(baseDir.getAbsolutePath(), false, goals);
+
+		int resultCode = processResult.getResultCode();
+
+		BladeCLI bladeCLI = getBladeCLI();
+		
+		BaseArgs args = getArgs();
+
+		if (resultCode > 0) {
+			String errorMessage = "Maven \"clean\" and \"package\" goals failed.";
+
+			_addError(errorMessage);
+
+			PrintStream err = bladeCLI.error();
+
+			new IOException(errorMessage).printStackTrace(err);
+
+			return;
+		} else {
+
+			String output = "Maven \"clean\" and \"package\" goals succeeded.";
+
+			bladeCLI.out(output);
+			
+			File targetDir = new File(baseDir, "target");
+			
+			PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.{jar,war}");
+
+			for (File outputFile : targetDir.listFiles()) {
+				Path outputFilePath = outputFile.toPath();
+				
+				if (matcher.matches(outputFilePath)) {
+					
+					Path outputFileName = outputFilePath.getFileName();
+					
+					Path outputFileDeployPath = deployPath.resolve(outputFileName);
+					
+					try {
+						Files.copy(outputFilePath, outputFileDeployPath);
+
+						output = "";
+
+						bladeCLI.out(output);
+						
+					} catch (IOException e) {
+						bladeCLI.error("Unable to copy file " + outputFilePath);	
+						if (args.isTrace()) {
+							bladeCLI.error(e);	
+						} else {
+							bladeCLI.error(e.getMessage());	
+						}
+					}
+				}
+			}
+		}
+		
 	}
 
 	@Override
