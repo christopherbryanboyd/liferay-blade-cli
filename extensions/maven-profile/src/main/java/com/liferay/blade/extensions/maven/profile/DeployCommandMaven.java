@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.liferay.extensions.maven.profile;
+package com.liferay.blade.extensions.maven.profile;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import com.liferay.blade.cli.command.DeployArgs;
 import com.liferay.blade.cli.command.DeployCommand;
 import com.liferay.blade.cli.gradle.ProcessResult;
 import com.liferay.blade.cli.util.WorkspaceUtil;
-import com.liferay.extensions.maven.profile.internal.MavenUtil;
+import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 
 /**
  * @author Gregory Amerson
