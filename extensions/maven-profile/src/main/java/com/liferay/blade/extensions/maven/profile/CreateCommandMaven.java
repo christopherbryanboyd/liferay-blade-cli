@@ -22,8 +22,10 @@ import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.CreateArgs;
 import com.liferay.blade.cli.command.CreateCommand;
 import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
+import com.liferay.project.templates.ProjectTemplatesArgs;
 
 import java.io.File;
+import java.io.IOException;
 
 import java.util.Properties;
 
@@ -53,10 +55,35 @@ public class CreateCommandMaven extends CreateCommand {
 	}
 
 	@Override
-	protected Properties getWorkspaceProperties() {
-		BladeCLI bladeCLI = getBladeCLI();
+	protected ProjectTemplatesArgs getProjectTemplateArgs(CreateArgs createArgs, BladeCLI bladeCLI, String template,
+			String name, File dir) throws IOException {
 
-		BaseArgs baseArgs = bladeCLI.getArgs();
+		ProjectTemplatesArgs projectTemplatesArgs = new ProjectTemplatesArgs();
+
+		projectTemplatesArgs.setGradle(false);
+		projectTemplatesArgs.setMaven(true);
+
+		projectTemplatesArgs.setClassName(createArgs.getClassname());
+		projectTemplatesArgs.setContributorType(createArgs.getContributorType());
+		projectTemplatesArgs.setDestinationDir(dir.getAbsoluteFile());
+
+		projectTemplatesArgs.setDependencyManagementEnabled(false);
+		projectTemplatesArgs.setHostBundleSymbolicName(createArgs.getHostBundleBSN());
+		projectTemplatesArgs.setLiferayVersion(getLiferayVersion(bladeCLI, createArgs));
+		projectTemplatesArgs.setOriginalModuleName(createArgs.getOriginalModuleName());
+		projectTemplatesArgs.setOriginalModuleVersion(createArgs.getOriginalModuleVersion());
+		projectTemplatesArgs.setHostBundleVersion(createArgs.getHostBundleVersion());
+		projectTemplatesArgs.setName(name);
+		projectTemplatesArgs.setPackageName(createArgs.getPackageName());
+		projectTemplatesArgs.setService(createArgs.getService());
+		projectTemplatesArgs.setTemplate(template);
+
+		return projectTemplatesArgs;
+	}
+
+	@Override
+	protected Properties getWorkspaceProperties() {
+		BaseArgs baseArgs = getArgs();
 
 		File baseDir = new File(baseArgs.getBase());
 

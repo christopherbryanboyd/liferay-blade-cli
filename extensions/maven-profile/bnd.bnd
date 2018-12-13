@@ -1,3 +1,11 @@
 Bundle-Name: maven-profile
 Bundle-SymbolicName: com.liferay.blade.profile.maven
 Bundle-Version: 1.0.0
+Private-Package:\
+	net.jmatrix,\
+	net.jmatrix.jproperties,\
+	net.jmatrix.jproperties.post,\
+	net.jmatrix.jproperties.util,\
+	\
+	org.apache.commons.logging,\
+	org.apache.commons.logging.impl

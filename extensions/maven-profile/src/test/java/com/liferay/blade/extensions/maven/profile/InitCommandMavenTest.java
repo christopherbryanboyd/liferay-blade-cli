@@ -167,7 +167,7 @@ public class InitCommandMavenTest {
 	private void _createMavenBundle() throws Exception {
 		String projectPath = new File(_workspaceDir, "modules").getAbsolutePath();
 
-		String[] args = {"create", "-t", "mvc-portlet", "-d", projectPath, "-b", "maven", "foo"};
+		String[] args = {"create", "-t", "mvc-portlet", "--base", projectPath, "-d", projectPath, "-b", "maven", "foo"};
 
 		BladeTest bladeTest = new BladeTest();
 
