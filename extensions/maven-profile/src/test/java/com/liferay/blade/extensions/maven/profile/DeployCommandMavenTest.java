@@ -16,14 +16,14 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import com.liferay.blade.cli.TestUtil;
-
 import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.liferay.blade.cli.TestUtil;
 
 /**
  * @author Christopher Bryan Boyd
@@ -32,15 +32,18 @@ public class DeployCommandMavenTest {
 
 	@Test
 	public void testInstallJar() throws Exception {
+		
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File workspaceDir = temporaryFolder.newFolder();
 
 		String[] args = {"init", "--base", workspaceDir.getPath(), "-b", "maven"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		args = new String[] {"server", "init", "--base", workspaceDir.getPath()};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		File bundlesDirectory = new File(workspaceDir, "bundles");
 
@@ -58,7 +61,7 @@ public class DeployCommandMavenTest {
 
 		args = new String[] {"--base", modulesDirectory.getAbsolutePath(), "create", "-t", "soy-portlet", "foo"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		File projectDirectory = new File(modulesDirectory, "foo");
 
@@ -66,7 +69,7 @@ public class DeployCommandMavenTest {
 
 		args = new String[] {"--base", projectDirectory.getAbsolutePath(), "deploy"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		System.out.println("test");
 
@@ -77,15 +80,18 @@ public class DeployCommandMavenTest {
 
 	@Test
 	public void testInstallWar() throws Exception {
+		
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File workspaceDir = temporaryFolder.newFolder();
 
 		String[] args = {"init", "--base", workspaceDir.getPath(), "-b", "maven"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		args = new String[] {"server", "init", "--base", workspaceDir.getPath()};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		File bundlesDirectory = new File(workspaceDir, "bundles");
 
@@ -103,7 +109,7 @@ public class DeployCommandMavenTest {
 
 		args = new String[] {"--base", warsDirectory.getAbsolutePath(), "create", "-t", "war-mvc-portlet", "foo"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		File projectDirectory = new File(warsDirectory, "foo");
 
@@ -111,13 +117,16 @@ public class DeployCommandMavenTest {
 
 		args = new String[] {"--base", projectDirectory.getAbsolutePath(), "deploy"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(extensionsDir, args);
 
 		int filesCount = osgiWarDirectory.list().length;
 
 		Assert.assertEquals(1, filesCount);
 	}
 
+	@Rule
+	public final TemporaryFolder extensionsTemporaryFolder = new TemporaryFolder();
+	
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 

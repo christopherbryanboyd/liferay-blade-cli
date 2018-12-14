@@ -16,14 +16,13 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
+import java.io.File;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.ServerInitCommand;
-import com.liferay.blade.cli.util.WorkspaceUtil;
 import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
-
-import java.io.File;
 
 /**
  * @author Christopher Bryan Boyd
@@ -39,7 +38,7 @@ public class ServerInitCommandMaven extends ServerInitCommand {
 
 		File baseDir = new File(baseArgs.getBase());
 
-		if (WorkspaceUtil.isWorkspace(baseDir)) {
+		if (MavenUtil.isWorkspace(baseDir)) {
 			File pomXmlFile = MavenUtil.getPomXMLFile(baseDir);
 
 			if (pomXmlFile.exists()) {

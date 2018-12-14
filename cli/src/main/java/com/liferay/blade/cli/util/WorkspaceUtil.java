@@ -16,18 +16,17 @@
 
 package com.liferay.blade.cli.util;
 
-import aQute.bnd.version.Version;
-
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.command.BaseArgs;
-
 import java.io.File;
 import java.io.FilenameFilter;
-
 import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.command.BaseArgs;
+
+import aQute.bnd.version.Version;
 
 /**
  * @author Gregory Amerson

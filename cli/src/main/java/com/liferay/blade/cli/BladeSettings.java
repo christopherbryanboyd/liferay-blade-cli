@@ -16,15 +16,14 @@
 
 package com.liferay.blade.cli;
 
-import com.liferay.blade.cli.util.Prompter;
-import com.liferay.blade.cli.util.WorkspaceUtil;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.util.Properties;
+
+import com.liferay.blade.cli.util.Prompter;
+import com.liferay.blade.cli.util.WorkspaceUtil;
 
 /**
  * @author Christopher Bryan Boyd
@@ -84,7 +83,9 @@ public class BladeSettings {
 
 			parentDir.mkdirs();
 		}
-
+		if (_settingsFile.getAbsolutePath().contains("cboyd")) {
+			throw new IOException("Don't save into home folder");
+		}
 		try (FileOutputStream out = new FileOutputStream(_settingsFile)) {
 			_properties.store(out, null);
 		}

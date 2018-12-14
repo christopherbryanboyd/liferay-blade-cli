@@ -16,29 +16,26 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import com.liferay.blade.cli.BladeCLI;
-import com.liferay.blade.cli.command.BaseArgs;
-import com.liferay.blade.cli.command.BladeProfile;
-import com.liferay.blade.cli.command.DeployArgs;
-import com.liferay.blade.cli.command.DeployCommand;
-import com.liferay.blade.cli.gradle.ProcessResult;
-import com.liferay.blade.cli.util.WorkspaceUtil;
-import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-
 import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+
+import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.command.BaseArgs;
+import com.liferay.blade.cli.command.BladeProfile;
+import com.liferay.blade.cli.command.DeployArgs;
+import com.liferay.blade.cli.command.DeployCommand;
+import com.liferay.blade.cli.gradle.ProcessResult;
+import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 
 /**
  * @author Gregory Amerson
@@ -56,7 +53,7 @@ public class DeployCommandMaven extends DeployCommand {
 
 		File baseDir = new File(deployArgs.getBase());
 
-		if (WorkspaceUtil.isWorkspace(baseDir)) {
+		if (MavenUtil.isWorkspace(baseDir)) {
 			_deploy();
 		}
 		else {

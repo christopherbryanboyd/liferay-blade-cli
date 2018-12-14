@@ -19,9 +19,7 @@ package com.liferay.blade.extensions.maven.profile.internal;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-
 import java.nio.file.Path;
-
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -52,7 +50,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.liferay.blade.cli.gradle.ProcessResult;
-import com.liferay.blade.cli.util.WorkspaceUtil;
+import com.liferay.blade.cli.util.BladeUtil;
 
 import net.jmatrix.jproperties.JProperties;
 
@@ -176,7 +174,15 @@ public class MavenUtil {
 
 			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 
-			File pomXmlFile = getPomXMLFile(baseDir);
+			File pomXmlFile;
+			
+			if (isWorkspace(absoluteBaseDir)) {
+				pomXmlFile = getPomXMLFile(absoluteBaseDir);
+			}
+			else
+			{
+				pomXmlFile = new File(absoluteBaseDir, _POM_XML_FILE_NAME);
+			}
 
 			Document document = documentBuilder.parse(pomXmlFile);
 
@@ -222,9 +228,66 @@ public class MavenUtil {
 			throw new RuntimeException("Unable to get maven properties", th);
 		}
 	}
+	public static File getWorkspaceDir(File dir) {
 
+		File mavenParent = BladeUtil.findParentFile(dir, new String[] {"pom.xml"}, true, MavenUtil::_isWorkspacePomFile);
+
+		if (_isWorkspacePomFile(new File(mavenParent, "pom.xml"))) {
+			return mavenParent;
+		}
+			File mavenPom = new File(dir, "pom.xml");
+
+			if (mavenPom.exists() && _isWorkspacePomFile(mavenPom)) {
+				return dir;
+			}
+		
+
+		return null;
+	}
+
+    private static boolean _isWorkspacePomFile(File pomFile) {
+		boolean pom = false;
+
+		if ((pomFile != null) && "pom.xml".equals(pomFile.getName()) && pomFile.exists()) {
+			pom = true;
+		}
+
+		if (pom) {
+			try {
+				String content = BladeUtil.read(pomFile);
+
+				if (content.contains("portal.tools.bundle.support")) {
+					return true;
+				}
+			}
+			catch (Exception e) {
+			}
+		}
+
+		return false;
+	}
+    
+	public static boolean isWorkspace(File dir) {
+
+		File workspaceDir = getWorkspaceDir(dir);
+
+		if (Objects.isNull(dir) || Objects.isNull(workspaceDir)) {
+			return false;
+		}
+
+			File pomFile = new File(workspaceDir, "pom.xml");
+
+			if (_isWorkspacePomFile(pomFile)) {
+				return true;
+			}
+
+			return false;
+		
+
+		
+	}
 	public static File getPomXMLFile(File dir) {
-		return new File(WorkspaceUtil.getWorkspaceDir(dir), _POM_XML_FILE_NAME);
+		return new File(getWorkspaceDir(dir), _POM_XML_FILE_NAME);
 	}
 
 	private static final String _POM_XML_FILE_NAME = "pom.xml";

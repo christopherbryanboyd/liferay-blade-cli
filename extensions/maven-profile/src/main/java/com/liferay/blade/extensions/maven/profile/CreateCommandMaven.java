@@ -16,6 +16,10 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BladeProfile;
@@ -23,11 +27,6 @@ import com.liferay.blade.cli.command.CreateArgs;
 import com.liferay.blade.cli.command.CreateCommand;
 import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 import com.liferay.project.templates.ProjectTemplatesArgs;
-
-import java.io.File;
-import java.io.IOException;
-
-import java.util.Properties;
 
 /**
  * @author Gregory Amerson
@@ -90,4 +89,13 @@ public class CreateCommandMaven extends CreateCommand {
 		return MavenUtil.getMavenProperties(baseDir);
 	}
 
+	@Override
+	protected boolean isWorkspace(File file) {
+		return MavenUtil.isWorkspace(file);
+	}
+	
+	@Override
+	protected File getWorkspaceDir(File file) {
+		return MavenUtil.getWorkspaceDir(file);
+	}
 }

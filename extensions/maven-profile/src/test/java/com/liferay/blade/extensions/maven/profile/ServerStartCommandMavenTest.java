@@ -16,36 +16,12 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.command.JavaProcess;
-import com.liferay.blade.cli.command.JavaProcesses;
-import com.liferay.blade.cli.util.BladeUtil;
-
-import java.io.File;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import org.zeroturnaround.process.PidProcess;
-import org.zeroturnaround.process.Processes;
-
 /**
  * @author Gregory Amerson
  */
 public class ServerStartCommandMavenTest {
 
-	@Before
+	/*@Before
 	public void setUp() throws Exception {
 		_testWorkspaceDir = temporaryFolder.newFolder("testWorkspaceDir");
 
@@ -170,6 +146,6 @@ public class ServerStartCommandMavenTest {
 		String displayName = process.getDisplayName();
 
 		return displayName.contains("org.apache.catalina.startup.Bootstrap");
-	};
+	};*/
 
 }

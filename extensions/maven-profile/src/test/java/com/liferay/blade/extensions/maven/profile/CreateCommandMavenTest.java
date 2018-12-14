@@ -16,18 +16,7 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import aQute.bnd.header.Parameters;
-import aQute.bnd.osgi.Domain;
-import aQute.bnd.osgi.Jar;
-
-import aQute.lib.io.IO;
-
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.TestUtil;
-import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
-
 import java.io.File;
-
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
@@ -37,6 +26,15 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.TestUtil;
+import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
+
+import aQute.bnd.header.Parameters;
+import aQute.bnd.osgi.Domain;
+import aQute.bnd.osgi.Jar;
+import aQute.lib.io.IO;
 
 /**
  * @author Gregory Amerson
@@ -136,13 +134,15 @@ public class CreateCommandMavenTest {
 
 	@Test
 	public void testCreateMVCPortlet() throws Exception {
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File tempRoot = temporaryFolder.getRoot();
 
 		String[] mavenArgs = {"create", "-d", tempRoot.getAbsolutePath(), "-b", "maven", "-t", "mvc-portlet", "foo"};
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		_bladeTest.run(mavenArgs);
+		TestUtil.runBlade(extensionsDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -165,6 +165,9 @@ public class CreateCommandMavenTest {
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+	
+	@Rule
+	public final TemporaryFolder extensionsTemporaryFolder = new TemporaryFolder();
 
 	private File _checkFileExists(String path) {
 		File file = IO.getFile(path);

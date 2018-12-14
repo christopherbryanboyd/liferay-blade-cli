@@ -16,26 +16,12 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.TestUtil;
-
-import java.io.File;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
-
 /**
  * @author Christopher Bryan Boyd
  */
 public class ServerCommandsMavenTest {
 
-	@Test
+	/*@Test
 	public void testServerInit() throws Exception {
 		File workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
 
@@ -97,7 +83,7 @@ public class ServerCommandsMavenTest {
 		repositoryElement.appendChild(urlElement);
 
 		repositoriesElement.appendChild(repositoryElement);
-	}
+	}*/
 
 	private static final String _REPOSITORY_CDN_URL = "https://repository-cdn.liferay.com/nexus/content/groups/public";
 

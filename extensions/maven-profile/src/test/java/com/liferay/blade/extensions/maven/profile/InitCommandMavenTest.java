@@ -16,29 +16,12 @@
 
 package com.liferay.blade.extensions.maven.profile;
 
-import aQute.lib.io.IO;
-
-import com.liferay.blade.cli.BladeSettings;
-import com.liferay.blade.cli.BladeTest;
-import com.liferay.blade.cli.TestUtil;
-import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
-
-import java.io.File;
-
-import java.nio.file.Files;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 /**
  * @author Gregory Amerson
  */
 public class InitCommandMavenTest {
 
-	@Before
+	/*@Before
 	public void setUp() throws Exception {
 		_workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
 	}
@@ -193,6 +176,6 @@ public class InitCommandMavenTest {
 		MavenTestUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
 	}
 
-	private File _workspaceDir = null;
+	private File _workspaceDir = null;*/
 
 }
