@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.BladeSettings;
 import com.liferay.blade.cli.command.BaseArgs;
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.CreateArgs;
@@ -68,7 +69,7 @@ public class CreateCommandMaven extends CreateCommand {
 
 		projectTemplatesArgs.setDependencyManagementEnabled(false);
 		projectTemplatesArgs.setHostBundleSymbolicName(createArgs.getHostBundleBSN());
-		projectTemplatesArgs.setLiferayVersion(getLiferayVersion(bladeCLI, createArgs));
+		projectTemplatesArgs.setLiferayVersion(_getLiferayVersion(bladeCLI, createArgs));
 		projectTemplatesArgs.setOriginalModuleName(createArgs.getOriginalModuleName());
 		projectTemplatesArgs.setOriginalModuleVersion(createArgs.getOriginalModuleVersion());
 		projectTemplatesArgs.setHostBundleVersion(createArgs.getHostBundleVersion());
@@ -79,7 +80,19 @@ public class CreateCommandMaven extends CreateCommand {
 
 		return projectTemplatesArgs;
 	}
+	
+	private String _getLiferayVersion(BladeCLI bladeCLI, CreateArgs createArgs) throws IOException {
+		String liferayVersion = createArgs.getLiferayVersion();
 
+		if (liferayVersion == null) {
+			BladeSettings bladeSettings = bladeCLI.getBladeSettings();
+
+			liferayVersion = bladeSettings.getLiferayVersionDefault();
+		}
+
+		return liferayVersion;
+	}
+	
 	@Override
 	protected Properties getWorkspaceProperties() {
 		BaseArgs baseArgs = getArgs();

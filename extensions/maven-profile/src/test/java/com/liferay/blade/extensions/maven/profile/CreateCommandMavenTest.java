@@ -48,6 +48,8 @@ public class CreateCommandMavenTest {
 
 	@Test
 	public void testCreateActivator() throws Exception {
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File tempRoot = temporaryFolder.getRoot();
 
 		String[] mavenArgs =
@@ -55,7 +57,7 @@ public class CreateCommandMavenTest {
 
 		String projectPath = new File(tempRoot, "bar-activator").getAbsolutePath();
 
-		_bladeTest.run(mavenArgs);
+		TestUtil.runBlade(extensionsDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -72,13 +74,15 @@ public class CreateCommandMavenTest {
 
 	@Test
 	public void testCreateApi() throws Exception {
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File tempRoot = temporaryFolder.getRoot();
 
 		String[] mavenArgs = {"create", "-d", tempRoot.getAbsolutePath(), "-b", "maven", "-t", "api", "foo"};
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		_bladeTest.run(mavenArgs);
+		TestUtil.runBlade(extensionsDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -103,6 +107,8 @@ public class CreateCommandMavenTest {
 
 	@Test
 	public void testCreateFragment() throws Exception {
+		File extensionsDir = extensionsTemporaryFolder.newFolder();
+		
 		File tempRoot = temporaryFolder.getRoot();
 
 		String[] mavenArgs = {
@@ -112,7 +118,7 @@ public class CreateCommandMavenTest {
 
 		String projectPath = new File(tempRoot, "loginHook").getAbsolutePath();
 
-		_bladeTest.run(mavenArgs);
+		TestUtil.runBlade(extensionsDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
