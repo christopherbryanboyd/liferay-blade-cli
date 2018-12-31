@@ -24,6 +24,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import java.util.Properties;
 
 /**
@@ -37,6 +40,8 @@ public class BladeSettings {
 
 		if (_settingsFile.exists()) {
 			load();
+
+			migrateSettingsIfNecessary();
 		}
 	}
 
@@ -56,6 +61,28 @@ public class BladeSettings {
 	public void load() throws IOException {
 		try (FileInputStream fileInputStream = new FileInputStream(_settingsFile)) {
 			_properties.load(fileInputStream);
+		}
+	}
+
+	public void migrateSettingsIfNecessary() throws IOException {
+		String name = _settingsFile.getName();
+
+		if ("settings.properties".equals(name)) {
+			Path settingsPath = _settingsFile.toPath();
+
+			Path settingsParentPath = settingsPath.getParent();
+
+			if (settingsParentPath.endsWith(".blade")) {
+				Path settingsParentParentPath = settingsParentPath.getParent();
+
+				Path newSettingsPath = settingsParentParentPath.resolve(".blade.properties");
+
+				Files.move(settingsPath, newSettingsPath);
+
+				Files.delete(settingsParentPath);
+
+				_settingsFile = newSettingsPath.toFile();
+			}
 		}
 	}
 
@@ -99,6 +126,6 @@ public class BladeSettings {
 	}
 
 	private final Properties _properties = new Properties();
-	private final File _settingsFile;
+	private File _settingsFile;
 
 }
