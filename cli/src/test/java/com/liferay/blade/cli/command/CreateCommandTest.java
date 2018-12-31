@@ -1654,7 +1654,7 @@ public class CreateCommandTest {
 
 		Assert.assertTrue(WorkspaceUtil.isWorkspace(workspace));
 
-		File bladeSettings = new File(workspace, ".blade/settings.properties");
+		File bladeSettings = new File(workspace, ".blade.properties");
 
 		try (InputStream inputStream = new FileInputStream(bladeSettings)) {
 			Properties properties = new Properties();
@@ -1672,7 +1672,7 @@ public class CreateCommandTest {
 
 		Assert.assertTrue(WorkspaceUtil.isWorkspace(workspace));
 
-		File bladeSettings = new File(workspace, ".blade/settings.properties");
+		File bladeSettings = new File(workspace, ".blade.properties");
 
 		try (InputStream inputStream = new FileInputStream(bladeSettings)) {
 			Properties properties = new Properties();
