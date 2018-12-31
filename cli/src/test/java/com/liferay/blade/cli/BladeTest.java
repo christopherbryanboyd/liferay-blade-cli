@@ -78,15 +78,23 @@ public class BladeTest extends BladeCLI {
 
 	@Override
 	public BladeSettings getBladeSettings() throws IOException {
-		final File settingsFile;
+		File settingsFile;
 
 		if (WorkspaceUtil.isWorkspace(this)) {
 			File workspaceDir = WorkspaceUtil.getWorkspaceDir(this);
 
 			settingsFile = new File(workspaceDir, ".blade/settings.properties");
+
+			if (!settingsFile.exists()) {
+				settingsFile = new File(workspaceDir, ".blade.properties");
+			}
 		}
 		else {
 			settingsFile = new File(_userHomeDir, ".blade/settings.properties");
+
+			if (!settingsFile.exists()) {
+				settingsFile = new File(_userHomeDir, ".blade.properties");
+			}
 		}
 
 		return new BladeSettings(settingsFile);

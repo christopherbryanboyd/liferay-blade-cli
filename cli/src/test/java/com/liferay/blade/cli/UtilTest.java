@@ -23,6 +23,7 @@ import com.liferay.blade.cli.util.WorkspaceUtil;
 import java.io.File;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import java.util.List;
 import java.util.Objects;
@@ -152,6 +153,53 @@ public class UtilTest {
 		Files.write(buildFile.toPath(), plugin.getBytes());
 
 		Assert.assertTrue(WorkspaceUtil.isWorkspace(workspace));
+	}
+
+	@Test
+	public void testMigrateBladeSettings() throws Exception {
+		File rootDirectory = temporaryFolder.getRoot();
+
+		String[] args = {"--base", rootDirectory.getAbsolutePath(), "init", "foo"};
+
+		File workspaceDirectory = new File(rootDirectory, "foo");
+
+		TestUtil.runBlade(args);
+
+		boolean workspace = WorkspaceUtil.isWorkspace(workspaceDirectory);
+
+		Assert.assertTrue(workspace);
+
+		File bladeSettings = new File(workspaceDirectory, ".blade.properties");
+
+		Assert.assertTrue(bladeSettings.exists());
+
+		Path workspacePath = workspaceDirectory.toPath();
+
+		Path bladeSettingsPath = bladeSettings.toPath();
+
+		Path bladePath = workspacePath.resolve(".blade");
+
+		Files.createDirectory(bladePath);
+
+		Path bladeSettingsNewPath = bladePath.resolve("settings.properties");
+
+		Files.move(bladeSettingsPath, bladeSettingsNewPath);
+
+		boolean bladeSettingsNewPathExists = Files.exists(bladeSettingsNewPath);
+
+		Assert.assertTrue(bladeSettingsNewPathExists);
+
+		args = new String[] {"--base", workspaceDirectory.getPath(), "help"};
+
+		TestUtil.runBlade(args);
+
+		bladeSettingsNewPathExists = Files.exists(bladeSettingsNewPath);
+
+		Assert.assertFalse(bladeSettingsNewPathExists);
+
+		boolean bladeSettingsPathExists = Files.exists(bladeSettingsPath);
+
+		Assert.assertTrue(bladeSettingsPathExists);
 	}
 
 	@Rule
