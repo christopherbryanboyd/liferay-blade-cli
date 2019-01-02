@@ -16,15 +16,11 @@
 
 package com.liferay.blade.cli.command;
 
-import com.liferay.blade.cli.TestUtil;
-
 import java.io.File;
-
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,6 +28,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import com.liferay.blade.cli.TestUtil;
 
 /**
  * @author Christopher Bryan Boyd
@@ -118,6 +116,8 @@ public class DeployCommandTest {
 		File deployDirectory = new File(bundlesDirectory, "deploy");
 
 		String deployDirectoryString = deployDirectory.getAbsolutePath();
+		
+		deployDirectoryString = deployDirectoryString.replace("\\", "\\\\");
 
 		String deployDirectoryGradleString = String.format("    deployDir = '%s'", deployDirectoryString);
 
