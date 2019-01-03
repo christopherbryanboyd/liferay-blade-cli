@@ -162,15 +162,7 @@ public class BladeCLI {
 	}
 
 	public BladeSettings getBladeSettings() throws IOException {
-		File settingsBaseDir;
-
-		if (WorkspaceUtil.isWorkspace(this)) {
-			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
-		}
-		else {
-			settingsBaseDir = _USER_HOME_DIR;
-		}
-
+		File settingsBaseDir = getSettingsBaseDir();
 		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
 
 		if (settingsFile.exists()) {
@@ -330,6 +322,8 @@ public class BladeCLI {
 		System.setOut(out());
 
 		System.setErr(error());
+
+		_migrateSettingsFile();
 
 		BladeSettings bladeSettings = getBladeSettings();
 
@@ -500,6 +494,19 @@ public class BladeCLI {
 		return builder.build();
 	}
 
+	protected File getSettingsBaseDir() {
+		File settingsBaseDir;
+
+		if (WorkspaceUtil.isWorkspace(this)) {
+			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
+		}
+		else {
+			settingsBaseDir = _USER_HOME_DIR;
+		}
+
+		return settingsBaseDir;
+	}
+
 	private static String _extractBasePath(String[] args) {
 		String defaultBasePath = ".";
 
@@ -628,6 +635,36 @@ public class BladeCLI {
 		}
 
 		return userBladePath;
+	}
+
+	private void _migrateSettingsFile() throws Exception {
+		File settingsBaseDir = getSettingsBaseDir();
+
+		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
+
+		if (settingsFile.exists()) {
+			String name = settingsFile.getName();
+
+			if ("settings.properties".equals(name)) {
+				Path settingsPath = settingsFile.toPath();
+
+				Path settingsParentPath = settingsPath.getParent();
+
+				if (settingsParentPath.endsWith(".blade")) {
+					Path settingsParentParentPath = settingsParentPath.getParent();
+
+					Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
+
+					Files.move(settingsPath, newSettingsPath);
+
+					try (Stream<?> filesStream = Files.list(settingsParentPath)) {
+						if (filesStream.count() == 0) {
+							Files.delete(settingsParentPath);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void _runCommand() throws Exception {
