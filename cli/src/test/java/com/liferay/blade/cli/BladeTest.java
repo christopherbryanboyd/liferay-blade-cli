@@ -77,47 +77,6 @@ public class BladeTest extends BladeCLI {
 	}
 
 	@Override
-	public BladeSettings getBladeSettings() throws IOException {
-		File settingsBaseDir;
-
-		if (WorkspaceUtil.isWorkspace(this)) {
-			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
-		}
-		else {
-			settingsBaseDir = _userHomeDir;
-		}
-
-		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
-
-		if (settingsFile.exists()) {
-			String name = settingsFile.getName();
-
-			if ("settings.properties".equals(name)) {
-				Path settingsPath = settingsFile.toPath();
-
-				Path settingsParentPath = settingsPath.getParent();
-
-				if (settingsParentPath.endsWith(".blade")) {
-					Path settingsParentParentPath = settingsParentPath.getParent();
-
-					Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
-
-					Files.move(settingsPath, newSettingsPath);
-
-					Files.delete(settingsParentPath);
-
-					settingsFile = newSettingsPath.toFile();
-				}
-			}
-		}
-		else {
-			settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_NEW_STRING);
-		}
-
-		return new BladeSettings(settingsFile);
-	}
-
-	@Override
 	public Path getExtensionsPath() {
 		Path userHomePath = _userHomeDir.toPath();
 
@@ -158,6 +117,20 @@ public class BladeTest extends BladeCLI {
 				}
 			}
 		}
+	}
+
+	@Override
+	protected File getSettingsBaseDir() {
+		File settingsBaseDir;
+
+		if (WorkspaceUtil.isWorkspace(this)) {
+			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
+		}
+		else {
+			settingsBaseDir = _userHomeDir;
+		}
+
+		return settingsBaseDir;
 	}
 
 	private boolean _assertErrors = true;

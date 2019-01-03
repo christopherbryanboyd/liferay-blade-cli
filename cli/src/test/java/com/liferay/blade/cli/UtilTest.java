@@ -171,11 +171,9 @@ public class UtilTest {
 
 		File bladeSettings = new File(workspaceDirectory, ".blade.properties");
 
-		Assert.assertTrue(bladeSettings.exists());
+		Path bladeSettingsPath = bladeSettings.toPath();
 
 		Path workspacePath = workspaceDirectory.toPath();
-
-		Path bladeSettingsPath = bladeSettings.toPath();
 
 		Path bladePath = workspacePath.resolve(".blade");
 
@@ -202,6 +200,25 @@ public class UtilTest {
 		boolean bladeSettingsPathExists = Files.exists(bladeSettingsPath);
 
 		Assert.assertTrue(bladeSettingsPathExists);
+	}
+
+	@Test
+	public void testNewBladeSettings() throws Exception {
+		File rootDirectory = temporaryFolder.getRoot();
+
+		String[] args = {"--base", rootDirectory.getAbsolutePath(), "init", "-f", "foo"};
+
+		File workspaceDirectory = new File(rootDirectory, "foo");
+
+		TestUtil.runBlade(workspaceDirectory, args);
+
+		boolean workspace = WorkspaceUtil.isWorkspace(workspaceDirectory);
+
+		Assert.assertTrue(workspace);
+
+		File bladeSettings = new File(workspaceDirectory, ".blade.properties");
+
+		Assert.assertTrue(bladeSettings.exists());
 	}
 
 	@Rule
