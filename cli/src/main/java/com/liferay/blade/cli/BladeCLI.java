@@ -171,10 +171,28 @@ public class BladeCLI {
 			settingsBaseDir = _USER_HOME_DIR;
 		}
 
-		File settingsFile = new File(settingsBaseDir, _BLADE_SETTINGS_OLD_STRING);
+		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
 
-		if (!settingsFile.exists()) {
-			settingsFile = new File(settingsBaseDir, _BLADE_SETTINGS_NEW_STRING);
+		if (settingsFile.exists()) {
+			String name = settingsFile.getName();
+
+			if ("settings.properties".equals(name)) {
+				Path settingsPath = settingsFile.toPath();
+
+				Path settingsParentPath = settingsPath.getParent();
+
+				if (settingsParentPath.endsWith(".blade")) {
+					Path settingsParentParentPath = settingsParentPath.getParent();
+
+					Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
+
+					Files.move(settingsPath, newSettingsPath);
+
+					Files.delete(settingsParentPath);
+
+					settingsFile = newSettingsPath.toFile();
+				}
+			}
 		}
 
 		return new BladeSettings(settingsFile);
@@ -697,10 +715,6 @@ public class BladeCLI {
 			properties.store(outputStream, null);
 		}
 	}
-
-	private static final String _BLADE_SETTINGS_NEW_STRING = ".blade.properties";
-
-	private static final String _BLADE_SETTINGS_OLD_STRING = ".blade/settings.properties";
 
 	private static final String _LAST_UPDATE_CHECK_KEY = "lastUpdateCheck";
 

@@ -159,11 +159,11 @@ public class UtilTest {
 	public void testMigrateBladeSettings() throws Exception {
 		File rootDirectory = temporaryFolder.getRoot();
 
-		String[] args = {"--base", rootDirectory.getAbsolutePath(), "init", "foo"};
+		String[] args = {"--base", rootDirectory.getAbsolutePath(), "init", "-f", "foo"};
 
 		File workspaceDirectory = new File(rootDirectory, "foo");
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(workspaceDirectory, args);
 
 		boolean workspace = WorkspaceUtil.isWorkspace(workspaceDirectory);
 
@@ -179,7 +179,9 @@ public class UtilTest {
 
 		Path bladePath = workspacePath.resolve(".blade");
 
-		Files.createDirectory(bladePath);
+		if (!Files.exists(bladePath)) {
+			Files.createDirectory(bladePath);
+		}
 
 		Path bladeSettingsNewPath = bladePath.resolve("settings.properties");
 
@@ -191,7 +193,7 @@ public class UtilTest {
 
 		args = new String[] {"--base", workspaceDirectory.getPath(), "help"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(workspaceDirectory, args);
 
 		bladeSettingsNewPathExists = Files.exists(bladeSettingsNewPath);
 
