@@ -82,6 +82,14 @@ public class BladeTest extends BladeCLI {
 		_assertErrors = assertErrors;
 	}
 
+	public BladeSettings getBladeSettings() throws IOException {
+		File settingsBaseDir = _getSettingsBaseDir();
+
+		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_NEW_STRING);
+
+		return new BladeSettings(settingsFile);
+	}
+
 	@Override
 	public Path getExtensionsPath() {
 		Path userHomePath = _userHomeDir.toPath();
@@ -127,8 +135,7 @@ public class BladeTest extends BladeCLI {
 		}
 	}
 
-	@Override
-	protected File getSettingsBaseDir() {
+	private File _getSettingsBaseDir() {
 		File settingsBaseDir;
 
 		if (WorkspaceUtil.isWorkspace(this)) {
