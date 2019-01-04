@@ -113,7 +113,7 @@ public class BladeCLI {
 	}
 
 	public BladeSettings getBladeSettings() throws IOException {
-		File settingsBaseDir = getSettingsBaseDir();
+		File settingsBaseDir = _getSettingsBaseDir();
 
 		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_NEW_STRING);
 
@@ -375,19 +375,6 @@ public class BladeCLI {
 		}
 	}
 
-	protected File getSettingsBaseDir() {
-		File settingsBaseDir;
-
-		if (WorkspaceUtil.isWorkspace(this)) {
-			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
-		}
-		else {
-			settingsBaseDir = _USER_HOME_DIR;
-		}
-
-		return settingsBaseDir;
-	}
-
 	private static String _extractBasePath(String[] args) {
 		String defaultBasePath = ".";
 
@@ -405,6 +392,19 @@ public class BladeCLI {
 		}
 
 		return defaultBasePath;
+	}
+
+	private File _getSettingsBaseDir() {
+		File settingsBaseDir;
+
+		if (WorkspaceUtil.isWorkspace(this)) {
+			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
+		}
+		else {
+			settingsBaseDir = _USER_HOME_DIR;
+		}
+
+		return settingsBaseDir;
 	}
 
 	private Path _getUpdateCheckPath() throws IOException {
@@ -429,7 +429,7 @@ public class BladeCLI {
 	}
 
 	private void _migrateSettingsFile() throws Exception {
-		File settingsBaseDir = getSettingsBaseDir();
+		File settingsBaseDir = _getSettingsBaseDir();
 
 		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
 
