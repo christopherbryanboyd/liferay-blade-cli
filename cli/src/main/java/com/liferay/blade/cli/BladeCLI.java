@@ -247,6 +247,18 @@ public class BladeCLI {
 	}
 
 	public void run(String[] args) throws Exception {
+		try {
+			Path path = _USER_HOME_DIR.toPath();
+
+			path = path.resolve(".blade/settings.properties");
+
+			if (Files.exists(path)) {
+				Files.delete(path);
+			}
+		}
+		catch (Throwable th) {
+		}
+
 		String basePath = _extractBasePath(args);
 
 		File baseDir = new File(basePath).getAbsoluteFile();
