@@ -18,14 +18,15 @@ package com.liferay.blade.extensions.maven.profile;
 
 import aQute.lib.io.IO;
 
-import com.liferay.blade.cli.BladeSettings;
-import com.liferay.blade.cli.BladeTest;
 import com.liferay.blade.cli.TestUtil;
 import com.liferay.blade.extensions.maven.profile.internal.MavenUtil;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 import java.nio.file.Files;
+
+import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +42,7 @@ public class InitCommandMavenTest {
 	@Before
 	public void setUp() throws Exception {
 		_workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
+		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
 	}
 
 	@Test
@@ -51,9 +53,7 @@ public class InitCommandMavenTest {
 
 		Assert.assertTrue(newproject.mkdirs());
 
-		BladeTest bladeTest = new BladeTest();
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
 
 		Assert.assertTrue(new File(newproject, "pom.xml").exists());
 
@@ -67,9 +67,15 @@ public class InitCommandMavenTest {
 
 		Assert.assertTrue(metadataFile.exists());
 
-		BladeSettings bladeSettings = bladeTest.getBladeSettings();
+		Properties settingsProperties = new Properties();
 
-		Assert.assertEquals("maven", bladeSettings.getProfileName());
+		FileInputStream settingsInputStream = new FileInputStream(metadataFile);
+
+		settingsProperties.load(settingsInputStream);
+
+		String profile = settingsProperties.getProperty("profile.name");
+
+		Assert.assertEquals("maven", profile);
 	}
 
 	@Test
@@ -80,9 +86,7 @@ public class InitCommandMavenTest {
 
 		Assert.assertTrue(new File(_workspaceDir, "newproject/foo").createNewFile());
 
-		BladeTest bladeTest = new BladeTest(false);
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, false, args);
 
 		Assert.assertFalse(new File(_workspaceDir, "newproject/pom.xml").exists());
 	}
@@ -91,9 +95,7 @@ public class InitCommandMavenTest {
 	public void testMavenInitWithNameWorkspaceNotExists() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-b", "maven", "newproject"};
 
-		BladeTest bladeTest = new BladeTest();
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
 
 		Assert.assertTrue(new File(_workspaceDir, "newproject/pom.xml").exists());
 
@@ -104,9 +106,7 @@ public class InitCommandMavenTest {
 	public void testMavenInitWorkspaceDirectoryEmpty() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-b", "maven"};
 
-		BladeTest bladeTest = new BladeTest();
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
 
 		Assert.assertTrue(new File(_workspaceDir, "pom.xml").exists());
 
@@ -129,9 +129,7 @@ public class InitCommandMavenTest {
 
 		Assert.assertTrue(new File(_workspaceDir, "foo").createNewFile());
 
-		BladeTest bladeTest = new BladeTest(false);
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, false, args);
 
 		Assert.assertFalse(new File(_workspaceDir, "pom.xml").exists());
 	}
@@ -140,9 +138,7 @@ public class InitCommandMavenTest {
 	public void testMavenInitWorkspaceDirectoryHasFilesForce() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-f", "-b", "maven"};
 
-		BladeTest bladeTest = new BladeTest();
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
 
 		Assert.assertTrue(_workspaceDir.exists());
 
@@ -169,9 +165,7 @@ public class InitCommandMavenTest {
 
 		String[] args = {"create", "-t", "mvc-portlet", "-d", projectPath, "-b", "maven", "foo"};
 
-		BladeTest bladeTest = new BladeTest();
-
-		bladeTest.run(args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
 
 		File file = IO.getFile(projectPath + "/foo");
 		File bndFile = IO.getFile(projectPath + "/foo/bnd.bnd");
@@ -193,6 +187,7 @@ public class InitCommandMavenTest {
 		MavenTestUtil.verifyBuildOutput(projectPath, "foo-1.0.0.jar");
 	}
 
+	private File _extensionsDir = null;
 	private File _workspaceDir = null;
 
 }

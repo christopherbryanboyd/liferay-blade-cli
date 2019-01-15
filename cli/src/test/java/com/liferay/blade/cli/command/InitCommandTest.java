@@ -17,6 +17,7 @@
 package com.liferay.blade.cli.command;
 
 import com.liferay.blade.cli.BladeTest;
+import com.liferay.blade.cli.BladeTest.BladeTestBuilder;
 import com.liferay.blade.cli.BladeTestResults;
 import com.liferay.blade.cli.GradleRunnerUtil;
 import com.liferay.blade.cli.TestUtil;
@@ -47,6 +48,8 @@ public class InitCommandTest {
 	@Before
 	public void setUp() throws Exception {
 		_workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
+
+		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
 	}
 
 	@Test
@@ -67,7 +70,7 @@ public class InitCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -86,7 +89,9 @@ public class InitCommandTest {
 
 		String[] args = {"--base", emptyDir.getPath(), "init"};
 
-		TestUtil.runBlade(args);
+		BladeTest bladeTest = _getBladeTestCustomWorkspace(emptyDir);
+
+		bladeTest.run(args);
 
 		boolean workspace = WorkspaceUtil.isWorkspace(emptyDir);
 
@@ -101,7 +106,9 @@ public class InitCommandTest {
 
 		String[] args = {"--base", pathStringToTest, "init"};
 
-		TestUtil.runBlade(args);
+		BladeTest bladeTest = _getBladeTestCustomWorkspace(emptyDir);
+
+		bladeTest.run(args);
 
 		boolean workspace = WorkspaceUtil.isWorkspace(emptyDir);
 
@@ -116,7 +123,9 @@ public class InitCommandTest {
 
 		String[] args = {"--base", pathStringToTest, "init", "."};
 
-		TestUtil.runBlade(args);
+		BladeTest bladeTest = _getBladeTestCustomWorkspace(emptyDir);
+
+		bladeTest.run(args);
 
 		boolean workspace = WorkspaceUtil.isWorkspace(emptyDir);
 
@@ -141,7 +150,7 @@ public class InitCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTestCustomWorkspace(projectDir);
 
 		bladeTest.run(args);
 
@@ -164,7 +173,7 @@ public class InitCommandTest {
 
 		String[] args = {"--base", basePath, "init", "-p", "myprofile"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(tempDir, _extensionsDir, args);
 
 		Assert.assertTrue(WorkspaceUtil.isWorkspace(tempDir));
 
@@ -185,7 +194,7 @@ public class InitCommandTest {
 	public void testDefaultInitWorkspaceDirectoryEmpty() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -206,7 +215,7 @@ public class InitCommandTest {
 
 		Assert.assertTrue(new File(_workspaceDir, "foo").createNewFile());
 
-		BladeTest bladeTest = new BladeTest(false);
+		BladeTest bladeTest = _getBladeTestNoAssert();
 
 		bladeTest.run(args);
 
@@ -217,7 +226,7 @@ public class InitCommandTest {
 	public void testDefaultInitWorkspaceDirectoryHasFilesForce() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-f"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -234,7 +243,7 @@ public class InitCommandTest {
 	public void testDefaultInitWorkspaceDirectoryIsWorkspace() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "firstWorkspace"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -242,7 +251,7 @@ public class InitCommandTest {
 
 		String[] moreArgs = {"--base", firstWorkspace.getPath(), "init", "nextWorkspace"};
 
-		bladeTest = new BladeTest(false);
+		bladeTest = _getBladeTestNoAssert();
 
 		bladeTest.run(moreArgs);
 
@@ -253,7 +262,7 @@ public class InitCommandTest {
 		Assert.assertFalse(nextWorkspace.getName() + " should not exist, but it does.", nextWorkspace.exists());
 
 		try {
-			BladeTestResults bladeTestResults = TestUtil.runBlade(firstWorkspace, moreArgs);
+			BladeTestResults bladeTestResults = TestUtil.runBlade(firstWorkspace, _extensionsDir, moreArgs);
 
 			Assert.assertFalse(
 				"There should be no results from the command, but bladeTestResults != null)", bladeTestResults != null);
@@ -270,7 +279,7 @@ public class InitCommandTest {
 	public void testInitCommandGradleOption() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-b", "gradle", "gradleworkspace"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -289,7 +298,7 @@ public class InitCommandTest {
 
 		_makeSDK(_workspaceDir);
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -316,7 +325,7 @@ public class InitCommandTest {
 	public void testInitWithLiferayVersion70() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-v", "7.0"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -334,7 +343,7 @@ public class InitCommandTest {
 	public void testInitWithLiferayVersion71() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-v", "7.1"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -352,7 +361,7 @@ public class InitCommandTest {
 	public void testInitWithLiferayVersionDefault() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -374,7 +383,7 @@ public class InitCommandTest {
 
 		Assert.assertTrue(newproject.mkdirs());
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -395,7 +404,7 @@ public class InitCommandTest {
 
 		Assert.assertTrue(new File(_workspaceDir, "newproject/foo").createNewFile());
 
-		BladeTest bladeTest = new BladeTest(false);
+		BladeTest bladeTest = _getBladeTestNoAssert();
 
 		bladeTest.run(args);
 
@@ -406,7 +415,7 @@ public class InitCommandTest {
 	public void testInitWithNameWorkspaceNotExists() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "newproject"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -423,7 +432,7 @@ public class InitCommandTest {
 
 		String[] args = {"create", "-t", "mvc-portlet", "-d", projectPath, "foo"};
 
-		BladeTest bladeTest = new BladeTest();
+		BladeTest bladeTest = _getBladeTest();
 
 		bladeTest.run(args);
 
@@ -433,6 +442,36 @@ public class InitCommandTest {
 		Assert.assertTrue(file.exists());
 
 		Assert.assertTrue(bndFile.exists());
+	}
+
+	private BladeTest _getBladeTest() {
+		BladeTestBuilder builder = BladeTest.builder();
+
+		builder.setExtensionsDir(_extensionsDir.toPath());
+		builder.setSettingsDir(_workspaceDir.toPath());
+
+		return builder.build();
+	}
+
+	private BladeTest _getBladeTestCustomWorkspace(File workspaceDir) {
+		BladeTestBuilder builder = BladeTest.builder();
+
+		builder.setExtensionsDir(_extensionsDir.toPath());
+		builder.setSettingsDir(workspaceDir.toPath());
+
+		return builder.build();
+	}
+
+	private BladeTest _getBladeTestNoAssert() {
+		BladeTestBuilder builder = BladeTest.builder();
+
+		builder.setExtensionsDir(_extensionsDir.toPath());
+		builder.setSettingsDir(_workspaceDir.toPath());
+		builder.setAssertErrors(false);
+
+		BladeTest bladeTest = builder.build();
+
+		return bladeTest;
 	}
 
 	private void _makeSDK(File dir) throws IOException {
@@ -458,6 +497,7 @@ public class InitCommandTest {
 		GradleRunnerUtil.verifyBuildOutput(projectPath + "/foo", "foo-1.0.0.jar");
 	}
 
+	private File _extensionsDir = null;
 	private File _workspaceDir = null;
 
 }
