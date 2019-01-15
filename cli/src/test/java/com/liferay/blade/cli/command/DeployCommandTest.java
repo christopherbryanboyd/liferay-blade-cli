@@ -16,11 +16,15 @@
 
 package com.liferay.blade.cli.command;
 
+import com.liferay.blade.cli.TestUtil;
+
 import java.io.File;
+
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,19 +34,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.liferay.blade.cli.TestUtil;
-
 /**
  * @author Christopher Bryan Boyd
  */
 public class DeployCommandTest {
+
 	@Before
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
 
 		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
 	}
-	
+
 	@Test
 	public void testInstallJar() throws Exception {
 		File workspaceDir = temporaryFolder.newFolder();
@@ -186,9 +189,11 @@ public class DeployCommandTest {
 
 		Assert.assertEquals(1, filesCount);
 	}
-	private File _extensionsDir = null;
-	private File _rootDir = null;
+
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	private File _extensionsDir = null;
+	private File _rootDir = null;
 
 }
