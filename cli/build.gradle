@@ -59,7 +59,7 @@ createWrapperZip {
 	include "gradle/**"
 	include "gradlew*"
 }
-
+//
 dependencies {
 	bladeExtensions group: "com.liferay.blade", name: "com.liferay.blade.extensions.maven.profile", version: "latest.integration"
 
