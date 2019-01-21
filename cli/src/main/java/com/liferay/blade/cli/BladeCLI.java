@@ -163,29 +163,18 @@ public class BladeCLI {
 
 	public BladeSettings getBladeSettings() throws IOException {
 		File settingsBaseDir = _getSettingsBaseDir();
+
 		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
 
 		if (settingsFile.exists()) {
 			String name = settingsFile.getName();
 
 			if ("settings.properties".equals(name)) {
-				Path settingsPath = settingsFile.toPath();
-
-				Path settingsParentPath = settingsPath.getParent();
-
-				if (settingsParentPath.endsWith(".blade")) {
-					Path settingsParentParentPath = settingsParentPath.getParent();
-
-					Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
-
-					Files.move(settingsPath, newSettingsPath);
-
-					Files.delete(settingsParentPath);
-
-					settingsFile = newSettingsPath.toFile();
-				}
+				_migrateBladeSettingsFile(settingsFile);
 			}
 		}
+
+		settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_NEW_STRING);
 
 		return new BladeSettings(settingsFile);
 	}
@@ -323,8 +312,6 @@ public class BladeCLI {
 
 		System.setErr(error());
 
-		_migrateSettingsFile();
-
 		BladeSettings bladeSettings = getBladeSettings();
 
 		if (profileName != null) {
@@ -442,6 +429,39 @@ public class BladeCLI {
 		if (_args.isTrace() && (_tracer != null)) {
 			_tracer.format("# " + s + "%n", args);
 			_tracer.flush();
+		}
+	}
+
+	protected File _getSettingsBaseDir() {
+		File settingsBaseDir;
+
+		if (WorkspaceUtil.isWorkspace(this)) {
+			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
+		}
+		else {
+			settingsBaseDir = _USER_HOME_DIR;
+		}
+
+		return settingsBaseDir;
+	}
+
+	protected void _migrateBladeSettingsFile(File settingsFile) throws IOException {
+		Path settingsPath = settingsFile.toPath();
+
+		Path settingsParentPath = settingsPath.getParent();
+
+		if (settingsParentPath.endsWith(".blade")) {
+			Path settingsParentParentPath = settingsParentPath.getParent();
+
+			Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
+
+			Files.move(settingsPath, newSettingsPath);
+
+			try (Stream<?> filesStream = Files.list(settingsParentPath)) {
+				if (filesStream.count() == 0) {
+					Files.delete(settingsParentPath);
+				}
+			}
 		}
 	}
 
@@ -603,19 +623,6 @@ public class BladeCLI {
 		return null;
 	}
 
-	private File _getSettingsBaseDir() {
-		File settingsBaseDir;
-
-		if (WorkspaceUtil.isWorkspace(this)) {
-			settingsBaseDir = WorkspaceUtil.getWorkspaceDir(this);
-		}
-		else {
-			settingsBaseDir = _USER_HOME_DIR;
-		}
-
-		return settingsBaseDir;
-	}
-
 	private Path _getUpdateCheckPath() throws IOException {
 		Path userBladePath = _getUserBladePath();
 
@@ -635,36 +642,6 @@ public class BladeCLI {
 		}
 
 		return userBladePath;
-	}
-
-	private void _migrateSettingsFile() throws Exception {
-		File settingsBaseDir = _getSettingsBaseDir();
-
-		File settingsFile = new File(settingsBaseDir, BladeSettings.BLADE_SETTINGS_OLD_STRING);
-
-		if (settingsFile.exists()) {
-			String name = settingsFile.getName();
-
-			if ("settings.properties".equals(name)) {
-				Path settingsPath = settingsFile.toPath();
-
-				Path settingsParentPath = settingsPath.getParent();
-
-				if (settingsParentPath.endsWith(".blade")) {
-					Path settingsParentParentPath = settingsParentPath.getParent();
-
-					Path newSettingsPath = settingsParentParentPath.resolve(BladeSettings.BLADE_SETTINGS_NEW_STRING);
-
-					Files.move(settingsPath, newSettingsPath);
-
-					try (Stream<?> filesStream = Files.list(settingsParentPath)) {
-						if (filesStream.count() == 0) {
-							Files.delete(settingsParentPath);
-						}
-					}
-				}
-			}
-		}
 	}
 
 	private void _runCommand() throws Exception {

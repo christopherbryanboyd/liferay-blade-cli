@@ -43,7 +43,6 @@ repositories {
 	maven {
 		url "https://repository-cdn.liferay.com/nexus/content/groups/public"
 	}
-	
 	maven {
 		url "https://repo.gradle.org/gradle/libs-releases/"
 	}

@@ -171,33 +171,33 @@ public class UtilTest {
 
 		File bladeSettings = new File(workspaceDirectory, ".blade.properties");
 
-		Path bladeSettingsPath = bladeSettings.toPath();
+		Path bladeSettingsNewPath = bladeSettings.toPath();
 
 		Path workspacePath = workspaceDirectory.toPath();
 
-		Path bladePath = workspacePath.resolve(".blade");
+		Path bladeDirPath = workspacePath.resolve(".blade");
 
-		if (!Files.exists(bladePath)) {
-			Files.createDirectory(bladePath);
+		if (!Files.exists(bladeDirPath)) {
+			Files.createDirectory(bladeDirPath);
 		}
 
-		Path bladeSettingsNewPath = bladePath.resolve("settings.properties");
+		Path bladeSettingsOldPath = bladeDirPath.resolve("settings.properties");
 
-		Files.move(bladeSettingsPath, bladeSettingsNewPath);
+		Files.move(bladeSettingsNewPath, bladeSettingsOldPath);
 
-		boolean bladeSettingsNewPathExists = Files.exists(bladeSettingsNewPath);
+		boolean bladeSettingsOldPathExists = Files.exists(bladeSettingsOldPath);
 
-		Assert.assertTrue(bladeSettingsNewPathExists);
+		Assert.assertTrue(bladeSettingsOldPathExists);
 
 		args = new String[] {"--base", workspaceDirectory.getPath(), "help"};
 
 		TestUtil.runBlade(workspaceDirectory, args);
 
-		bladeSettingsNewPathExists = Files.exists(bladeSettingsNewPath);
+		bladeSettingsOldPathExists = Files.exists(bladeSettingsOldPath);
 
-		Assert.assertFalse(bladeSettingsNewPathExists);
+		Assert.assertFalse(bladeSettingsOldPathExists);
 
-		boolean bladeSettingsPathExists = Files.exists(bladeSettingsPath);
+		boolean bladeSettingsPathExists = Files.exists(bladeSettingsNewPath);
 
 		Assert.assertTrue(bladeSettingsPathExists);
 	}

@@ -58,7 +58,7 @@ public class TargetPlatformTest {
 		String[] args =
 			{"--base", _nonGradleWorkspaceDir.getAbsolutePath(), "create", "-t", "activator", "test-project"};
 
-		TestUtil.runBlade(args);
+		TestUtil.runBlade(temporaryFolder.getRoot(), args);
 
 		File projectDir = new File(_nonGradleWorkspaceDir, "test-project");
 
