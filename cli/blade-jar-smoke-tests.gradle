@@ -21,13 +21,9 @@ ByteArrayOutputStream standardStream = new ByteArrayOutputStream()
 
 testBladeCreateCommand {
 	args = [jar.archivePath, 'create', '-l']
-	errorOutput = errorStream
-	standardOutput = standardStream
+	errorOutput = System.err
+	standardOutput = System.out
 
-	doLast{
-		assert standardStream.toString().contains("service-builder")
-		assert !errorStream.toString().toLowerCase().contains("error")
-	}
 }
 
 testBladeGwCommand {
