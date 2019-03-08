@@ -1,6 +1,7 @@
 com.liferay.blade.cli.command.ConvertCommand
 com.liferay.blade.cli.command.CreateCommand
 com.liferay.blade.cli.command.DeployCommand
+com.liferay.blade.cli.command.DeployRemoteCommand
 com.liferay.blade.cli.command.GradleWrapperCommand
 com.liferay.blade.cli.command.HelpCommand
 com.liferay.blade.cli.command.InitCommand
