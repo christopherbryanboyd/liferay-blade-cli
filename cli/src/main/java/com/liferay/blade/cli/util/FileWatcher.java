@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Example to watch a directory (or tree) for changes to files.
@@ -168,7 +169,7 @@ public class FileWatcher {
 			if (!reportModified.isEmpty()) {
 				for (Path modified : reportModified) {
 					try {
-						consumer.consume(modified);
+						consumer.accept(modified);
 					}
 					catch (Throwable t) {
 						//ignore
@@ -190,12 +191,6 @@ public class FileWatcher {
 				}
 			}
 		}
-	}
-
-	public interface Consumer<E> {
-
-		public void consume(E reference);
-
 	}
 
 	/**
