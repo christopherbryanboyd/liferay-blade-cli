@@ -16,7 +16,7 @@ apply plugin: "maven-publish"
 
 dependencies {
 	compileOnly group: "com.beust", name: "jcommander", version: "1.72"
-	compileOnly project(":cli")
+	compile group: "com.liferay.blade", name: "com.liferay.blade.cli", version: "latest.integration"
 
 	testCompile gradleTestKit()
 	testCompile group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"
