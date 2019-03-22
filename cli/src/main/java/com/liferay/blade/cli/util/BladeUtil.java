@@ -17,6 +17,7 @@
 package com.liferay.blade.cli.util;
 
 import com.liferay.blade.cli.BladeCLI;
+import com.liferay.blade.cli.command.SamplesCommand;
 import com.liferay.project.templates.ProjectTemplates;
 import com.liferay.project.templates.internal.util.ProjectTemplatesUtil;
 
@@ -223,6 +224,14 @@ public class BladeUtil {
 		templatesFiles.add(extensions.toFile());
 
 		return ProjectTemplates.getTemplates(templatesFiles);
+	}
+	
+	public static void addGradleWrapper(File destinationDir) throws Exception {
+		InputStream inputStream = SamplesCommand.class.getResourceAsStream("/wrapper.zip");
+
+		FileUtil.unzip(inputStream, destinationDir);
+
+		new File(destinationDir, "gradlew").setExecutable(true);
 	}
 
 	public static boolean hasGradleWrapper(File dir) {
