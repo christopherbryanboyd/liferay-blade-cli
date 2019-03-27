@@ -86,6 +86,27 @@ public class InstallExtensionCommandTest {
 	}
 
 	@Test
+	public void testInstallCustomExtensionSubDirectory() throws Exception {
+		Assume.assumeFalse(_isWindows());
+
+		String[] args = {"extension", "install", "https://github.com/christopherbryanboyd/liferay-blade-cli/tree/deployremote/extensions/deploy-remote-command"};
+		
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+
+		String output = bladeTestResults.getOutput();
+
+		Assert.assertTrue("Expected output to contain \"successful\"\n" + output, output.contains(" successful"));
+
+		Path rootPath = _rootDir.toPath();
+
+		Path extensionJarPath = rootPath.resolve(Paths.get(".blade", "extensions", "blade-sample-command-master.jar"));
+
+		boolean pathExists = Files.exists(extensionJarPath);
+
+		Assert.assertTrue(extensionJarPath.toAbsolutePath() + " does not exist", pathExists);
+	}
+
+	@Test
 	public void testInstallCustomExtensionTwiceDontOverwrite() throws Exception {
 		String jarName = _sampleCommandJarFile.getName();
 

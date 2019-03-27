@@ -280,10 +280,10 @@ public class DeployRemoteCommand extends BaseCommand<DeployRemoteArgs> {
 
 		}.start();
 
-		Consumer<Path> consumer = new Consumer<Path>() {
+		com.liferay.blade.cli.util.FileWatcher.Consumer<Path> consumer = new com.liferay.blade.cli.util.FileWatcher.Consumer<Path>() {
 
 			@Override
-			public void accept(Path modified) {
+			public void consume(Path modified) {
 				try {
 					File file = modified.toFile();
 

@@ -67,6 +67,14 @@ public class BladeUtil {
 
 	public static final String APP_SERVER_TYPE_PROPERTY = "app.server.type";
 
+	public static void addGradleWrapper(File destinationDir) throws Exception {
+		InputStream inputStream = SamplesCommand.class.getResourceAsStream("/wrapper.zip");
+
+		FileUtil.unzip(inputStream, destinationDir);
+
+		new File(destinationDir, "gradlew").setExecutable(true);
+	}
+
 	public static boolean canConnect(String host, int port) {
 		InetSocketAddress localAddress = new InetSocketAddress(0);
 		InetSocketAddress remoteAddress = new InetSocketAddress(host, Integer.valueOf(port));
@@ -216,6 +224,8 @@ public class BladeUtil {
 		return templates.keySet();
 	}
 
+	
+
 	public static Map<String, String> getTemplates(BladeCLI bladeCLI) throws Exception {
 		Path extensions = bladeCLI.getExtensionsPath();
 
@@ -224,14 +234,6 @@ public class BladeUtil {
 		templatesFiles.add(extensions.toFile());
 
 		return ProjectTemplates.getTemplates(templatesFiles);
-	}
-	
-	public static void addGradleWrapper(File destinationDir) throws Exception {
-		InputStream inputStream = SamplesCommand.class.getResourceAsStream("/wrapper.zip");
-
-		FileUtil.unzip(inputStream, destinationDir);
-
-		new File(destinationDir, "gradlew").setExecutable(true);
 	}
 
 	public static boolean hasGradleWrapper(File dir) {

@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -87,6 +88,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					Collectors.toList()
 				);
 				
+
 				if (urlSplitEndCollection.size() > 2) {
 					StringBuilder githubRootUrl = new StringBuilder("https://github.com/");
 
@@ -96,6 +98,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					
 					int x = 0;
 					
+
 					for (String urlString : urlSplitEndCollection) {
 						if (x > 3) {
 							subPath.append(urlString + '/');
@@ -106,12 +109,14 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 						else if (x < 2) {
 							githubRootUrl.append(urlString + '/');
 						}
+
 						x++;
 					}
 					
 					Path projectPath = Files.createTempDirectory("extension");
 					
 					Path projectSubPath = Paths.get(subPath.toString());
+
 					
 					projectSubPath = projectPath.resolve(projectSubPath);
 					
@@ -120,6 +125,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					Runtime runtime = Runtime.getRuntime();
 
 					Process process = runtime.exec("git -C " + projectPath.toString() + " init");
+
 					process.waitFor();
 					process = runtime.exec("git -C " + projectPath.toString() + " remote add -f origin " + githubRootUrl);
 					process.waitFor();
@@ -127,26 +133,31 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					process.waitFor();
 					
 					Path gitInfoPath = Paths.get(".git", "info");
+
 					
 					gitInfoPath = projectPath.resolve(gitInfoPath);
 					
 					Files.createDirectories(gitInfoPath);
 					
 					Path sparseCheckoutPath = gitInfoPath.resolve("sparse-checkout");
+
 					
 					Files.createFile(sparseCheckoutPath);
 					
 					String subPathString = subPath.toString();
+
 					
 					Files.write(sparseCheckoutPath, subPathString.getBytes());
 
 					process = runtime.exec("git -C " + projectPath.toString() + " pull origin " + branch);
 					process.waitFor();
 					
+
 					if (_isGradleBuild(projectSubPath)) {
 						
 						File projectSubDir = projectSubPath.toFile();
 						
+
 						if (!BladeUtil.hasGradleWrapper(projectSubDir)) {
 							BladeUtil.addGradleWrapper(projectSubDir);
 						}
@@ -155,6 +166,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 						
 						Set<Path> extensionPaths = _gradleAssemble(projectSubPath);
 						
+
 						if (!extensionPaths.isEmpty()) {
 							for (Path extensionPath : extensionPaths) {
 								_installExtension(extensionPath);
@@ -174,6 +186,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					
 					Path path = Files.createTempDirectory(null);
 					
+
 					try {
 						Path zip = path.resolve("master.zip");
 						
@@ -189,14 +202,17 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 						
 						File[] directories = dir.listFiles(File::isDirectory);
 						
+
 						if ((directories != null) && (directories.length > 0)) {
 							Path directory = directories[0].toPath();
 							
+
 							if (_isGradleBuild(directory)) {
 								bladeCLI.out("Building extension...");
 								
 								Set<Path> extensionPaths = _gradleAssemble(directory);
 								
+
 								if (!extensionPaths.isEmpty()) {
 									for (Path extensionPath : extensionPaths) {
 										_installExtension(extensionPath);
