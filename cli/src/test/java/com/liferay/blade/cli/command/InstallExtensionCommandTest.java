@@ -39,6 +39,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import net.diibadaaba.zipdiff.DifferenceCalculator;
 import net.diibadaaba.zipdiff.Differences;
@@ -89,7 +90,7 @@ public class InstallExtensionCommandTest {
 	public void testInstallCustomExtensionSubDirectory() throws Exception {
 		Assume.assumeFalse(_isWindows());
 
-		String[] args = {"extension", "install", "https://github.com/christopherbryanboyd/liferay-blade-cli/tree/deployremote/extensions/deploy-remote-command"};
+		String[] args = {"extension", "install", _linkToDeployCommand};
 		
 		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
 
@@ -99,11 +100,21 @@ public class InstallExtensionCommandTest {
 
 		Path rootPath = _rootDir.toPath();
 
-		Path extensionJarPath = rootPath.resolve(Paths.get(".blade", "extensions", "blade-sample-command-master.jar"));
+		Path extensionDirPath = rootPath.resolve(Paths.get(".blade", "extensions"));
 
-		boolean pathExists = Files.exists(extensionJarPath);
-
-		Assert.assertTrue(extensionJarPath.toAbsolutePath() + " does not exist", pathExists);
+		try (Stream<Path> extensionStream = Files.list(extensionDirPath)) {
+			
+			boolean pathExists = extensionStream.map(
+				Path::getFileName
+			).map(
+				Object::toString
+			).anyMatch(
+				fileNameString -> fileNameString.startsWith("deploy-remote-command")
+			);	
+			
+			Assert.assertTrue("deploy-remote-command extension jar does not exist", pathExists);
+		}
+					
 	}
 
 	@Test
@@ -410,6 +421,8 @@ public class InstallExtensionCommandTest {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private static final String _linkToDeployCommand = "https://github.com/christopherbryanboyd/liferay-blade-cli/tree/deployremote/extensions/deploy-remote-command";
 
 	private static final File _sampleCommandJarFile = new File(System.getProperty("sampleCommandJarFile"));
 
