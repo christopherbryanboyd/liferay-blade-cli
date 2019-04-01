@@ -35,6 +35,19 @@ import org.junit.rules.TemporaryFolder;
 public class DownloadFromGithubTest {
 
 	@Test
+	public void testGithubFileDownload() throws IOException {
+		File testDirFile = tempFolder.newFolder();
+
+		Path testDirPath = testDirFile.toPath();
+
+		Path zip = testDirPath.resolve("master.zip");
+
+		BladeUtil.downloadGithubProject("https://github.com/liferay/liferay-blade-cli", zip);
+
+		Assert.assertTrue(Files.exists(zip));
+	}
+	
+	@Test
 	public void testDownloadFromGithub() throws IOException {
 		File testDirFile = tempFolder.newFolder();
 

@@ -70,7 +70,7 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 
 		String pathArgLower = pathArg.toLowerCase();
 
-		if (pathArgLower.startsWith("http") && _isValidURL(pathArg)) {
+		if (pathArgLower.startsWith("http") && BladeUtil.isValidURL(pathArg)) {
 			if (pathArgLower.contains("//github.com/")) {
 				Path path = Files.createTempDirectory(null);
 
@@ -214,17 +214,6 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 		}
 
 		return false;
-	}
-
-	private static boolean _isValidURL(String urlString) {
-		try {
-			new URL(urlString).toURI();
-
-			return true;
-		}
-		catch (Exception e) {
-			return false;
-		}
 	}
 
 	private Set<Path> _gradleAssemble(Path projectPath) throws Exception {

@@ -78,9 +78,23 @@ public class BladeUtil {
 
 		downloadLink(zipUrl, target);
 	}
+	
+	public static void downloadGithubFile(String link, Path target) throws Exception {
+		link = link.toLowerCase();
+		
+		if (link.startsWith("http") && isValidURL(link) && _isURLAvailable(link)) {
+			if (link.contains("//github.com/")) {
+				link = link.replace("github.com", "raw.githubusercontent.com");
+				
+				link = link.replace("/blob", "");
+				
+				downloadLink(link, target);
+			}
+		}
+	}
 
 	public static void downloadLink(String link, Path target) throws IOException {
-		if (_isURLAvailable(link)) {
+		if (isValidURL(link) && _isURLAvailable(link)) {
 			LinkDownloader downloader = new LinkDownloader(link, target);
 
 			downloader.run();
@@ -90,6 +104,17 @@ public class BladeUtil {
 		}
 	}
 
+	public static boolean isValidURL(String urlString) {
+		try {
+			new URL(urlString).toURI();
+
+			return true;
+		}
+		catch (Exception e) {
+			return false;
+		}
+	}
+	
 	public static File findParentFile(File dir, String[] fileNames, boolean checkParents) {
 		if (dir == null) {
 			return null;
