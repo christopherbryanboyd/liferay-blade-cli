@@ -216,8 +216,14 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 					throw new Exception("Only github http(s) links and direct jar links are supported");
 				}
 			}
-		} else if (pathArg.indexOf('/' == 1 -1)) {
-		
+		} else if (pathArg.indexOf('/') == -1) {
+			Path tempExtensionDirectory = Files.createTempDirectory("extensions");
+			
+			Path tempExtensionFile = tempExtensionDirectory.resolve("extensions.xml");
+			
+			BladeUtil.downloadGithubFile("https://github.com/gamerson/liferay-blade-cli/blob/master/publish-release.sh", tempExtensionFile);
+			
+			System.out.println("Foobar");
 		}
 		else {
 			Path path = Paths.get(pathArg);

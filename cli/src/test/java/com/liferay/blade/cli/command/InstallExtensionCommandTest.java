@@ -87,6 +87,26 @@ public class InstallExtensionCommandTest {
 	}
 
 	@Test
+	public void testInstallCustomExtensionByName() throws Exception {
+		String[] args = {"extension install", "remote-deploy-command"};
+
+		File root = temporaryFolder.getRoot();
+
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+
+		String output = bladeTestResults.getOutput();
+
+		Assert.assertTrue("Expected output to contain \"successful\"\n" + output, output.contains(" successful"));
+
+		Assert.assertTrue(output.contains(_sampleCommandJarFile.getName()));
+
+		File extensionJar = new File(root, ".blade/extensions/" + _sampleCommandJarFile.getName());
+
+		Assert.assertTrue(extensionJar.getAbsolutePath() + " does not exist", extensionJar.exists());
+	}
+
+
+	@Test
 	public void testInstallCustomExtensionSubdirectory() throws Exception {
 		Assume.assumeFalse(_isWindows());
 
