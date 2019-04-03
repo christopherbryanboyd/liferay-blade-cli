@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<profiles>
+	<profile>
+		<updatedDate>2019-04-03T01:06:17.254-05:00</updatedDate>
+		<version>1.0.0-SNAPSHOT</version>
+		<profileName>remote-deploy-command</profileName>
+		<githubProjectUrl>https://github.com/liferay/liferay-blade-cli/tree/master/extensions/remote-deploy-command</githubProjectUrl>
+		<author>liferay</author>
+	</profile>
+</profiles>
