@@ -22,6 +22,7 @@ import com.liferay.blade.cli.gradle.GradleTooling;
 import com.liferay.blade.cli.gradle.ProcessResult;
 import com.liferay.blade.cli.util.BladeUtil;
 import com.liferay.blade.cli.util.FileUtil;
+import com.liferay.blade.cli.util.LinkDownloader;
 import com.liferay.blade.cli.util.Prompter;
 import com.liferay.blade.cli.util.StringUtil;
 import com.liferay.blade.gradle.tooling.ProjectInfo;
@@ -201,8 +202,22 @@ public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 				}
 			}
 			else {
-				throw new Exception("Only github http(s) links are supported");
+				if (pathArg.endsWith(".jar")) {
+					
+					Path tempDirectory = Files.createTempDirectory("jarcontainer");
+					int lastIndexOfSlash = pathArg.lastIndexOf('/');
+					String jarName = pathArg.substring(lastIndexOfSlash);
+					Path tempFile = tempDirectory.resolve(jarName);
+					LinkDownloader linkDownloader = new LinkDownloader(pathArg, tempFile);
+					linkDownloader.run();
+					System.out.println(Files.exists(tempFile));
+				}
+				else {
+					throw new Exception("Only github http(s) links and direct jar links are supported");
+				}
 			}
+		} else if (pathArg.indexOf('/' == 1 -1)) {
+		
 		}
 		else {
 			Path path = Paths.get(pathArg);
