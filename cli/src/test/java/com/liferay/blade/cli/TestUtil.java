@@ -114,13 +114,17 @@ public class TestUtil {
 	}
 
 	public static BladeTestResults runBlade(
-		File settingsDir, File extensionsDir, boolean assertErrors, String... args) {
+		File settingsDir, File extensionsDir, File bladeHome, boolean assertErrors, String... args) {
 
 		return runBlade(settingsDir, extensionsDir, System.in, assertErrors, args);
 	}
 
+	public static BladeTestResults runBlade(File settingsDir, File extensionsDir, File homeDir, String... args) {
+		return runBlade(settingsDir, extensionsDir, System.in, true, args);
+	}
+
 	public static BladeTestResults runBlade(
-		File settingsDir, File extensionsDir, InputStream in, boolean assertErrors, String... args) {
+		File settingsDir, File extensionsDir, File homeDir, InputStream in, boolean assertErrors, String... args) {
 
 		Predicate<String> localeFilter = line -> line.contains("LC_ALL: cannot change locale");
 
@@ -132,7 +136,7 @@ public class TestUtil {
 
 		StringPrintStream errorPrintStream = StringPrintStream.newFilteredInstance(filters);
 
-		return runBlade(settingsDir, extensionsDir, outputPrintStream, errorPrintStream, in, assertErrors, args);
+		return runBlade(settingsDir, extensionsDir, homeDir, outputPrintStream, errorPrintStream, in, assertErrors, args);
 	}
 
 	public static BladeTestResults runBlade(File settingsDir, File extensionsDir, InputStream in, String... args)
@@ -164,10 +168,6 @@ public class TestUtil {
 		BladeTest bladeTest = bladeTestBuilder.build();
 
 		return runBlade(bladeTest, out, err, assertErrors, args);
-	}
-
-	public static BladeTestResults runBlade(File settingsDir, File extensionsDir, String... args) {
-		return runBlade(settingsDir, extensionsDir, System.in, true, args);
 	}
 
 	public static BladeTestResults runBlade(Path settingsDir, Path extensionsDir, String... args) {

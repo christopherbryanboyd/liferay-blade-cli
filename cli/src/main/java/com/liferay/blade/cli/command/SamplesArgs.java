@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 /**
@@ -39,15 +41,18 @@ public class SamplesArgs extends BaseArgs {
 		return _sampleName;
 	}
 
+	@CollectUsage(censor=true)
 	@Parameter(description = "The directory where to create the new project.", names = {"-d", "--dir"})
 	private File _dir;
 
+	@CollectUsage
 	@Parameter(
 		description = "The version of Liferay to target when downloading the sample project. Available options are 7.0, 7.1. (default 7.1).",
 		names = {"-v", "--liferay-version"}
 	)
 	private String _liferayVersion;
 
+	@CollectUsage
 	@Parameter(description = "name")
 	private String _sampleName;
 

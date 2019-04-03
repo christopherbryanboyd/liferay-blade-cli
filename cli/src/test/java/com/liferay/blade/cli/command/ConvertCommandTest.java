@@ -38,8 +38,10 @@ public class ConvertCommandTest {
 	@Before
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
+		
+		_homeDir = temporaryFolder.newFolder(".blade");
 
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_extensionsDir = new File(_homeDir, "extensions");
 	}
 
 	@Test
@@ -60,11 +62,11 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "-a"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, false, args);
 
 		Assert.assertTrue(
 			new File(
@@ -94,11 +96,11 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "1-2-1-columns-layouttpl"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File layoutWar = new File(projectDir, "wars/1-2-1-columns-layouttpl");
 
@@ -127,11 +129,11 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "sample-application-adapter-hook"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File sampleExpandoHook = new File(projectDir, "wars/sample-application-adapter-hook");
 
@@ -141,7 +143,7 @@ public class ConvertCommandTest {
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "sample-servlet-filter-hook"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File sampleServletFilterHook = new File(projectDir, "wars/sample-servlet-filter-hook");
 
@@ -166,13 +168,13 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File theme = new File(projectDir, "wars/sample-styled-minimal-theme");
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "-t", "sample-styled-minimal-theme"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(theme.exists());
 
@@ -190,7 +192,7 @@ public class ConvertCommandTest {
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "-t", "sample-styled-advanced-theme"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File advancedTheme = new File(projectDir, "wars/sample-styled-advanced-theme");
 
@@ -215,7 +217,7 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "convert", "sample-dao-portlet"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		_contains(
 			new File(projectDir, "wars/sample-dao-portlet/build.gradle"),
@@ -224,7 +226,7 @@ public class ConvertCommandTest {
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "sample-tapestry-portlet"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		_contains(
 			new File(projectDir, "wars/sample-tapestry-portlet/build.gradle"),
@@ -243,7 +245,7 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "convert", "sample-hibernate-portlet"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		_contains(
 			new File(projectDir, "wars/sample-hibernate-portlet/build.gradle"),
@@ -276,7 +278,7 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", workspaceParent.getPath(), "init", "ws"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File workspaceDir = new File(workspaceParent, "ws");
 
@@ -287,7 +289,7 @@ public class ConvertCommandTest {
 			"sample-application-adapter-hook"
 		};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		File warDir = new File(workspaceDir, "wars/sample-application-adapter-hook");
 
@@ -300,7 +302,7 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "convert", "-t", "sample-html4-theme"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(new File(projectDir, "wars/sample-html4-theme/docroot_backup/other/afile").exists());
 	}
@@ -355,7 +357,7 @@ public class ConvertCommandTest {
 
 		String[] args = {"--base", projectDir.getPath(), "init", "-u"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(pluginsSdkDir.exists());
 
@@ -363,6 +365,7 @@ public class ConvertCommandTest {
 	}
 
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

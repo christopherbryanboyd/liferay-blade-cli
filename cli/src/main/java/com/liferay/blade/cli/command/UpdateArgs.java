@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Gregory Amerson
  */
@@ -33,6 +35,7 @@ public class UpdateArgs extends BaseArgs {
 		_snapshots = snapshots;
 	}
 
+	@CollectUsage
 	@Parameter(description = "Switch to use the snapshot repository.", names = {"-s", "--snapshots"})
 	private boolean _snapshots;
 

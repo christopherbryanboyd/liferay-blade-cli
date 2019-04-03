@@ -28,7 +28,10 @@ import com.liferay.blade.cli.command.BaseCommand;
 import com.liferay.blade.cli.command.BladeProfile;
 import com.liferay.blade.cli.command.UpdateCommand;
 import com.liferay.blade.cli.command.VersionCommand;
+import com.liferay.blade.cli.util.BladeUtil;
 import com.liferay.blade.cli.util.CombinedClassLoader;
+import com.liferay.blade.cli.util.CommandHistoryDto;
+import com.liferay.blade.cli.util.CommandHistoryManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +112,8 @@ public class BladeCLI {
 		return commandMap;
 	}
 
+	
+
 	public static void main(String[] args) {
 		BladeCLI bladeCLI = new BladeCLI();
 
@@ -122,11 +127,15 @@ public class BladeCLI {
 		}
 	}
 
+	
+
 	public BladeCLI() {
 		this(System.out, System.err, System.in);
 	}
 
 	public BladeCLI(PrintStream out, PrintStream err, InputStream in) {
+		commandHistoryManager.load();
+		
 		AnsiConsole.systemInstall();
 
 		_out = out;
@@ -440,7 +449,26 @@ public class BladeCLI {
 			}
 			else {
 				if (_args != null) {
-					_runCommand();
+					CommandHistoryDto commandHistoryDto = new CommandHistoryDto();
+
+					try {
+						_runCommand();
+						commandHistoryDto.setExitCode(0);
+					}
+					catch (Throwable th) {
+						error(th);
+						commandHistoryDto.setException(th.toString());
+						commandHistoryDto.setExitCode(-1);
+
+						throw th;
+					}
+					finally {
+						commandHistoryDto.setArgs(_inputArgs);
+						commandHistoryDto.setProfile(_args.getProfileName());
+						commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
+						commandHistoryManager.add(commandHistoryDto);
+						commandHistoryManager.save();
+					}
 				}
 				else {
 					_jCommander.usage();
@@ -472,6 +500,26 @@ public class BladeCLI {
 			_tracer.format("# " + s + "%n", args);
 			_tracer.flush();
 		}
+	}
+
+	protected Path getCommandHistoryPath() {
+		File userBladeDirectory = _getUserBladePath().toFile();
+
+		File commandHistoryFile = new File(userBladeDirectory, "command_history.json");
+
+		Path commandHistoryPath = commandHistoryFile.toPath();
+
+		if (!Files.exists(commandHistoryPath)) {
+			try {
+				Files.createFile(commandHistoryPath);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		return commandHistoryPath;
+		
 	}
 
 	private static void _addCommand(Map<String, BaseCommand<?>> map, BaseCommand<?> baseCommand)
@@ -859,20 +907,23 @@ public class BladeCLI {
 
 	private static final String _LAST_UPDATE_CHECK_KEY = "lastUpdateCheck";
 
-	private static final File _USER_HOME_DIR = new File(System.getProperty("user.home"));
+	private static final File _USER_HOME_DIR = new File(BladeUtil.getBladeHome());
 
 	private static final Formatter _tracer = new Formatter(System.out);
 
 	private BaseArgs _args = new BaseArgs();
 	private BaseCommand<?> _baseCommand;
 	private String _command;
+	private CommandHistoryManager _commandHistoryManager = new CommandHistoryManager(BladeUtil.getCommandHistoryPath());
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
 	private final PrintStream _error;
 	private Extensions _extensions;
 	private ExtensionsClassLoaderSupplier _extensionsClassLoaderSupplier;
 	private final InputStream _in;
+	private String _inputArgs;
 	private JCommander _jCommander;
 	private final PrintStream _out;
 	private Collection<WorkspaceProvider> _workspaceProviders = null;
+	private CommandHistoryManager commandHistoryManager = new CommandHistoryManager(getCommandHistoryPath());
 
 }

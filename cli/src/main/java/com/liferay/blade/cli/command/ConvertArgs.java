@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 import java.util.ArrayList;
@@ -63,21 +65,27 @@ public class ConvertArgs extends BaseArgs {
 		return _themeBuilder;
 	}
 
+	@CollectUsage
 	@Parameter(description = "Migrate all plugin projects", names = {"-a", "--all"})
 	private boolean _all;
+	
 
+	@CollectUsage
 	@Parameter(description = "List the projects available to be converted", names = {"-l", "--list"})
 	private boolean _list;
 
+	@CollectUsage
 	@Parameter(description = "name")
 	private List<String> _name = new ArrayList<>();
 
+	@CollectUsage(censor=true)
 	@Parameter(
 		description = "The Plugins SDK directory, otherwise default value is <workspace_dir>/plugins-sdk",
 		names = {"-s", "--source"}
 	)
 	private File _source;
 
+	@CollectUsage
 	@Parameter(
 		description = "Use ThemeBuilder gradle plugin instead of NodeJS to convert theme project",
 		names = {"-t", "--theme-builder"}

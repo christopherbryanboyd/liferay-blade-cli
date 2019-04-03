@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Christopher Bryan Boyd
  */
@@ -29,6 +31,7 @@ public class UninstallExtensionArgs extends BaseArgs {
 		return _name;
 	}
 
+	@CollectUsage
 	@Parameter(description = "The name of the extension to uninstall")
 	private String _name;
 

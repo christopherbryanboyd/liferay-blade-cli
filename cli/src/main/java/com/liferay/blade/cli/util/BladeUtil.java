@@ -38,6 +38,7 @@ import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -127,6 +128,8 @@ public class BladeUtil {
 		return null;
 	}
 
+	
+
 	public static List<Properties> getAppServerProperties(File dir) {
 		File projectRoot = findParentFile(dir, _APP_SERVER_PROPERTIES_FILE_NAMES, true);
 
@@ -143,8 +146,22 @@ public class BladeUtil {
 		return properties;
 	}
 
+	public static String getBladeHome() {
+		return System.getProperty("blade.home", getDefaultBladeHome());
+	}
+
 	public static String getBundleVersion(Path pathToJar) throws IOException {
 		return getManifestProperty(pathToJar, "Bundle-Version");
+	}
+
+	public static Path getCommandHistoryPath() {
+		Path path = Paths.get(getBladeHome());
+
+		if (!path.endsWith("command_history.xml")) {
+			path = path.resolve("command_history.xml");
+		}
+
+		return path;
 	}
 
 	public static File getGradleWrapper(File dir) {
@@ -519,6 +536,10 @@ public class BladeUtil {
 		}
 
 		return false;
+	}
+
+	private static String getDefaultBladeHome() {
+		return Paths.get(System.getProperty("user.home")).resolve(".blade").toString();
 	}
 
 	private static final String[] _APP_SERVER_PROPERTIES_FILE_NAMES = {

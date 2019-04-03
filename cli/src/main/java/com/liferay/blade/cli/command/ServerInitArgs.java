@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Christopher Bryan Boyd
  */
@@ -32,6 +34,7 @@ public class ServerInitArgs extends BaseArgs {
 		return _environment;
 	}
 
+	@CollectUsage
 	@Parameter(
 		description = "Set the environment with the settings appropriate for current development.",
 		names = {"-e", "--environment"}

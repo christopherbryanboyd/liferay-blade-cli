@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Christopher Bryan Boyd
  */
@@ -29,6 +31,7 @@ public class InstallExtensionArgs extends BaseArgs {
 		return _path;
 	}
 
+	@CollectUsage(censor=true)
 	@Parameter(description = "The path of the extension to install.", required = true)
 	private String _path;
 

@@ -42,6 +42,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 	@Before
 	public void setUp() throws Exception {
 		_workspaceDir = temporaryFolder.newFolder("build", "test", "workspace");
+		_homeDir = temporaryFolder.newFolder(".blade");
 
 		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
 	}
@@ -52,13 +53,13 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		File mavenworkspace = new File(_workspaceDir, "mavenworkspace");
 
-		TestUtil.runBlade(mavenworkspace, _extensionsDir, args);
+		TestUtil.runBlade(mavenworkspace, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(mavenworkspace.exists());
 
 		args = new String[] {"--base", mavenworkspace.getPath(), "create", "-t", "portlet", "project1"};
 
-		TestUtil.runBlade(mavenworkspace, _extensionsDir, args);
+		TestUtil.runBlade(mavenworkspace, _extensionsDir, _homeDir, args);
 
 		File projectDirectory = new File(mavenworkspace, "modules/project1");
 
@@ -77,7 +78,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		Assert.assertTrue(newproject.mkdirs());
 
-		TestUtil.runBlade(newproject, _extensionsDir, args);
+		TestUtil.runBlade(newproject, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(new File(newproject, "pom.xml").exists());
 
@@ -112,7 +113,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		Assert.assertTrue(new File(_workspaceDir, "newproject/foo").createNewFile());
 
-		TestUtil.runBlade(_workspaceDir, _extensionsDir, false, args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, _homeDir, false, args);
 
 		Assert.assertFalse(new File(_workspaceDir, "newproject/pom.xml").exists());
 	}
@@ -123,7 +124,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		File projectDir = new File(_workspaceDir, "newproject");
 
-		TestUtil.runBlade(projectDir, _extensionsDir, args);
+		TestUtil.runBlade(projectDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(new File(_workspaceDir, "newproject/pom.xml").exists());
 
@@ -134,7 +135,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 	public void testMavenInitWorkspaceDirectoryEmpty() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-P", "maven"};
 
-		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(new File(_workspaceDir, "pom.xml").exists());
 
@@ -157,7 +158,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		Assert.assertTrue(new File(_workspaceDir, "foo").createNewFile());
 
-		TestUtil.runBlade(_workspaceDir, _extensionsDir, false, args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, _homeDir, false, args);
 
 		Assert.assertFalse(new File(_workspaceDir, "pom.xml").exists());
 	}
@@ -166,7 +167,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 	public void testMavenInitWorkspaceDirectoryHasFilesForce() throws Exception {
 		String[] args = {"--base", _workspaceDir.getPath(), "init", "-f", "-P", "maven"};
 
-		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, _homeDir, args);
 
 		Assert.assertTrue(_workspaceDir.exists());
 
@@ -193,7 +194,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 
 		String[] args = {"create", "-t", "mvc-portlet", "-d", projectPath, "-P", "maven", "foo"};
 
-		TestUtil.runBlade(_workspaceDir, _extensionsDir, args);
+		TestUtil.runBlade(_workspaceDir, _extensionsDir, _homeDir, args);
 
 		File file = IO.getFile(projectPath + "/foo");
 		File bndFile = IO.getFile(projectPath + "/foo/bnd.bnd");
@@ -216,6 +217,7 @@ public class InitCommandMavenTest implements MavenExecutor {
 	}
 
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _workspaceDir = null;
 
 }

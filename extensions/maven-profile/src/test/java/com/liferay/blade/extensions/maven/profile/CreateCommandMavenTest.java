@@ -47,7 +47,9 @@ public class CreateCommandMavenTest implements MavenExecutor {
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
 
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
+
+		_extensionsDir = new File(_homeDir, "extensions");
 	}
 
 	@Test
@@ -59,7 +61,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "bar-activator").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -82,7 +84,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -116,7 +118,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "loginHook").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -144,7 +146,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -173,7 +175,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -250,6 +252,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 	}
 
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

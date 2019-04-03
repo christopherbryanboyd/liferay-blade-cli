@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Gregory Amerson
  */
@@ -29,6 +31,7 @@ public class DeployArgs extends BaseArgs {
 		return _watch;
 	}
 
+	@CollectUsage
 	@Parameter(
 		description = "Watches the deployed file for changes and will automatically redeploy", names = {"-w", "--watch"}
 	)

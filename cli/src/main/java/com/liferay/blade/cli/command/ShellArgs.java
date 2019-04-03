@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,12 +44,15 @@ public class ShellArgs extends BaseArgs {
 		return _port;
 	}
 
+	@CollectUsage
 	@Parameter
 	private List<String> _args = new ArrayList<>();
 
+	@CollectUsage
 	@Parameter(description = "The host to use to connect to gogo shell", names = {"-h", "--host"})
 	private String _host;
 
+	@CollectUsage
 	@Parameter(description = "The port to use to connect to gogo shell", names = {"-p", "--port"})
 	private int _port;
 

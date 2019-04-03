@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Gregory Amerson
  */
@@ -28,6 +30,8 @@ public class InitArgs extends BaseArgs {
 	public String getLiferayVersion() {
 		return _liferayVersion;
 	}
+
+	
 
 	public String getName() {
 		return _name;
@@ -65,21 +69,26 @@ public class InitArgs extends BaseArgs {
 		_upgrade = upgrade;
 	}
 
+	@CollectUsage
 	@Parameter(description = "create anyway if there are files located at target folder", names = {"-f", "--force"})
 	private boolean _force;
 
+	@CollectUsage
 	@Parameter(
 		description = "The version of Liferay to target when init the workspace. Available options are 7.0, 7.1. (default 7.1).",
 		names = {"-v", "--liferay-version"}
 	)
 	private String _liferayVersion = "7.1";
 
+	@CollectUsage
 	@Parameter(description = "[name]")
 	private String _name;
 
+	@CollectUsage
 	@Parameter(description = "force to refresh workspace template", names = {"-r", "--refresh"})
 	private boolean _refresh;
 
+	@CollectUsage
 	@Parameter(description = "upgrade plugins-sdk from 6.2 to 7.0", names = {"-u", "--upgrade"})
 	private boolean _upgrade;
 

@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 /**
@@ -42,15 +44,18 @@ public class UpgradePropsArgs extends BaseArgs {
 		return _propertiesFile;
 	}
 
+	@CollectUsage
 	@Parameter(description = "Liferay server bundle directory.", names = {"-d", "--bundle-dir"})
 	private File _bundleDir;
 
+	@CollectUsage
 	@Parameter(
 		description = "If specified, write out report to this file, otherwise uses stdout.",
 		names = {"-o", "--output-file"}
 	)
 	private File _outputFile;
 
+	@CollectUsage
 	@Parameter(
 		description = "Specify existing Liferay 6.x portal-ext.properties file.", names = {"-p", "--properties-file"}
 	)

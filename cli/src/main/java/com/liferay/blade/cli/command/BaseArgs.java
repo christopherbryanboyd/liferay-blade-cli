@@ -19,6 +19,9 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.BladeUtil;
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 /**
@@ -29,6 +32,12 @@ public class BaseArgs {
 
 	public String getBase() {
 		return _base;
+	}
+
+	
+
+	public String getBladeHome() {
+		return _bladeHome;
 	}
 
 	public String getProfileName() {
@@ -51,18 +60,26 @@ public class BaseArgs {
 		_profileName = profileName;
 	}
 
+	@CollectUsage(censor=true)
 	@Parameter(description = "Specify a new base directory (default working directory).", names = "--base")
 	private String _base = new File("").getAbsolutePath();
 
+	@CollectUsage(censor=true)
+	@Parameter(description = "Specify the blade home directory (defaults to \"~/.blade/\".", names = {"-h", "--home"})
+	private String _bladeHome = BladeUtil.getBladeHome();
+
+	@CollectUsage()
 	@Parameter(description = "Get help on a specific command.", help = true, names = "--help")
 	private boolean _help;
 
+	@CollectUsage()
 	@Parameter(
 		description = "Specify the profile to use when invoking the command.",
 		names = {"-b", "--build", "-P", "--profile-name"}
 	)
 	private String _profileName;
 
+	@CollectUsage()
 	@Parameter(description = "Print exception stack traces when they occur.", names = "--trace")
 	private boolean _trace;
 

@@ -51,7 +51,9 @@ public class ExtensionsTest {
 
 		_rootDir = temporaryFolder.getRoot();
 
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
+
+		_extensionsDir = new File(_homeDir, "extensions");
 
 		_extensionsClassLoaderSupplier = new ExtensionsClassLoaderSupplier(_extensionsDir.toPath());
 
@@ -98,7 +100,7 @@ public class ExtensionsTest {
 
 		BladeTestResults results = null;
 
-		results = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+		results = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, false, args);
 
 		String output = results.getOutput();
 
@@ -149,7 +151,7 @@ public class ExtensionsTest {
 
 		String[] args = {"--base", workspaceDir.getPath(), "init", "-P", "foo"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
 
 		BladeSettings settings = _bladeTest.getBladeSettings();
 
@@ -218,6 +220,7 @@ public class ExtensionsTest {
 	private BladeTest _bladeTest;
 	private ExtensionsClassLoaderSupplier _extensionsClassLoaderSupplier = null;
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

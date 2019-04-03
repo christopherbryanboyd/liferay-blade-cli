@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 /**
  * @author Christopher Bryan Boyd
  * @author Gregory Amerson
@@ -47,18 +49,22 @@ public class ServerStartArgs extends BaseArgs {
 		_debug = debug;
 	}
 
+	@CollectUsage
 	@Parameter(description = "Start server in debug mode", names = {"-d", "--debug"})
 	private boolean _debug;
 
+	@CollectUsage
 	@Parameter(description = "Debug port number in debug mode", names = {"-p", "--port"})
 	private int _debugPort = -1;
 
+	@CollectUsage
 	@Parameter(
 		description = "When in debug mode, suspend the started server until the debugger is connected",
 		names = {"-s", "--suspend"}
 	)
 	private boolean _suspend = false;
 
+	@CollectUsage
 	@Parameter(description = "Tail the started server", names = {"-t", "--tail"})
 	private boolean _tail;
 

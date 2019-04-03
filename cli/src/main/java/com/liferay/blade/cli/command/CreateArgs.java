@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 /**
@@ -124,21 +126,26 @@ public class CreateArgs extends BaseArgs {
 		_template = template;
 	}
 
+	
+
 	@Parameter(
 		description = "If a class is generated in the project, provide the name of the class to be generated. If not provided defaults to project name.",
 		names = {"-c", "--classname"}
 	)
 	private String _classname;
 
+	@CollectUsage
 	@Parameter(
 		description = "Used to identify your module as a Theme Contributor. Also, used to add the Liferay-Theme-Contributor-Type and Web-ContextPath bundle headers.",
 		names = {"-C", "--contributor-type"}
 	)
 	private String _contributorType;
 
+	@CollectUsage
 	@Parameter(description = "The directory where to create the new project.", names = {"-d", "--dir"})
 	private File _dir;
 
+	@CollectUsage(censor=true)
 	@Parameter(
 		description = "If a new jsp hook fragment needs to be created, provide the name of the host bundle symbolic name. Required for \"-t fragment\".",
 		names = {"-h", "--host-bundle-bsn"}
