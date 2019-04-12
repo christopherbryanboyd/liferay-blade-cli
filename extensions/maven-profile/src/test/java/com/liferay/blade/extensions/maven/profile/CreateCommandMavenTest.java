@@ -48,8 +48,6 @@ public class CreateCommandMavenTest implements MavenExecutor {
 		_rootDir = temporaryFolder.getRoot();
 
 		_homeDir = temporaryFolder.newFolder(".blade");
-
-		_extensionsDir = new File(_homeDir, "extensions");
 	}
 
 	@Test
@@ -61,7 +59,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "bar-activator").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -84,7 +82,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -118,7 +116,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "loginHook").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -146,7 +144,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -175,7 +173,7 @@ public class CreateCommandMavenTest implements MavenExecutor {
 
 		String projectPath = new File(tempRoot, "foo").getAbsolutePath();
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, mavenArgs);
+		TestUtil.runBlade(_rootDir, _homeDir, mavenArgs);
 
 		_checkMavenBuildFiles(projectPath);
 
@@ -251,7 +249,6 @@ public class CreateCommandMavenTest implements MavenExecutor {
 		}
 	}
 
-	private File _extensionsDir = null;
 	private File _homeDir = null;
 	private File _rootDir = null;
 

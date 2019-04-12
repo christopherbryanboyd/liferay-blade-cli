@@ -54,11 +54,11 @@ public class DeployCommandTest {
 
 		String[] args = {"--base", workspaceDir.getPath(), "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		args = new String[] {"--base", workspaceDir.getPath(), "server", "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		File bundlesDirectory = new File(workspaceDir.getPath(), "bundles");
 
@@ -84,7 +84,7 @@ public class DeployCommandTest {
 
 		args = new String[] {"--base", modulesDirectory.getAbsolutePath(), "create", "-t", "mvc-portlet", "foo"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		File projectDirectory = new File(modulesDirectory, "foo");
 
@@ -92,7 +92,7 @@ public class DeployCommandTest {
 
 		args = new String[] {"--base", projectDirectory.getAbsolutePath(), "deploy"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		osgiModulesDirectoryList = osgiModulesDirectory.list();
 		
@@ -109,11 +109,11 @@ public class DeployCommandTest {
 
 		String[] args = {"--base", workspaceDir.getPath(), "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		args = new String[] {"--base", workspaceDir.getPath(), "server", "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		File bundlesDirectory = new File(workspaceDir.getPath(), "bundles");
 
@@ -159,11 +159,11 @@ public class DeployCommandTest {
 
 		String[] args = {"--base", workspaceDir.getPath(), "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		args = new String[] {"--base", workspaceDir.getPath(), "server", "init"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		File bundlesDirectory = new File(workspaceDir.getPath(), "bundles");
 
@@ -185,7 +185,7 @@ public class DeployCommandTest {
 
 		args = new String[] {"--base", warsDirectory.getAbsolutePath(), "create", "-t", "war-mvc-portlet", "foo"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 
 		File projectDirectory = new File(warsDirectory, "foo");
 
@@ -193,7 +193,7 @@ public class DeployCommandTest {
 
 		args = new String[] {"--base", projectDirectory.getAbsolutePath(), "deploy"};
 
-		TestUtil.runBlade(workspaceDir, _extensionsDir, _homeDir, args);
+		TestUtil.runBlade(workspaceDir, _homeDir, args);
 		
 		deployDirectoryList = deployDirectory.list();
 

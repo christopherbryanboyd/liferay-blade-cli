@@ -39,7 +39,7 @@ public class GradleExecTest {
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
 
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
 	}
 
 	@Test
@@ -56,7 +56,7 @@ public class GradleExecTest {
 
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(_extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(_homeDir.toPath());
 		bladeTestBuilder.setSettingsDir(_rootDir.toPath());
 		bladeTestBuilder.setStdOut(ps);
 
@@ -86,13 +86,13 @@ public class GradleExecTest {
 	private BladeTest _getBladeTest() {
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(_extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(_homeDir.toPath());
 		bladeTestBuilder.setSettingsDir(_rootDir.toPath());
 
 		return bladeTestBuilder.build();
 	}
 
-	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

@@ -59,8 +59,6 @@ public class SamplesCommandTest {
 		_rootDir = temporaryFolder.getRoot();
 
 		_homeDir = temporaryFolder.newFolder(".blade");
-
-		_extensionsDir = new File(_homeDir, "extensions");
 	}
 
 	@Test
@@ -199,7 +197,7 @@ public class SamplesCommandTest {
 	public void testGetSampleWithGradleWrapperExisting() throws Exception {
 		String[] initArgs = {"--base", _rootDir.getPath() + "/test/workspace", "init"};
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, initArgs);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, initArgs);
 
 		String output = bladeTestResults.getOutput();
 
@@ -207,7 +205,7 @@ public class SamplesCommandTest {
 
 		String[] samplesArgs = {"samples", "-d", _rootDir.getPath() + "/test/workspace/modules", "auth-failure"};
 
-		bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, samplesArgs);
+		bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, samplesArgs);
 
 		output = bladeTestResults.getOutput();
 
@@ -295,7 +293,7 @@ public class SamplesCommandTest {
 
 	@Test
 	public void testListSamples() throws Exception {
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, "samples");
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, "samples");
 
 		String output = bladeTestResults.getOutput();
 
@@ -316,7 +314,7 @@ public class SamplesCommandTest {
 	private BladeTest _getBladeTest() {
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(_extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(_homeDir.toPath());
 
 		bladeTestBuilder.setSettingsDir(_rootDir.toPath());
 
@@ -325,7 +323,6 @@ public class SamplesCommandTest {
 
 	private static final File _USER_HOME_DIR = new File(System.getProperty("user.home"));
 
-	private File _extensionsDir = null;
 	private File _homeDir = null;
 	private File _rootDir = null;
 

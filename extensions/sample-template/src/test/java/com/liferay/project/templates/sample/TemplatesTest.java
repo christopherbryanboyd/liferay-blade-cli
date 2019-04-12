@@ -43,9 +43,7 @@ public class TemplatesTest {
 
 	@Before
 	public void setUp() throws Exception {
-		File extensionsDir = _getExtensionsDir();
-
-		Path extensionsDirPath = extensionsDir.toPath();
+		File homeDir = _getHomeDir();
 
 		File settingsDir = temporaryFolder.getRoot();
 
@@ -55,7 +53,9 @@ public class TemplatesTest {
 
 		bladeTestBuilder.setSettingsDir(settingsDirPath);
 
-		bladeTestBuilder.setExtensionsDir(extensionsDirPath);
+		Path homeDirPath = homeDir.toPath();
+		
+		bladeTestBuilder.setBladeHomeDir(homeDirPath);
 
 		_bladeTest = bladeTestBuilder.build();
 	}
@@ -95,18 +95,24 @@ public class TemplatesTest {
 		Assert.assertTrue(Files.exists(sampleJarPath));
 	}
 
-	private File _getExtensionsDir() {
-		return new File(temporaryFolder.getRoot(), ".blade/extensions");
+	private File _getHomeDir() {
+		File homeDir = new File(temporaryFolder.getRoot(), ".blade");
+		
+		if (!homeDir.exists()) {
+			homeDir.mkdir();
+		}
+
+		return homeDir;
 	}
 
 	private void _setupTestExtensions() throws Exception {
-		File extensionsDir = _getExtensionsDir();
+		File homeDir = _getHomeDir();
 
-		extensionsDir.mkdirs();
+		homeDir.mkdirs();
 
-		Assert.assertTrue("Unable to create test extensions dir.", extensionsDir.exists());
+		Assert.assertTrue("Unable to create test extensions dir.", homeDir.exists());
 
-		Path extensionsPath = extensionsDir.toPath();
+		Path extensionsPath = homeDir.toPath();
 
 		_setupTestExtension(extensionsPath, System.getProperty("sampleTemplateJarFile"));
 	}

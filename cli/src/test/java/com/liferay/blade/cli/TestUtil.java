@@ -114,17 +114,17 @@ public class TestUtil {
 	}
 
 	public static BladeTestResults runBlade(
-		File settingsDir, File extensionsDir, File bladeHome, boolean assertErrors, String... args) {
+		File settingsDir, File homeDir, boolean assertErrors, String... args) {
 
-		return runBlade(settingsDir, extensionsDir, System.in, assertErrors, args);
+		return runBlade(settingsDir, homeDir, System.in, assertErrors, args);
 	}
 
-	public static BladeTestResults runBlade(File settingsDir, File extensionsDir, File homeDir, String... args) {
-		return runBlade(settingsDir, extensionsDir, System.in, true, args);
+	public static BladeTestResults runBlade(File settingsDir, File homeDir, String... args) {
+		return runBlade(settingsDir, homeDir, System.in, true, args);
 	}
 
 	public static BladeTestResults runBlade(
-		File settingsDir, File extensionsDir, File homeDir, InputStream in, boolean assertErrors, String... args) {
+		File settingsDir, File homeDir, InputStream in, boolean assertErrors, String... args) {
 
 		Predicate<String> localeFilter = line -> line.contains("LC_ALL: cannot change locale");
 
@@ -136,22 +136,21 @@ public class TestUtil {
 
 		StringPrintStream errorPrintStream = StringPrintStream.newFilteredInstance(filters);
 
-		return runBlade(settingsDir, extensionsDir, homeDir, outputPrintStream, errorPrintStream, in, assertErrors, args);
+		return runBlade(settingsDir, homeDir, outputPrintStream, errorPrintStream, in, assertErrors, args);
 	}
 
-	public static BladeTestResults runBlade(File settingsDir, File extensionsDir, InputStream in, String... args)
+	public static BladeTestResults runBlade(File settingsDir, File homeDir, InputStream in, String... args)
 		throws Exception {
 
-		return runBlade(settingsDir, extensionsDir, in, true, args);
+		return runBlade(settingsDir, homeDir, in, true, args);
 	}
-
 	public static BladeTestResults runBlade(
-		File settingsDir, File extensionsDir, PrintStream out, PrintStream err, InputStream in, boolean assertErrors,
+		File settingsDir, File homeDir, PrintStream out, PrintStream err, InputStream in, boolean assertErrors,
 		String... args) {
 
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(homeDir.toPath());
 
 		String settingsDirName = settingsDir.getName();
 

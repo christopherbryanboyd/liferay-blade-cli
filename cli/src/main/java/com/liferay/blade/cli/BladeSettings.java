@@ -22,7 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -31,75 +32,88 @@ import java.util.Properties;
  */
 public class BladeSettings {
 
-	public BladeSettings(File settingsFile) throws IOException {
-		_settingsFile = settingsFile;
+	public BladeSettings(BladeCLI bladeCli, File bladeUserHomeDir, File... settingsFiles) throws IOException {
+		_bladeCLI = bladeCli;
+		
+		_settingsFiles = Arrays.asList(settingsFiles);
 
-		if (_settingsFile.exists()) {
+		if (_settingsFiles.stream().anyMatch(File::exists)) {
 			load();
 		}
 	}
 
 	public String getLiferayVersionDefault() {
-		if (_properties.getProperty("liferay.version.default") != null) {
-			return _properties.getProperty("liferay.version.default");
+		if (_properties.getProperty(_LIFERAY_VERSION_DEFAULT_KEY) != null) {
+			return _properties.getProperty(_LIFERAY_VERSION_DEFAULT_KEY);
 		}
 		else {
 			return "7.1";
 		}
 	}
+	
+	public boolean getSubmitUsageStats() {
+		return Boolean.valueOf(_properties.getProperty(_SUBMIT_STATS_KEY));
+	}
 
 	public String getProfileName() {
-		return _properties.getProperty("profile.name");
+		return _properties.getProperty(_PROFILE_NAME);
 	}
 
 	public void load() throws IOException {
-		try (FileInputStream fileInputStream = new FileInputStream(_settingsFile)) {
-			_properties.load(fileInputStream);
+		for (File file : _settingsFiles) {
+			if (file.exists()) {
+				try (FileInputStream fileInputStream = new FileInputStream(file)) {
+					_properties.load(fileInputStream);
+				}
+			}
 		}
 	}
 
-	public void migrateWorkspaceIfNecessary(BladeCLI bladeCLI) throws IOException {
-		WorkspaceProvider workspaceProvider = bladeCLI.getWorkspaceProvider(_settingsFile);
-
-		if ((workspaceProvider != null) && workspaceProvider.isWorkspace(bladeCLI)) {
-			File workspaceDirectory = workspaceProvider.getWorkspaceDir(_settingsFile);
-
-			File pomFile = new File(workspaceDirectory, "pom.xml");
-
-			boolean shouldPrompt = false;
-
-			if (pomFile.exists()) {
-				if (!_settingsFile.exists()) {
-					shouldPrompt = true;
-				}
-				else {
-					String profilePromptDisabled = _properties.getProperty("profile.prompt.disabled", "false");
-
-					if (!"true".equals(profilePromptDisabled)) {
-						String profileName = getProfileName();
-
-						if (!"maven".equals(profileName)) {
-							shouldPrompt = true;
+	public void migrateWorkspaceIfNecessary() throws IOException {
+		
+		for (File _settingsFile : _settingsFiles) {
+			WorkspaceProvider workspaceProvider = _bladeCLI.getWorkspaceProvider(_settingsFile);
+	
+			if ((workspaceProvider != null) && workspaceProvider.isWorkspace(_bladeCLI)) {
+				File workspaceDirectory = workspaceProvider.getWorkspaceDir(_settingsFile);
+	
+				File pomFile = new File(workspaceDirectory, "pom.xml");
+	
+				boolean shouldPrompt = false;
+	
+				if (pomFile.exists()) {
+					if (!_settingsFile.exists()) {
+						shouldPrompt = true;
+					}
+					else {
+						String profilePromptDisabled = _properties.getProperty("profile.prompt.disabled", "false");
+	
+						if (!"true".equals(profilePromptDisabled)) {
+							String profileName = getProfileName();
+	
+							if (!"maven".equals(profileName)) {
+								shouldPrompt = true;
+							}
 						}
 					}
 				}
-			}
-
-			if (shouldPrompt) {
-				String question =
-					"WARNING: blade commands will not function properly in a Maven workspace unless the blade " +
-						"profile is set to \"maven\". Should the settings for this workspace be updated?";
-
-				if (Prompter.confirm(question, true)) {
-					setProfileName("maven");
-					save();
-				}
-				else {
-					question = "Should blade remember this setting for this workspace?";
-
+	
+				if (shouldPrompt) {
+					String question =
+						"WARNING: blade commands will not function properly in a Maven workspace unless the blade " +
+							"profile is set to \"maven\". Should the settings for this workspace be updated?";
+	
 					if (Prompter.confirm(question, true)) {
-						_properties.setProperty("profile.prompt.disabled", "true");
+						setProfileName("maven");
 						save();
+					}
+					else {
+						question = "Should blade remember this setting for this workspace?";
+	
+						if (Prompter.confirm(question, true)) {
+							_properties.setProperty("profile.prompt.disabled", "true");
+							save();
+						}
 					}
 				}
 			}
@@ -107,26 +121,57 @@ public class BladeSettings {
 	}
 
 	public void save() throws IOException {
-		if (!_settingsFile.exists()) {
-			File parentDir = _settingsFile.getParentFile();
+		for (File _settingsFile : _settingsFiles) {
+			if (!_settingsFile.exists()) {
+				File parentDir = _settingsFile.getParentFile();
+	
+				parentDir.mkdirs();
+			}
+			WorkspaceProvider workspaceProvider = _bladeCLI.getWorkspaceProvider(_settingsFile);
+			
+			if ((workspaceProvider != null) && workspaceProvider.isWorkspace(_bladeCLI)) {
 
-			parentDir.mkdirs();
-		}
-
-		try (FileOutputStream out = new FileOutputStream(_settingsFile)) {
-			_properties.store(out, null);
+				Properties properties = new Properties();
+				String propertyValue = _properties.getProperty(_LIFERAY_VERSION_DEFAULT_KEY);
+				properties.put(_LIFERAY_VERSION_DEFAULT_KEY, propertyValue);
+				propertyValue = _properties.getProperty(_PROFILE_NAME);
+				properties.put(_PROFILE_NAME, propertyValue);
+				try (FileOutputStream out = new FileOutputStream(_settingsFile)) {
+					properties.store(out, null);
+				}
+			}
+			else {
+				Properties properties = new Properties();
+				
+				String submitUsageStats = getSubmitUsageStats();
+				
+				properties.setProperty(_SUBMIT_STATS_KEY, submitUsageStats);
+				
+				try (FileOutputStream out = new FileOutputStream(_settingsFile)) {
+					properties.store(out, null);
+				}
+			}
 		}
 	}
 
 	public void setLiferayVersionDefault(String liferayVersion) {
-		_properties.setProperty("liferay.version.default", liferayVersion);
+		_properties.setProperty(_LIFERAY_VERSION_DEFAULT_KEY, liferayVersion);
 	}
 
 	public void setProfileName(String profileName) {
-		_properties.setProperty("profile.name", profileName);
+		_properties.setProperty(_PROFILE_NAME, profileName);
 	}
+	
+	public void setSubmitUsageStats(boolean submitStats) {
+		_properties.setProperty(_SUBMIT_STATS_KEY, String.valueOf(submitStats));
+	}
+	private static final String _PROFILE_NAME = "profile.name";
+	private static final String _SUBMIT_STATS_KEY = "submit.stats";
 
+	private static final String _LIFERAY_VERSION_DEFAULT_KEY = "liferay.version.default";
+	private final BladeCLI _bladeCLI;
+	private final File _bladeUserHomeDir;
 	private final Properties _properties = new Properties();
-	private final File _settingsFile;
+	private final Collection<File> _settingsFiles;
 
 }

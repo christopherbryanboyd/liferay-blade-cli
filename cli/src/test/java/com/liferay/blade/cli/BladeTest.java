@@ -54,18 +54,19 @@ public class BladeTest extends BladeCLI {
 
 		settingsFile = new File(settingsBaseDir, _BLADE_PROPERTIES);
 
-		return new BladeSettings(settingsFile);
+		return new BladeSettings(this, settingsFile);
 	}
 
 	@Override
 	public Path getExtensionsPath() {
+		Path extensionsDir = _bladeHomeDir.resolve("extensions");
 		try {
-			Files.createDirectories(_extensionsDir);
+			Files.createDirectories(extensionsDir);
 		}
 		catch (IOException ioe) {
 		}
 
-		return _extensionsDir;
+		return extensionsDir;
 	}
 
 	@Override
@@ -131,12 +132,12 @@ public class BladeTest extends BladeCLI {
 	public static class BladeTestBuilder {
 
 		public BladeTest build() {
-			if (_extensionsDir == null) {
-				_extensionsDir = _userHomePath.resolve(".blade/extensions");
+			if (_bladeHomeDir == null) {
+				_bladeHomeDir = Paths.get(System.getProperty("user.home")).resolve(".blade");
 			}
 
 			if (_settingsDir == null) {
-				_settingsDir = _userHomePath.resolve(".blade");
+				_settingsDir = _bladeHomeDir;
 			}
 
 			if (_stdIn == null) {
@@ -154,8 +155,8 @@ public class BladeTest extends BladeCLI {
 			BladeTest bladeTest = new BladeTest(_stdOut, _stdError, _stdIn);
 
 			bladeTest._assertErrors = _assertErrors;
-			bladeTest._extensionsDir = _extensionsDir;
 			bladeTest._settingsDir = _settingsDir;
+			bladeTest._bladeHomeDir = _bladeHomeDir;
 
 			return bladeTest;
 		}
@@ -164,8 +165,8 @@ public class BladeTest extends BladeCLI {
 			_assertErrors = assertErrors;
 		}
 
-		public void setExtensionsDir(Path extensionsDir) {
-			_extensionsDir = extensionsDir;
+		public void setBladeHomeDir(Path extensionsDir) {
+			_bladeHomeDir = extensionsDir;
 		}
 
 		public void setSettingsDir(Path settingsDir) {
@@ -185,12 +186,11 @@ public class BladeTest extends BladeCLI {
 		}
 
 		private boolean _assertErrors = true;
-		private Path _extensionsDir = null;
+		private Path _bladeHomeDir = null;
 		private Path _settingsDir = null;
 		private PrintStream _stdError = null;
 		private InputStream _stdIn = null;
 		private PrintStream _stdOut = null;
-		private Path _userHomePath = Paths.get(System.getProperty("user.home"));
 
 	}
 
@@ -240,7 +240,7 @@ public class BladeTest extends BladeCLI {
 	private static final String _BLADE_PROPERTIES = ".blade.properties";
 
 	private boolean _assertErrors = true;
-	private Path _extensionsDir;
+	private Path _bladeHomeDir;
 	private Path _settingsDir;
 
 }

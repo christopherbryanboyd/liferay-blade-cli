@@ -42,7 +42,11 @@ public class UninstallExtensionCommandTest {
 	public void setUpTestExtensions() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
 
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
+		
+		_extensionsDir = new File(_homeDir, "extensions");
+		
+		_extensionsDir.mkdir();
 
 		Path extensionsPath = _extensionsDir.toPath();
 
@@ -57,13 +61,9 @@ public class UninstallExtensionCommandTest {
 
 		String[] args = {"extension", "uninstall", jarName};
 
-		File extensionsDir = new File(temporaryFolder.getRoot(), "extensions");
+		File testJar = new File(_extensionsDir, jarName);
 
-		extensionsDir.mkdirs();
-
-		File testJar = new File(extensionsDir, jarName);
-
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -88,6 +88,7 @@ public class UninstallExtensionCommandTest {
 	}
 
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

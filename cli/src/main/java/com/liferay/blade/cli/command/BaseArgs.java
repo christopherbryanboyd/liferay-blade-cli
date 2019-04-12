@@ -65,7 +65,7 @@ public class BaseArgs {
 	private String _base = new File("").getAbsolutePath();
 
 	@CollectUsage(censor=true)
-	@Parameter(description = "Specify the blade home directory (defaults to \"~/.blade/\".", names = {"-h", "--home"})
+	@Parameter(description = "Specify the blade home directory (defaults to \"~/.blade/\".", names = {"--home"})
 	private String _bladeHome = BladeUtil.getBladeHome();
 
 	@CollectUsage()

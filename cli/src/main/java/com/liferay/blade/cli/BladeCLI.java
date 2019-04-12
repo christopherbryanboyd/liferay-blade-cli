@@ -186,7 +186,7 @@ public class BladeCLI {
 
 		settingsFile = new File(settingsBaseDir, _BLADE_PROPERTIES);
 
-		return new BladeSettings(settingsFile);
+		return new BladeSettings(this, settingsFile);
 	}
 
 	public BaseCommand<?> getCommand() {
@@ -347,14 +347,22 @@ public class BladeCLI {
 		out(message);
 		_jCommander.usage(command);
 	}
+	
+	private boolean isCensored() {
+		return false;
+	}
 
 	public void run(String[] args) throws Exception {
+		CommandHistoryDto commandHistoryDto = new CommandHistoryDto();
+		
 		try {
 			Extensions extensions = getExtensions();
 
 			String basePath = _extractBasePath(args);
 
 			String profileName = _extractProfileName(args);
+			
+			commandHistoryDto.setProfile(String.valueOf(profileName));
 
 			File baseDir = new File(basePath).getAbsoluteFile();
 
@@ -369,8 +377,11 @@ public class BladeCLI {
 			if (profileName != null) {
 				bladeSettings.setProfileName(profileName);
 			}
+			else {
+				commandHistoryDto.setProfile("gradle");
+			}
 
-			bladeSettings.migrateWorkspaceIfNecessary(this);
+			bladeSettings.migrateWorkspaceIfNecessary();
 
 			_commands = extensions.getCommands(bladeSettings.getProfileName());
 
@@ -382,10 +393,15 @@ public class BladeCLI {
 				printUsage();
 			}
 			else {
+				
+				commandHistoryDto.setArgs(Arrays.deepToString(args));
+				
 				try {
 					_jCommander.parse(args);
 
 					String command = _jCommander.getParsedCommand();
+					
+					commandHistoryDto.setName(command);
 
 					Map<String, JCommander> jCommands = _jCommander.getCommands();
 
@@ -404,7 +420,11 @@ public class BladeCLI {
 
 						_args.setBase(baseDir);
 
+						commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
+						
 						runCommand();
+						
+						commandHistoryDto.setExitCode(0);
 
 						postRunCommand();
 					}
@@ -413,6 +433,11 @@ public class BladeCLI {
 					}
 				}
 				catch (MissingCommandException mce) {
+					
+					commandHistoryDto.setException(mce.getMessage());
+					
+					commandHistoryDto.setExitCode(-1);
+					
 					error("Error");
 
 					StringBuilder stringBuilder = new StringBuilder("0. No such command");
@@ -426,11 +451,31 @@ public class BladeCLI {
 					printUsage();
 				}
 				catch (ParameterException pe) {
+
+					commandHistoryDto.setException(pe.getMessage());
+					
+					commandHistoryDto.setExitCode(-2);
+					
 					error(_jCommander.getParsedCommand() + ": " + pe.getMessage());
+				}
+				catch (Throwable th) {
+
+					commandHistoryDto.setException("Unknown Error: " + th.getMessage());
+					
+					commandHistoryDto.setExitCode(-3);
+
+					error(_jCommander.getParsedCommand() + ": " + th.getMessage());
 				}
 			}
 		}
 		finally {
+			
+			commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
+			
+			commandHistoryManager.add(commandHistoryDto);
+			
+			commandHistoryManager.save();
+			
 			if (_extensionsClassLoaderSupplier != null) {
 				_extensionsClassLoaderSupplier.close();
 			}
@@ -449,25 +494,14 @@ public class BladeCLI {
 			}
 			else {
 				if (_args != null) {
-					CommandHistoryDto commandHistoryDto = new CommandHistoryDto();
 
 					try {
 						_runCommand();
-						commandHistoryDto.setExitCode(0);
 					}
 					catch (Throwable th) {
 						error(th);
-						commandHistoryDto.setException(th.toString());
-						commandHistoryDto.setExitCode(-1);
 
 						throw th;
-					}
-					finally {
-						commandHistoryDto.setArgs(_inputArgs);
-						commandHistoryDto.setProfile(_args.getProfileName());
-						commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
-						commandHistoryManager.add(commandHistoryDto);
-						commandHistoryManager.save();
 					}
 				}
 				else {
@@ -812,7 +846,7 @@ public class BladeCLI {
 	}
 
 	private void _runCommand() throws Exception {
-		BaseCommand<?> command = null;
+		BaseCommand<?> command = null; 
 
 		if (_commands.containsKey(_command)) {
 			command = _commands.get(_command);
@@ -833,9 +867,9 @@ public class BladeCLI {
 				thread.setContextClassLoader(combinedClassLoader);
 
 				if (_args.getProfileName() == null) {
-					_args.setProfileName("gradle");
+					_args.setProfileName("gradle"); 
+	
 				}
-
 				command.execute();
 			}
 			catch (Throwable th) {

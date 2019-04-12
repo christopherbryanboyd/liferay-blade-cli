@@ -57,7 +57,7 @@ public class GradlePrintErrorTest {
 	@Before
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class GradlePrintErrorTest {
 
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(_extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(_homeDir.toPath());
 		bladeTestBuilder.setSettingsDir(_rootDir.toPath());
 		bladeTestBuilder.setAssertErrors(false);
 
@@ -117,7 +117,7 @@ public class GradlePrintErrorTest {
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 	private static class GradleExecSpecial extends GradleExec {

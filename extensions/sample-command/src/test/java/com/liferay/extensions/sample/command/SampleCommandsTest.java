@@ -42,7 +42,10 @@ public class SampleCommandsTest {
 	@Before
 	public void setUp() throws Exception {
 		_rootDir = temporaryFolder.getRoot();
-		_extensionsDir = temporaryFolder.newFolder(".blade", "extensions");
+		_homeDir = temporaryFolder.newFolder(".blade");
+		_extensionsDir = new File(_homeDir, "extensions");
+		
+		_extensionsDir.mkdir();
 	}
 
 	@Test
@@ -56,7 +59,7 @@ public class SampleCommandsTest {
 		StringPrintStream outputStream = StringPrintStream.newInstance();
 		BladeTestBuilder bladeTestBuilder = BladeTest.builder();
 
-		bladeTestBuilder.setExtensionsDir(_extensionsDir.toPath());
+		bladeTestBuilder.setBladeHomeDir(_homeDir.toPath());
 		bladeTestBuilder.setSettingsDir(_rootDir.toPath());
 		bladeTestBuilder.setStdOut(outputStream);
 
@@ -121,6 +124,7 @@ public class SampleCommandsTest {
 	}
 
 	private File _extensionsDir = null;
+	private File _homeDir = null;
 	private File _rootDir = null;
 
 }

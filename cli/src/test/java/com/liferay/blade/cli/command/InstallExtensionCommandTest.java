@@ -75,7 +75,7 @@ public class InstallExtensionCommandTest {
 
 		File root = temporaryFolder.getRoot();
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -94,7 +94,7 @@ public class InstallExtensionCommandTest {
 
 		String[] args = {"extension", "install", _LINK_TO_DEPLOY_COMMAND};
 		
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, false, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, false, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -129,7 +129,7 @@ public class InstallExtensionCommandTest {
 
 		Path extensionPath = extensionJar.toPath();
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -154,7 +154,7 @@ public class InstallExtensionCommandTest {
 
 		args = new String[] {"extension", "install", sampleCommandFile.getAbsolutePath()};
 
-		output = _testBladeWithInteractive(_rootDir, _extensionsDir, _homeDir, args, "n");
+		output = _testBladeWithInteractive(_rootDir, _homeDir, args, "n");
 
 		Assert.assertTrue(
 			"Expected output to contain \"already exists\"\n" + output, output.contains(" already exists"));
@@ -168,7 +168,7 @@ public class InstallExtensionCommandTest {
 
 		Assert.assertFalse(extensionFile.lastModified() == 0);
 
-		output = _testBladeWithInteractive(_rootDir, _extensionsDir, _homeDir, args, "defaultShouldBeNo");
+		output = _testBladeWithInteractive(_rootDir, _homeDir, args, "defaultShouldBeNo");
 
 		Assert.assertFalse(extensionFile.lastModified() == 0);
 		Assert.assertTrue(
@@ -189,7 +189,7 @@ public class InstallExtensionCommandTest {
 
 		Path extensionPath = extensionJar.toPath();
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -214,7 +214,7 @@ public class InstallExtensionCommandTest {
 
 		args = new String[] {"extension", "install", sampleCommandFile.getAbsolutePath()};
 
-		output = _testBladeWithInteractive(_rootDir, _extensionsDir, _homeDir, args, "y");
+		output = _testBladeWithInteractive(_rootDir, _homeDir, args, "y");
 
 		_testJarsDiff(sampleCommandFile, extensionJar);
 
@@ -236,7 +236,7 @@ public class InstallExtensionCommandTest {
 
 		String[] args = {"extension", "install", "https://github.com/gamerson/blade-sample-command"};
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -278,7 +278,7 @@ public class InstallExtensionCommandTest {
 	public void testInstallUninstallCustomExtension() throws Exception {
 		String[] args = {"extension install", _sampleCommandJarFile.getAbsolutePath()};
 
-		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		String output = bladeTestResults.getOutput();
 
@@ -288,7 +288,7 @@ public class InstallExtensionCommandTest {
 
 		args = new String[] {"extension uninstall", _sampleCommandJarFile.getName()};
 
-		bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, _homeDir, args);
+		bladeTestResults = TestUtil.runBlade(_rootDir, _homeDir, args);
 
 		output = bladeTestResults.getOutput();
 
@@ -409,13 +409,13 @@ public class InstallExtensionCommandTest {
 		return osName.contains("win");
 	}
 
-	private String _testBladeWithInteractive(File userHomeDir, File extensionsDir, File homeDir, String[] args, String data)
+	private String _testBladeWithInteractive(File userHomeDir, File homeDir, String[] args, String data)
 		throws Exception {
 
 		InputStream in = new ByteArrayInputStream(data.getBytes("UTF-8"));
 
 		try {
-			BladeTestResults bladeTestResults = TestUtil.runBlade(userHomeDir, extensionsDir, homeDir, in, args);
+			BladeTestResults bladeTestResults = TestUtil.runBlade(userHomeDir, homeDir, in, args);
 
 			return bladeTestResults.getOutput();
 		}
