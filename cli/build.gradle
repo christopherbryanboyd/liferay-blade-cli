@@ -145,6 +145,7 @@ bladeExtensionsVersions {
 	}
 
 	doLast {
+		properties.setProperty("com.liferay.blade.extensions.maven.profile", "1.0.7")
 		properties.store(bladeExtensionsVersionsFile.newWriter(), null)
 	}
 }
