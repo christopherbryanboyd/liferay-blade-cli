@@ -3,6 +3,7 @@ buildscript {
 		classpath group: "com.gradle", name: "build-scan-plugin", version: "1.16"
 		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.change.log.builder", version: "1.1.1"
 		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.source.formatter", version: "2.3.303"
+		classpath group: "gradle.plugin.com.palantir.gradle.docker", name: "gradle-docker", version: "0.22.1"
 		classpath group: "nu.studer", name: "gradle-credentials-plugin", version: "1.0.4"
 	}
 
@@ -27,6 +28,7 @@ buildscript {
 apply plugin: "com.gradle.build-scan"
 apply plugin: "com.liferay.change.log.builder"
 apply plugin: "com.liferay.source.formatter"
+apply plugin: "com.palantir.docker-run"
 
 task clean(type:Delete)
 
@@ -53,6 +55,17 @@ clean {
 			delete mavenLocalRepo
 		}
 	}
+}
+
+dockerRun {
+	clean = true
+	command 'sh', '/home/gradle/project/gradlew', '-p', '/home/gradle/project/', 'clean', 'jar', 'test', '--stacktrace', '--project-cache-dir', '/home/gradle', '--debug-jvm'
+	daemonize false
+	env 'GRADLE_USER_HOME': '/home/gradle', 'JAVA_TOOL_OPTIONS': ' -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Xmx4096m', 'GRADLE_OPTS': '-Xmx4G'
+	image 'openjdk:8-stretch'
+	name 'liferay-gradle'
+	ports '5005:5005'
+	volumes "${System.getProperty('user.dir')}": '/home/gradle/project'
 }
 
 formatSource {
