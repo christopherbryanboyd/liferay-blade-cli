@@ -23,7 +23,7 @@ buildscript {
 		}
 	}
 }
-
+// test
 apply plugin: "com.gradle.build-scan"
 apply plugin: "com.liferay.change.log.builder"
 apply plugin: "com.liferay.source.formatter"
