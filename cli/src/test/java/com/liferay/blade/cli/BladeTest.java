@@ -54,7 +54,7 @@ public class BladeTest extends BladeCLI {
 
 		settingsFile = new File(settingsBaseDir, _BLADE_PROPERTIES);
 
-		return new BladeSettings(this, settingsFile);
+		return new BladeSettings(this, _bladeHomeDir.toFile(), settingsFile);
 	}
 
 	@Override

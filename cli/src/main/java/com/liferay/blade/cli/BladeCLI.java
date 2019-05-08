@@ -186,7 +186,7 @@ public class BladeCLI {
 
 		settingsFile = new File(settingsBaseDir, _BLADE_PROPERTIES);
 
-		return new BladeSettings(this, settingsFile);
+		return new BladeSettings(this, _USER_HOME_DIR, settingsFile);
 	}
 
 	public BaseCommand<?> getCommand() {

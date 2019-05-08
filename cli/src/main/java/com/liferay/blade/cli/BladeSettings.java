@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -34,6 +36,7 @@ public class BladeSettings {
 
 	public BladeSettings(BladeCLI bladeCli, File bladeUserHomeDir, File... settingsFiles) throws IOException {
 		_bladeCLI = bladeCli;
+		_bladeUserHomeDir = bladeUserHomeDir;
 		
 		_settingsFiles = Arrays.asList(settingsFiles);
 
@@ -60,13 +63,40 @@ public class BladeSettings {
 	}
 
 	public void load() throws IOException {
+		List<File> loadFirstList = new ArrayList<>();
+		List<File> loadLastList = new ArrayList<>();
+		
 		for (File file : _settingsFiles) {
 			if (file.exists()) {
-				try (FileInputStream fileInputStream = new FileInputStream(file)) {
-					_properties.load(fileInputStream);
+				WorkspaceProvider workspaceProvider = _bladeCLI.getWorkspaceProvider(file);
+				
+				if ((workspaceProvider != null) && workspaceProvider.isWorkspace(file)) {
+					loadLastList.add(file);
+				}
+				else {
+					loadFirstList.add(file);
 				}
 			}
 		}
+		for (File file : loadFirstList) {
+			try (FileInputStream fileInputStream = new FileInputStream(file)) {
+				
+				Properties properties = new Properties();
+				properties.load(fileInputStream);
+				
+				_properties.putAll(properties);
+			}
+		}
+		for (File file : loadLastList) {
+			try (FileInputStream fileInputStream = new FileInputStream(file)) {
+				
+				Properties properties = new Properties();
+				properties.load(fileInputStream);
+				
+				_properties.putAll(properties);
+			}
+		}
+		
 	}
 
 	public void migrateWorkspaceIfNecessary() throws IOException {
@@ -143,7 +173,7 @@ public class BladeSettings {
 			else {
 				Properties properties = new Properties();
 				
-				String submitUsageStats = getSubmitUsageStats();
+				String submitUsageStats = String.valueOf(getSubmitUsageStats());
 				
 				properties.setProperty(_SUBMIT_STATS_KEY, submitUsageStats);
 				
