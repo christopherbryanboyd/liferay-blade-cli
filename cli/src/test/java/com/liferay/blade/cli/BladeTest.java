@@ -60,6 +60,7 @@ public class BladeTest extends BladeCLI {
 	@Override
 	public Path getExtensionsPath() {
 		Path extensionsDir = _bladeHomeDir.resolve("extensions");
+
 		try {
 			Files.createDirectories(extensionsDir);
 		}
@@ -133,7 +134,9 @@ public class BladeTest extends BladeCLI {
 
 		public BladeTest build() {
 			if (_bladeHomeDir == null) {
-				_bladeHomeDir = Paths.get(System.getProperty("user.home")).resolve(".blade");
+				_bladeHomeDir = Paths.get(System.getProperty("user.home"));
+				
+				_bladeHomeDir = _bladeHomeDir.resolve(".blade");
 			}
 
 			if (_settingsDir == null) {

@@ -54,6 +54,7 @@ public class TemplatesTest {
 		bladeTestBuilder.setSettingsDir(settingsDirPath);
 
 		Path homeDirPath = homeDir.toPath();
+
 		
 		bladeTestBuilder.setBladeHomeDir(homeDirPath);
 
@@ -98,6 +99,7 @@ public class TemplatesTest {
 	private File _getHomeDir() {
 		File homeDir = new File(temporaryFolder.getRoot(), ".blade");
 		
+
 		if (!homeDir.exists()) {
 			homeDir.mkdir();
 		}

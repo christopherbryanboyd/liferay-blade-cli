@@ -60,26 +60,26 @@ public class BaseArgs {
 		_profileName = profileName;
 	}
 
-	@CollectUsage(censor=true)
+	@CollectUsage(censor = true)
 	@Parameter(description = "Specify a new base directory (default working directory).", names = "--base")
 	private String _base = new File("").getAbsolutePath();
 
-	@CollectUsage(censor=true)
-	@Parameter(description = "Specify the blade home directory (defaults to \"~/.blade/\".", names = {"--home"})
+	@CollectUsage(censor = true)
+	@Parameter(description = "Specify the blade home directory (defaults to \"~/.blade/\".", names = "--home")
 	private String _bladeHome = BladeUtil.getBladeHome();
 
-	@CollectUsage()
+	@CollectUsage
 	@Parameter(description = "Get help on a specific command.", help = true, names = "--help")
 	private boolean _help;
 
-	@CollectUsage()
+	@CollectUsage
 	@Parameter(
 		description = "Specify the profile to use when invoking the command.",
 		names = {"-b", "--build", "-P", "--profile-name"}
 	)
 	private String _profileName;
 
-	@CollectUsage()
+	@CollectUsage
 	@Parameter(description = "Print exception stack traces when they occur.", names = "--trace")
 	private boolean _trace;
 

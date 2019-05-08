@@ -145,7 +145,7 @@ public class CreateArgs extends BaseArgs {
 	@Parameter(description = "The directory where to create the new project.", names = {"-d", "--dir"})
 	private File _dir;
 
-	@CollectUsage(censor=true)
+	@CollectUsage(censor = true)
 	@Parameter(
 		description = "If a new jsp hook fragment needs to be created, provide the name of the host bundle symbolic name. Required for \"-t fragment\".",
 		names = {"-h", "--host-bundle-bsn"}

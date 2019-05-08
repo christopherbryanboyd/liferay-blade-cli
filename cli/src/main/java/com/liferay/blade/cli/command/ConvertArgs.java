@@ -78,7 +78,7 @@ public class ConvertArgs extends BaseArgs {
 	@Parameter(description = "name")
 	private List<String> _name = new ArrayList<>();
 
-	@CollectUsage(censor=true)
+	@CollectUsage(censor = true)
 	@Parameter(
 		description = "The Plugins SDK directory, otherwise default value is <workspace_dir>/plugins-sdk",
 		names = {"-s", "--source"}

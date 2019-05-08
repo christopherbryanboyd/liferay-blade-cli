@@ -22,124 +22,152 @@ import java.util.Date;
  * @author Christopher Bryan Boyd
  */
 public class CommandHistoryDto {
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj == null) {
+			return false;
+		}
+
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		CommandHistoryDto other = (CommandHistoryDto)obj;
+
+		if (_args == null) {
+			if (other._args != null) {
+				return false;
+			}
+		} 
+		else if (!_args.equals(other._args)) {
+			return false;
+		}
+
+		if (_exceptionString == null) {
+			if (other._exceptionString != null) {
+				return false;
+			}
+		} 
+		else if (!_exceptionString.equals(other._exceptionString)) {
+			return false;
+		}
+
+		if (_exitCode != other._exitCode) {
+			return false;
+		}
+
+		if (_name == null) {
+			if (other._name != null) {
+				return false;
+			}
+		} 
+		else if (!_name.equals(other._name)) {
+			return false;
+		}
+
+		if (_profile == null) {
+			if (other._profile != null) {
+				return false;
+			}
+		} 
+		else if (!_profile.equals(other._profile)) {
+			return false;
+		}
+
+		if (_timeInvoked != other._timeInvoked) {
+			return false;
+		}
+
+		return true;
+	}
+
+	
+
 	public String getArgs() {
-		return args;
+		return _args;
 	}
 
 	
 
 	public String getException() {
-		return exceptionString;
+		return _exceptionString;
+	}
+
+	public int getExitCode() {
+		return _exitCode;
 	}
 
 	
 
-	public int getExitCode() {
-		return exitCode;
-	}
-
 	public String getName() {
-		return name;
+		return _name;
 	}
 
 	
 
 	public String getProfile() {
-		return profile;
+		return _profile;
 	}
-
-	
 
 	public Date getTimeInvoked() {
-		return new Date(timeInvoked);
+		return new Date(_timeInvoked);
 	}
 
-	public void setArgs(String args) {
-		this.args = args;
-	}
-
-	public void setException(String exception) {
-		this.exceptionString = exception;
-	}
-
-	public void setExitCode(int exitCode) {
-		this.exitCode = exitCode;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public void setProfile(String profile) {
-		this.profile = profile;
-	}
-
-	public void setTimeInvoked(Date timeInvoked) {
-		this.timeInvoked = timeInvoked.getTime();
-	}
-
-	public void setTimeInvokedValue(long timeInvoked) {
-		this.timeInvoked = timeInvoked;
-	}
-
-	private String args;
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((args == null) ? 0 : args.hashCode());
-		result = prime * result + ((exceptionString == null) ? 0 : exceptionString.hashCode());
-		result = prime * result + exitCode;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((profile == null) ? 0 : profile.hashCode());
-		result = prime * result + (int) (timeInvoked ^ (timeInvoked >>> 32));
+		result = prime * result + ((_args == null) ? 0 : _args.hashCode());
+		result = prime * result + ((_exceptionString == null) ? 0 : _exceptionString.hashCode());
+		result = prime * result + _exitCode;
+		result = prime * result + ((_name == null) ? 0 : _name.hashCode());
+		result = prime * result + ((_profile == null) ? 0 : _profile.hashCode());
+		result = prime * result + (int)(_timeInvoked ^ (_timeInvoked >>> 32));
+
 		return result;
 	}
 
-
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CommandHistoryDto other = (CommandHistoryDto) obj;
-		if (args == null) {
-			if (other.args != null)
-				return false;
-		} else if (!args.equals(other.args))
-			return false;
-		if (exceptionString == null) {
-			if (other.exceptionString != null)
-				return false;
-		} else if (!exceptionString.equals(other.exceptionString))
-			return false;
-		if (exitCode != other.exitCode)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (profile == null) {
-			if (other.profile != null)
-				return false;
-		} else if (!profile.equals(other.profile))
-			return false;
-		if (timeInvoked != other.timeInvoked)
-			return false;
-		return true;
+	public void setArgs(String args) {
+		_args = args;
 	}
 
-	private String exceptionString;
-	private int exitCode;
-	private String name;
-	private String profile;
+	public void setException(String exception) {
+		_exceptionString = exception;
+	}
+
+	public void setExitCode(int exitCode) {
+		_exitCode = exitCode;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	public void setProfile(String profile) {
+		_profile = profile;
+	}
+
+	public void setTimeInvoked(Date timeInvoked) {
+		_timeInvoked = timeInvoked.getTime();
+	}
+
+	public void setTimeInvokedValue(long timeInvoked) {
+		_timeInvoked = timeInvoked;
+	}
+
+
+
+	private String _args;
+	private String _exceptionString;
+	private int _exitCode;
+	private String _name;
+	private String _profile;
 
 	
-	private long timeInvoked;
+	private long _timeInvoked;
 
 }

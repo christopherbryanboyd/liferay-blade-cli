@@ -147,7 +147,7 @@ public class BladeUtil {
 	}
 
 	public static String getBladeHome() {
-		return System.getProperty("blade.home", getDefaultBladeHome());
+		return System.getProperty("blade.home", _getDefaultBladeHome());
 	}
 
 	public static String getBundleVersion(Path pathToJar) throws IOException {
@@ -155,13 +155,22 @@ public class BladeUtil {
 	}
 
 	public static Path getCommandHistoryPath() {
-		Path path = Paths.get(getBladeHome());
+		File userBladeDirectory = new File(getBladeHome());
 
-		if (!path.endsWith("command_history.xml")) {
-			path = path.resolve("command_history.xml");
+		File commandHistoryFile = new File(userBladeDirectory, "command_history.json");
+
+		Path commandHistoryPath = commandHistoryFile.toPath();
+
+		if (!Files.exists(commandHistoryPath)) {
+			try {
+				Files.createFile(commandHistoryPath);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
-
-		return path;
+		
+		return commandHistoryPath;
 	}
 
 	public static File getGradleWrapper(File dir) {
@@ -520,6 +529,15 @@ public class BladeUtil {
 		return false;
 	}
 
+	private static String _getDefaultBladeHome() {
+		Path bladeHomePath = Paths.get(System.getProperty("user.home"));
+
+		
+		bladeHomePath = bladeHomePath.resolve(".blade");
+		
+		return bladeHomePath.toString();
+	}
+
 	private static boolean _isURLAvailable(String urlString) throws IOException {
 		URL url = new URL(urlString);
 
@@ -536,10 +554,6 @@ public class BladeUtil {
 		}
 
 		return false;
-	}
-
-	private static String getDefaultBladeHome() {
-		return Paths.get(System.getProperty("user.home")).resolve(".blade").toString();
 	}
 
 	private static final String[] _APP_SERVER_PROPERTIES_FILE_NAMES = {

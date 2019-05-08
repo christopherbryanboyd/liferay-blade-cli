@@ -31,7 +31,7 @@ public class InstallExtensionArgs extends BaseArgs {
 		return _path;
 	}
 
-	@CollectUsage(censor=true)
+	@CollectUsage(censor = true)
 	@Parameter(description = "The path of the extension to install.", required = true)
 	private String _path;
 

@@ -41,7 +41,7 @@ public class SamplesArgs extends BaseArgs {
 		return _sampleName;
 	}
 
-	@CollectUsage(censor=true)
+	@CollectUsage(censor = true)
 	@Parameter(description = "The directory where to create the new project.", names = {"-d", "--dir"})
 	private File _dir;
 

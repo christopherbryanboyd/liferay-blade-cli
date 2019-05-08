@@ -119,10 +119,6 @@ public class TestUtil {
 		return runBlade(settingsDir, homeDir, System.in, assertErrors, args);
 	}
 
-	public static BladeTestResults runBlade(File settingsDir, File homeDir, String... args) {
-		return runBlade(settingsDir, homeDir, System.in, true, args);
-	}
-
 	public static BladeTestResults runBlade(
 		File settingsDir, File homeDir, InputStream in, boolean assertErrors, String... args) {
 
@@ -144,6 +140,7 @@ public class TestUtil {
 
 		return runBlade(settingsDir, homeDir, in, true, args);
 	}
+
 	public static BladeTestResults runBlade(
 		File settingsDir, File homeDir, PrintStream out, PrintStream err, InputStream in, boolean assertErrors,
 		String... args) {
@@ -167,6 +164,10 @@ public class TestUtil {
 		BladeTest bladeTest = bladeTestBuilder.build();
 
 		return runBlade(bladeTest, out, err, assertErrors, args);
+	}
+
+	public static BladeTestResults runBlade(File settingsDir, File homeDir, String... args) {
+		return runBlade(settingsDir, homeDir, System.in, true, args);
 	}
 
 	public static BladeTestResults runBlade(Path settingsDir, Path extensionsDir, String... args) {

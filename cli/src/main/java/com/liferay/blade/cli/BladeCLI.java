@@ -134,7 +134,7 @@ public class BladeCLI {
 	}
 
 	public BladeCLI(PrintStream out, PrintStream err, InputStream in) {
-		commandHistoryManager.load();
+		_commandHistoryManager.load();
 		
 		AnsiConsole.systemInstall();
 
@@ -347,20 +347,20 @@ public class BladeCLI {
 		out(message);
 		_jCommander.usage(command);
 	}
+
 	
-	private boolean isCensored() {
-		return false;
-	}
 
 	public void run(String[] args) throws Exception {
 		CommandHistoryDto commandHistoryDto = new CommandHistoryDto();
 		
+
 		try {
 			Extensions extensions = getExtensions();
 
 			String basePath = _extractBasePath(args);
 
 			String profileName = _extractProfileName(args);
+
 			
 			commandHistoryDto.setProfile(String.valueOf(profileName));
 
@@ -396,10 +396,12 @@ public class BladeCLI {
 				
 				commandHistoryDto.setArgs(Arrays.deepToString(args));
 				
+
 				try {
 					_jCommander.parse(args);
 
 					String command = _jCommander.getParsedCommand();
+
 					
 					commandHistoryDto.setName(command);
 
@@ -451,7 +453,6 @@ public class BladeCLI {
 					printUsage();
 				}
 				catch (ParameterException pe) {
-
 					commandHistoryDto.setException(pe.getMessage());
 					
 					commandHistoryDto.setExitCode(-2);
@@ -459,7 +460,6 @@ public class BladeCLI {
 					error(_jCommander.getParsedCommand() + ": " + pe.getMessage());
 				}
 				catch (Throwable th) {
-
 					commandHistoryDto.setException("Unknown Error: " + th.getMessage());
 					
 					commandHistoryDto.setExitCode(-3);
@@ -472,10 +472,11 @@ public class BladeCLI {
 			
 			commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
 			
-			commandHistoryManager.add(commandHistoryDto);
+			_commandHistoryManager.add(commandHistoryDto);
 			
-			commandHistoryManager.save();
+			_commandHistoryManager.save();
 			
+
 			if (_extensionsClassLoaderSupplier != null) {
 				_extensionsClassLoaderSupplier.close();
 			}
@@ -494,7 +495,6 @@ public class BladeCLI {
 			}
 			else {
 				if (_args != null) {
-
 					try {
 						_runCommand();
 					}
@@ -536,25 +536,7 @@ public class BladeCLI {
 		}
 	}
 
-	protected Path getCommandHistoryPath() {
-		File userBladeDirectory = _getUserBladePath().toFile();
 
-		File commandHistoryFile = new File(userBladeDirectory, "command_history.json");
-
-		Path commandHistoryPath = commandHistoryFile.toPath();
-
-		if (!Files.exists(commandHistoryPath)) {
-			try {
-				Files.createFile(commandHistoryPath);
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		
-		return commandHistoryPath;
-		
-	}
 
 	private static void _addCommand(Map<String, BaseCommand<?>> map, BaseCommand<?> baseCommand)
 		throws IllegalAccessException, InstantiationException {
@@ -870,6 +852,7 @@ public class BladeCLI {
 					_args.setProfileName("gradle"); 
 	
 				}
+
 				command.execute();
 			}
 			catch (Throwable th) {
@@ -937,6 +920,8 @@ public class BladeCLI {
 		}
 	}
 
+	
+
 	private static final String _BLADE_PROPERTIES = ".blade.properties";
 
 	private static final String _LAST_UPDATE_CHECK_KEY = "lastUpdateCheck";
@@ -954,10 +939,8 @@ public class BladeCLI {
 	private Extensions _extensions;
 	private ExtensionsClassLoaderSupplier _extensionsClassLoaderSupplier;
 	private final InputStream _in;
-	private String _inputArgs;
 	private JCommander _jCommander;
 	private final PrintStream _out;
 	private Collection<WorkspaceProvider> _workspaceProviders = null;
-	private CommandHistoryManager commandHistoryManager = new CommandHistoryManager(getCommandHistoryPath());
 
 }
