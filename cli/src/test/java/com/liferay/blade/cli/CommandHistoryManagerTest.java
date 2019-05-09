@@ -21,12 +21,14 @@ import com.liferay.blade.cli.util.CommandHistoryManager;
 
 import java.io.File;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import java.util.Date;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -35,6 +37,50 @@ import org.junit.rules.TemporaryFolder;
  * @author Christopher Bryan Boyd
  */
 public class CommandHistoryManagerTest {
+	@Before
+	public void setUp() throws Exception {
+		_rootDir = temporaryFolder.getRoot();
+
+		_homeDir = temporaryFolder.newFolder(".blade");
+	}
+
+	
+
+	@Test
+	public void testCommandHistoryBlade() throws Exception {
+		String[] gradleArgs = {"create", "-d", _rootDir.getAbsolutePath(), "-t", "activator", "bar-activator"};
+
+		TestUtil.runBlade(_rootDir, _homeDir, gradleArgs);
+
+		Path commandHistory = _homeDir.toPath();
+
+		
+		commandHistory = commandHistory.resolve("command_history.json");
+		
+		Assert.assertTrue(Files.exists(commandHistory));
+
+		CommandHistoryManager commandHistoryManager = new CommandHistoryManager(commandHistory);
+
+		
+		commandHistoryManager.load();
+		
+		List<CommandHistoryDto> historyList = commandHistoryManager.getDtoList();
+		
+		Assert.assertEquals(historyList.toString(), 1, historyList.size());
+		
+		CommandHistoryDto dto = historyList.get(0);
+
+		
+		String args = dto.getArgs();
+
+		
+		Assert.assertTrue(args.contains("-t,"));
+		Assert.assertTrue(args.contains("activator,"));
+		Assert.assertFalse(args.contains("bar-activator"));
+		Assert.assertTrue(args.contains("<final parameter censored>"));
+	}
+
+	
 
 	@Test
 	public void testCommandHistoryManager() throws Exception {
@@ -82,5 +128,8 @@ public class CommandHistoryManagerTest {
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	private File _homeDir = null;
+	private File _rootDir = null;
 
 }

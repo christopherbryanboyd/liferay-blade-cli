@@ -19,6 +19,8 @@ package com.liferay.blade.cli.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
+import com.liferay.blade.cli.util.CollectUsage;
+
 import java.io.File;
 
 /**
@@ -39,9 +41,11 @@ public class OpenArgs extends BaseArgs {
 		_file = file.getAbsolutePath();
 	}
 
+	@CollectUsage(censor = true)
 	@Parameter(description = "file or directory to open/import")
 	private String _file;
 
+	@CollectUsage(censor = true)
 	@Parameter(description = "The workspace to open or import this file or project", names = {"-w", "--workspace"})
 	private String _workspace;
 

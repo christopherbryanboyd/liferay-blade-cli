@@ -80,7 +80,7 @@ public class InitArgs extends BaseArgs {
 	)
 	private String _liferayVersion = "7.1";
 
-	@CollectUsage
+	@CollectUsage(censor = true)
 	@Parameter(description = "[name]")
 	private String _name;
 

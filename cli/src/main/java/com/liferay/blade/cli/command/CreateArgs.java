@@ -126,8 +126,7 @@ public class CreateArgs extends BaseArgs {
 		_template = template;
 	}
 
-	
-
+	@CollectUsage(censor = true)
 	@Parameter(
 		description = "If a class is generated in the project, provide the name of the class to be generated. If not provided defaults to project name.",
 		names = {"-c", "--classname"}
@@ -152,45 +151,54 @@ public class CreateArgs extends BaseArgs {
 	)
 	private String _hostBundleBSN;
 
+	@CollectUsage
 	@Parameter(
 		description = "If a new jsp hook fragment needs to be created, provide the name of the host bundle version. Required for \"-t fragment\".",
 		names = {"-H", "--host-bundle-version"}
 	)
 	private String _hostBundleVersion;
 
+	@CollectUsage
 	@Parameter(
 		description = "The version of Liferay to target when creating the project. Available options are 7.0, 7.1. (default 7.1).",
 		names = {"-v", "--liferay-version"}
 	)
 	private String _liferayVersion;
 
+	@CollectUsage
 	@Parameter(description = "Prints a list of available project templates", names = {"-l", "--list-templates"})
 	private boolean _listTemplates;
 
+	@CollectUsage(censor = true)
 	@Parameter(description = "The project name")
 	private String _name;
 
+	@CollectUsage(censor = true)
 	@Parameter(
 		description = "Sets the name of the original module when creating a project with modules-ext template.",
 		names = {"-m", "--original-module-name"}
 	)
 	private String _originalModuleName;
 
+	@CollectUsage
 	@Parameter(
 		description = "Sets the version of the original module when creating a project with modules-ext template.",
 		names = {"-M", "--original-module-version"}
 	)
 	private String _originalModuleVersion;
 
+	@CollectUsage(censor = true)
 	@Parameter(description = "The Java package to use when generating Java source.", names = {"-p", "--package-name"})
 	private String _packageName;
 
+	@CollectUsage(censor = true)
 	@Parameter(
 		description = "If a new DS component needs to be created, provides the name of the service to be implemented.",
 		names = {"-s", "--service"}
 	)
 	private String _service;
 
+	@CollectUsage
 	@Parameter(
 		description = "The project template to use when creating the project. To see the list of templates available use blade create <-l | --list-templates>",
 		names = {"-t", "--template"}

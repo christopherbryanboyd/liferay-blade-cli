@@ -154,25 +154,6 @@ public class BladeUtil {
 		return getManifestProperty(pathToJar, "Bundle-Version");
 	}
 
-	public static Path getCommandHistoryPath() {
-		File userBladeDirectory = new File(getBladeHome());
-
-		File commandHistoryFile = new File(userBladeDirectory, "command_history.json");
-
-		Path commandHistoryPath = commandHistoryFile.toPath();
-
-		if (!Files.exists(commandHistoryPath)) {
-			try {
-				Files.createFile(commandHistoryPath);
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
-		
-		return commandHistoryPath;
-	}
-
 	public static File getGradleWrapper(File dir) {
 		File gradleRoot = findParentFile(dir, new String[] {_GRADLEW_UNIX_FILE_NAME, _GRADLEW_WINDOWS_FILE_NAME}, true);
 

@@ -16,12 +16,19 @@
 
 package com.liferay.blade.cli;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterDescription;
+
+import com.liferay.blade.cli.command.BaseArgs;
+import com.liferay.blade.cli.util.CollectUsage;
 import com.liferay.blade.cli.util.Prompter;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import java.lang.reflect.Field;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +42,83 @@ import java.util.Properties;
  */
 public class BladeSettings {
 
+	public static String[] getUsageArgs(String[] args, Class<? extends BaseArgs> clazz, Collection<ParameterDescription> parameters) {
+		Class<?> localClazz = clazz;
+		List<String> argsList = new ArrayList<>(Arrays.asList(args));
+		List<String> newArgsList = new ArrayList<>();
+		String finalParameter = null;
+		while (BaseArgs.class.isAssignableFrom(localClazz)) {
+			for (Field field : localClazz.getDeclaredFields()) {
+				Parameter annotation = field.getAnnotation(Parameter.class);
+				
+
+				if (annotation != null) {
+					String[] names = annotation.names();
+
+					if ((names != null) && (names.length > 0)) {
+						
+						String nameUsed = null;
+
+						for (String name : names) {
+							if (argsList.contains(name)) {
+								nameUsed = name;
+
+								break;
+							}
+						}
+
+						if (nameUsed != null) {
+							CollectUsage collectUsageAnnotation = field.getAnnotation(CollectUsage.class);
+							
+
+							if (collectUsageAnnotation != null) {
+								Class<?> type = field.getType();
+
+								if (!type.equals(boolean.class)) {
+									newArgsList.add(nameUsed);
+									
+
+									if (collectUsageAnnotation.censor()) {
+										newArgsList.add("<censored>");
+									}
+									else {
+										newArgsList.add(argsList.get(argsList.indexOf(nameUsed) + 1));
+									}
+								}
+								else {
+									newArgsList.add(nameUsed);
+								}
+							}
+						}
+					}
+					else {
+						CollectUsage collectUsageAnnotation = field.getAnnotation(CollectUsage.class);
+						
+
+						if (collectUsageAnnotation != null) {
+								
+
+							if (collectUsageAnnotation.censor()) {
+								finalParameter = "<final parameter censored>";
+							}
+							else {
+								finalParameter = argsList.get(newArgsList.size() - 1);
+							}
+						}
+					}
+				}
+			}
+
+			localClazz = localClazz.getSuperclass();
+		}
+
+		if (finalParameter != null) {
+			newArgsList.add(finalParameter);
+		}
+
+		return newArgsList.toArray(new String[0]);
+	}
+
 	public BladeSettings(BladeCLI bladeCLI, File bladeUserHomeDir, File... settingsFiles) throws IOException {
 		_bladeCLI = bladeCLI;
 		_bladeUserHomeDir = bladeUserHomeDir;
@@ -46,6 +130,8 @@ public class BladeSettings {
 		}
 	}
 
+	
+
 	public String getLiferayVersionDefault() {
 		if (_properties.getProperty(_LIFERAY_VERSION_DEFAULT_KEY) != null) {
 			return _properties.getProperty(_LIFERAY_VERSION_DEFAULT_KEY);
@@ -54,8 +140,6 @@ public class BladeSettings {
 			return "7.1";
 		}
 	}
-
-	
 
 	public String getProfileName() {
 		return _properties.getProperty(_PROFILE_NAME);
@@ -212,6 +296,8 @@ public class BladeSettings {
 	public void setLiferayVersionDefault(String liferayVersion) {
 		_properties.setProperty(_LIFERAY_VERSION_DEFAULT_KEY, liferayVersion);
 	}
+
+	
 
 	public void setProfileName(String profileName) {
 		_properties.setProperty(_PROFILE_NAME, profileName);

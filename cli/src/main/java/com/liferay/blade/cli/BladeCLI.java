@@ -134,8 +134,7 @@ public class BladeCLI {
 	}
 
 	public BladeCLI(PrintStream out, PrintStream err, InputStream in) {
-		_commandHistoryManager.load();
-		
+
 		AnsiConsole.systemInstall();
 
 		_out = out;
@@ -204,7 +203,7 @@ public class BladeCLI {
 	}
 
 	public Path getExtensionsPath() {
-		Path userBladePath = _getUserBladePath();
+		Path userBladePath = getUserBladePath();
 
 		Path extensions = userBladePath.resolve("extensions");
 
@@ -393,8 +392,7 @@ public class BladeCLI {
 				printUsage();
 			}
 			else {
-				
-				commandHistoryDto.setArgs(Arrays.deepToString(args));
+
 				
 
 				try {
@@ -413,6 +411,11 @@ public class BladeCLI {
 						List<Object> objects = jCommander.getObjects();
 
 						Object commandArgs = objects.get(0);
+
+						
+						String[] usageArgs = BladeSettings.getUsageArgs(args, ((BaseArgs)commandArgs).getClass(), jCommander.getParameters());
+						
+						commandHistoryDto.setArgs(Arrays.deepToString(usageArgs));
 
 						_command = command;
 
@@ -472,9 +475,12 @@ public class BladeCLI {
 			
 			commandHistoryDto.setTimeInvokedValue(System.currentTimeMillis());
 			
-			_commandHistoryManager.add(commandHistoryDto);
+			CommandHistoryManager commandHistoryManager = _getCommandHistoryManager();
+
 			
-			_commandHistoryManager.save();
+			commandHistoryManager.add(commandHistoryDto);
+			
+			commandHistoryManager.save();
 			
 
 			if (_extensionsClassLoaderSupplier != null) {
@@ -536,7 +542,25 @@ public class BladeCLI {
 		}
 	}
 
+	protected Path getUserBladePath() {
+		Path userHomePath = _USER_HOME_DIR.toPath();
 
+		Path userBladePath = userHomePath.resolve(".blade");
+
+		try {
+			if (Files.notExists(userBladePath)) {
+				Files.createDirectories(userBladePath);
+			}
+			else if (!Files.isDirectory(userBladePath)) {
+				throw new IOException(userBladePath + " is not a directory.");
+			}
+		}
+		catch (IOException ioe) {
+			throw new RuntimeException(ioe);
+		}
+
+		return userBladePath;
+	}
 
 	private static void _addCommand(Map<String, BaseCommand<?>> map, BaseCommand<?> baseCommand)
 		throws IllegalAccessException, InstantiationException {
@@ -725,6 +749,36 @@ public class BladeCLI {
 		return _extensionsClassLoaderSupplier.get();
 	}
 
+	private CommandHistoryManager _getCommandHistoryManager( ) {
+		if (_commandHistoryManager == null) {
+			_commandHistoryManager = new CommandHistoryManager(_getCommandHistoryPath());
+			
+			_commandHistoryManager.load();
+		}
+
+		return _commandHistoryManager;
+		
+	}
+
+	private Path _getCommandHistoryPath() {
+		File userBladeDirectory = getUserBladePath().toFile();
+
+		File commandHistoryFile = new File(userBladeDirectory, "command_history.json");
+
+		Path commandHistoryPath = commandHistoryFile.toPath();
+
+		if (!Files.exists(commandHistoryPath)) {
+			try {
+				Files.createFile(commandHistoryPath);
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		return commandHistoryPath;
+	}
+
 	private File _getSettingsBaseDir() {
 		File baseDir = new File(_args.getBase());
 
@@ -743,29 +797,9 @@ public class BladeCLI {
 	}
 
 	private Path _getUpdateCheckPath() throws IOException {
-		Path userBladePath = _getUserBladePath();
+		Path userBladePath = getUserBladePath();
 
 		return userBladePath.resolve("updateCheck.properties");
-	}
-
-	private Path _getUserBladePath() {
-		Path userHomePath = _USER_HOME_DIR.toPath();
-
-		Path userBladePath = userHomePath.resolve(".blade");
-
-		try {
-			if (Files.notExists(userBladePath)) {
-				Files.createDirectories(userBladePath);
-			}
-			else if (!Files.isDirectory(userBladePath)) {
-				throw new IOException(userBladePath + " is not a directory.");
-			}
-		}
-		catch (IOException ioe) {
-			throw new RuntimeException(ioe);
-		}
-
-		return userBladePath;
 	}
 
 	private Collection<WorkspaceProvider> _getWorkspaceProviders() throws Exception {
@@ -871,6 +905,8 @@ public class BladeCLI {
 		}
 	}
 
+	
+
 	private boolean _shouldCheckForUpdates() {
 		try {
 			if (_command.contains("update")) {
@@ -920,20 +956,23 @@ public class BladeCLI {
 		}
 	}
 
-	
-
 	private static final String _BLADE_PROPERTIES = ".blade.properties";
 
 	private static final String _LAST_UPDATE_CHECK_KEY = "lastUpdateCheck";
 
+
 	private static final File _USER_HOME_DIR = new File(BladeUtil.getBladeHome());
 
+	
+
 	private static final Formatter _tracer = new Formatter(System.out);
+
+	
 
 	private BaseArgs _args = new BaseArgs();
 	private BaseCommand<?> _baseCommand;
 	private String _command;
-	private CommandHistoryManager _commandHistoryManager = new CommandHistoryManager(BladeUtil.getCommandHistoryPath());
+	private CommandHistoryManager _commandHistoryManager = null;
 	private Map<String, BaseCommand<? extends BaseArgs>> _commands;
 	private final PrintStream _error;
 	private Extensions _extensions;

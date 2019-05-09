@@ -54,12 +54,14 @@ public class BladeTest extends BladeCLI {
 
 		settingsFile = new File(settingsBaseDir, _BLADE_PROPERTIES);
 
-		return new BladeSettings(this, _bladeHomeDir.toFile(), settingsFile);
+		return new BladeSettings(this, getUserBladePath().toFile(), settingsFile);
 	}
+
+	
 
 	@Override
 	public Path getExtensionsPath() {
-		Path extensionsDir = _bladeHomeDir.resolve("extensions");
+		Path extensionsDir = getUserBladePath().resolve("extensions");
 
 		try {
 			Files.createDirectories(extensionsDir);
@@ -199,6 +201,23 @@ public class BladeTest extends BladeCLI {
 
 	protected BladeTest(PrintStream out, PrintStream err, InputStream in) {
 		super(out, err, in);
+	}
+
+	protected Path getUserBladePath() {
+
+		try {
+			if (Files.notExists(_bladeHomeDir)) {
+				Files.createDirectories(_bladeHomeDir);
+			}
+			else if (!Files.isDirectory(_bladeHomeDir)) {
+				throw new IOException(_bladeHomeDir + " is not a directory.");
+			}
+		}
+		catch (IOException ioe) {
+			throw new RuntimeException(ioe);
+		}
+
+		return _bladeHomeDir;
 	}
 
 	private File _getSettingsBaseDir() {
