@@ -30,6 +30,7 @@ apply plugin: "com.liferay.source.formatter"
 
 task clean(type:Delete)
 task dockerImageBuild(type:Exec)
+task dockerImageDelete(type:Exec)
 task dockerNexusDelete(type:Exec)
 task dockerNexusStart(type:Exec)
 task dockerNexusStop(type:Exec)
@@ -41,6 +42,8 @@ String userHome = System.getProperty("user.home")
 String gradleHome = System.getProperty("gradle.user.home") ?: System.getenv("GRADLE_USER_HOME") ?: new File(userHome, ".gradle").absolutePath
 
 File gradleEncryptedProperties = new File(gradleHome, "gradle.encrypted.properties")
+
+File gradleCredentialsProperties = new File(gradleHome, "gradle.credentials.properties")
 
 boolean localNexus = project.hasProperty("localNexus")
 
@@ -87,7 +90,7 @@ dockerPublishSnapshots {
 
 	args.addAll(['-v', "${userHome}/.gradle/wrapper:/root/.gradle/wrapper"])
 
-	if (gradleEncryptedProperties.exists()) {
+	if (gradleCredentialsProperties.exists()) {
 		args.addAll(['-v', "${userHome}/.gradle/gradle.credentials.properties:/root/.gradle/gradle.encrypted.properties"])
 	}
 
@@ -111,7 +114,7 @@ dockerPublishRelease {
 		finalizedBy 'dockerNexusStop'
 	}
 
-	if (gradleEncryptedProperties.exists()) {
+	if (gradleCredentialsProperties.exists()) {
 		args.addAll(['-v', "${userHome}/.gradle/gradle.credentials.properties:/root/.gradle/gradle.encrypted.properties"])
 	}
 
