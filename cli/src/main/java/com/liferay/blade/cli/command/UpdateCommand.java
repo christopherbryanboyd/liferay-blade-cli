@@ -160,7 +160,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 
 	public static String getUpdateVersion(boolean snapshotsArg, String repoUrl) throws IOException {
 		String url = repoUrl;
-		
+
 		if (url == null) {
 			if (snapshotsArg) {
 				url = _SNAPSHOTS_REPO_URL;
@@ -169,7 +169,6 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 				url = _RELEASES_REPO_URL;
 			}
 		}
-
 
 		if (hasUpdateUrlFromBladeDir()) {
 			url = getUpdateUrlFromBladeDir();

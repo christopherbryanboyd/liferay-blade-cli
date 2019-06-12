@@ -34,7 +34,7 @@ public class BaseArgs {
 	public String getProfileName() {
 		return _profileName;
 	}
-	
+
 	public String getRepoUrl() {
 		return _repoUrl;
 	}
@@ -67,12 +67,9 @@ public class BaseArgs {
 	)
 	private String _profileName;
 
-	@Parameter(
-		hidden = true,
-		names = { "--url" }
-	)
+	@Parameter(hidden = true, names = "--url")
 	private String _repoUrl;
-	
+
 	@Parameter(description = "Print exception stack traces when they occur.", names = "--trace")
 	private boolean _trace;
 
