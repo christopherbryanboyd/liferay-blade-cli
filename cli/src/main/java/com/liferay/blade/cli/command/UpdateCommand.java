@@ -158,12 +158,18 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 		return url;
 	}
 
-	public static String getUpdateVersion(boolean snapshotsArg) throws IOException {
-		String url = _RELEASES_REPO_URL;
-
-		if (snapshotsArg) {
-			url = _SNAPSHOTS_REPO_URL;
+	public static String getUpdateVersion(boolean snapshotsArg, String repoUrl) throws IOException {
+		String url = repoUrl;
+		
+		if (url == null) {
+			if (snapshotsArg) {
+				url = _SNAPSHOTS_REPO_URL;
+			}
+			else {
+				url = _RELEASES_REPO_URL;
+			}
 		}
+
 
 		if (hasUpdateUrlFromBladeDir()) {
 			url = getUpdateUrlFromBladeDir();
@@ -281,7 +287,7 @@ public class UpdateCommand extends BaseCommand<UpdateArgs> {
 		String updateVersion = "";
 
 		try {
-			updateVersion = getUpdateVersion(snapshotsArg);
+			updateVersion = getUpdateVersion(snapshotsArg, updateArgs.getRepoUrl());
 
 			try {
 				currentVersion = VersionCommand.getBladeCLIVersion();

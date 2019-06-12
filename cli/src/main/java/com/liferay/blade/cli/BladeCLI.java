@@ -277,7 +277,7 @@ public class BladeCLI {
 		String updateVersion = "";
 
 		try {
-			updateVersion = UpdateCommand.getUpdateVersion(fromSnapshots);
+			updateVersion = UpdateCommand.getUpdateVersion(fromSnapshots, _args.getRepoUrl());
 
 			available = UpdateCommand.shouldUpdate(bladeCLIVersion, updateVersion);
 
