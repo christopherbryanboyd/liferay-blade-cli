@@ -65,7 +65,7 @@ public interface MavenExecutor {
 			Runtime runtime = Runtime.getRuntime();
 
 			if (windows) {
-				command = ArrayUtils.addAll(new String[] { "cmd.exe", "/c", "mvnw.cmd" }, args);
+				command = ArrayUtils.addAll(new String[] { /*"cmd.exe", "/c",*/ "mvnw.cmd" }, args);
 			}
 			else {
 				command = ArrayUtils.addAll(new String[] { "./mvnw" }, args);
