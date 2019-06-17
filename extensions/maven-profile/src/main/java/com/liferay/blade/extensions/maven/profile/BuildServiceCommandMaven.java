@@ -82,7 +82,7 @@ public class BuildServiceCommandMaven extends BaseCommand<BuildServiceArgsMaven>
 							}
 						}
 
-						String[] args = {"--projects", "\"" + sb.toString() + "\"", "service-builder:build"};
+						String[] args = {"--projects", sb.toString(), "service-builder:build"};
 
 						bladeCLI.out("Executing " + String.join(" ", args));
 
