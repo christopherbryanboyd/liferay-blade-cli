@@ -68,7 +68,7 @@ public interface MavenExecutor {
 		try {
 			Runtime runtime = Runtime.getRuntime();
 
-			command = (windows ? "cmd.exe /c .\\mvnw.cmd -f " + projectPath + "\\pom.xml" : "./mvnw") + " " + stringBuilder.toString();
+			command = (windows ? "cmd.exe /c .\\mvnw.cmd -X -f " + projectPath + "\\pom.xml" : "./mvnw") + " " + stringBuilder.toString();
 
 			Process process = runtime.exec(command, null, new File(projectPath));
 
