@@ -40,7 +40,7 @@ public class BuildServiceCommandMaven extends BaseCommand<BuildServiceArgsMaven>
 
 	@Override
 	public void execute() throws Exception {
-		BladeCLI bladeCLI = getBladeCLI();
+ 		BladeCLI bladeCLI = getBladeCLI();
 
 		BaseArgs baseArgs = bladeCLI.getArgs();
 
@@ -70,6 +70,8 @@ public class BuildServiceCommandMaven extends BaseCommand<BuildServiceArgsMaven>
 
 						for (int x = 0; x < paths.size(); x++) {
 							Path path = paths.get(x);
+							
+							path = path.toAbsolutePath();
 
 							String pathString = path.toString();
 
