@@ -25,6 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * @author Gregory Amerson
  */
@@ -55,20 +57,19 @@ public interface MavenExecutor {
 
 		int exitValue = 1;
 
-		StringBuilder stringBuilder = new StringBuilder();
-
-		for (String arg : args) {
-			stringBuilder.append(arg + " ");
-		}
-
 		StringBuilder output = new StringBuilder();
 
-		String command = null;
+		String command[] = null;
 
 		try {
 			Runtime runtime = Runtime.getRuntime();
 
-			command = (windows ? "cmd.exe /c .\\mvnw.cmd -X -f " + projectPath + "\\pom.xml" : "./mvnw") + " " + stringBuilder.toString();
+			if (windows) {
+				command = ArrayUtils.addAll(new String[] { "cmd.exe", "/c", "mvnw.cmd" }, args);
+			}
+			else {
+				command = ArrayUtils.addAll(new String[] { "./mvnw" }, args);
+			}
 
 			Process process = runtime.exec(command, null, new File(projectPath));
 
