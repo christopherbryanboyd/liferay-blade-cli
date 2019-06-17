@@ -57,9 +57,9 @@ public class BuildServiceCommandMaven extends BaseCommand<BuildServiceArgsMaven>
 				try (Stream<Path> pathStream = Files.walk(baseDirPath)) {
 					List<Path> paths = pathStream.filter(
 						path -> _pathHasFileName(path, "service.xml")
-					).map(
+					)/*.map(
 						path -> baseDirPath.relativize(path)
-					).map(
+					)*/.map(
 						path -> path.getParent()
 					).collect(
 						Collectors.toList()
