@@ -44,11 +44,13 @@ public class ProcessResult {
 	
 	private void executeLocal(File directory, boolean printOutput, String... args) {
 		
-		Runtime runtime = Runtime.getRuntime();
+		ProcessBuilder processBuilder = new ProcessBuilder(args);
+		
+		processBuilder.directory(directory);
 		
 		try {
 
-			Process process = runtime.exec(args, null, directory);
+			Process process = processBuilder.start();
 	
 			CompletableFuture<Void> outputFuture = CompletableFuture.runAsync(
 				() -> {
