@@ -37,7 +37,7 @@ public interface MavenExecutor {
 	}
 
 	public default void execute(String projectPath, String[] args, boolean printOutput) {
-		Objects.requireNonNull(args, "Args must be specified");
+		Objects.requireNonNull(args, "Args must be specified"); 
 
 		if (!(args.length > 0)) {
 			throw new RuntimeException("Args must be specified");
@@ -65,7 +65,7 @@ public interface MavenExecutor {
 			Runtime runtime = Runtime.getRuntime();
 
 			if (windows) {
-				command = ArrayUtils.addAll(new String[] { "cmd.exe", "/C", new File(projectPath, "mvnw.cmd").getAbsolutePath() }, args);
+				command = ArrayUtils.addAll(new String[] { "cmd.exe", "/C", "dir" /*, new File(projectPath, "mvnw.cmd").getAbsolutePath()*/ }, args);
 			}
 			else {
 				command = ArrayUtils.addAll(new String[] { "./mvnw" }, args);
