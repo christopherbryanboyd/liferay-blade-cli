@@ -21,11 +21,14 @@ import java.io.File;
 import java.io.InputStreamReader;
 
 import java.util.Objects;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.ArrayUtils;
+
+import com.liferay.blade.extensions.maven.profile.ProcessResult;
 
 /**
  * @author Gregory Amerson
@@ -35,7 +38,6 @@ public interface MavenExecutor {
 	public default void execute(String projectPath, String[] args) {
 		execute(projectPath, args, false);
 	}
-
 	public default void execute(String projectPath, String[] args, boolean printOutput) {
 		Objects.requireNonNull(args, "Args must be specified"); 
 
@@ -62,7 +64,6 @@ public interface MavenExecutor {
 		String command[] = null;
 
 		try {
-			Runtime runtime = Runtime.getRuntime();
 
 			if (windows) {
 				command = ArrayUtils.addAll(new String[] { /*"cmd.exe", "/C",*/ "dir" /*, new File(projectPath, "mvnw.cmd").getAbsolutePath()*/ }, args);
@@ -70,61 +71,21 @@ public interface MavenExecutor {
 			else {
 				command = ArrayUtils.addAll(new String[] { "./mvnw" }, args);
 			}
+			
+			ProcessResult processResult = ProcessResult.execute(new File(projectPath), true, command);
+			processResult.getFuture().get();
+			
+			for (Throwable throwable : processResult.getThrowables()) {
+				System.err.println(throwable.getMessage());
+			}
+			
+			if (processResult.getOutput().contains("BUILD SUCCESS")) {
+				buildSuccess.set(true);
+			}
+			
+			
 
-			Process process = runtime.exec(command, null, new File(projectPath));
-
-			BufferedReader processOutput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			BufferedReader processError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-			CountDownLatch latch = new CountDownLatch(2);
-
-			CompletableFuture.runAsync(
-				() -> {
-					String line = null;
-
-					try {
-						while ((line = processOutput.readLine()) != null) {
-							output.append(line);
-							output.append(System.lineSeparator());
-
-							if (line.contains("BUILD SUCCESS")) {
-								buildSuccess.set(true);
-							}
-
-							if (printOutput) {
-								System.out.println(line);
-							}
-						}
-
-						latch.countDown();
-					}
-					catch (Exception e) {
-					}
-				});
-
-			CompletableFuture.runAsync(
-				() -> {
-					String line = null;
-
-					try {
-						while ((line = processError.readLine()) != null) {
-							output.append(line);
-							output.append(System.lineSeparator());
-
-							if (printOutput) {
-								System.err.println(line);
-							}
-						}
-
-						latch.countDown();
-					}
-					catch (Exception e) {
-					}
-				});
-
-			latch.await();
-
-			exitValue = process.waitFor();
+			exitValue = processResult.getExitCode();
 		}
 		catch (Exception e) {
 			StringBuilder sb = new StringBuilder();
