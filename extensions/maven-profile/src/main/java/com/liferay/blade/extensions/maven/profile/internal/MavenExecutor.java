@@ -62,11 +62,11 @@ public interface MavenExecutor {
 		StringBuilder output = new StringBuilder();
 
 		String command[] = null;
-
+ 
 		try {
 
 			if (windows) {
-				command = ArrayUtils.addAll(new String[] { /*"cmd.exe", "/C",*/ "dir" /*, new File(projectPath, "mvnw.cmd").getAbsolutePath()*/ }, args);
+				command = ArrayUtils.addAll(new String[] { /*"cmd.exe", "/C",*/ "dir" /*, new File(projectPath, "mvnw.cmd").getAbsolutePath()*/ }/*, args*/);
 			}
 			else {
 				command = ArrayUtils.addAll(new String[] { "./mvnw" }, args);
