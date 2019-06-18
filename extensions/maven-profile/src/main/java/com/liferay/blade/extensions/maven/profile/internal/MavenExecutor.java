@@ -135,7 +135,9 @@ public interface MavenExecutor {
 
 			throw new RuntimeException(sb.toString(), e);
 		}
-
+		catch (Throwable th) {
+			th.printStackTrace();
+		}
 		boolean exitValueCorrect = false;
 
 		if (exitValue == 0) {
