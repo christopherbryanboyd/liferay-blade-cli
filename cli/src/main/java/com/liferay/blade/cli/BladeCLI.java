@@ -332,6 +332,7 @@ public class BladeCLI {
 
 	public void printUsage(String command, String message) {
 		out(message);
+
 		_jCommander.usage(command);
 	}
 
