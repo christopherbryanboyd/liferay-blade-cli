@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.WorkspaceProvider;
 import com.liferay.blade.cli.gradle.GradleExec;
@@ -40,6 +42,7 @@ import java.util.stream.Stream;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class WatchCommand extends BaseCommand<WatchArgs> {
 
 	public WatchCommand() {

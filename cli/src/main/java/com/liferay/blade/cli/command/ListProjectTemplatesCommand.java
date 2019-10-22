@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.util.BladeUtil;
 
@@ -33,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Christopher Bryan Boyd
  */
+@ServiceProvider(BaseCommand.class)
 public class ListProjectTemplatesCommand extends BaseCommand<ListProjectTemplatesArgs> {
 
 	@Override

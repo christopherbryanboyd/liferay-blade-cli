@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 
 import java.util.Objects;
@@ -23,6 +25,7 @@ import java.util.Objects;
 /**
  * @author Christopher Bryan Boyd
  */
+@ServiceProvider(BaseCommand.class)
 public class HelpCommand extends BaseCommand<HelpArgs> {
 
 	public HelpCommand() {

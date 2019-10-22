@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.BladeSettings;
 import com.liferay.blade.cli.WorkspaceProvider;
@@ -48,6 +50,7 @@ import java.util.Set;
  * @author Gregory Amerson
  * @author Terry Jia
  */
+@ServiceProvider(BaseCommand.class)
 public class InitCommand extends BaseCommand<InitArgs> {
 
 	public InitCommand() {

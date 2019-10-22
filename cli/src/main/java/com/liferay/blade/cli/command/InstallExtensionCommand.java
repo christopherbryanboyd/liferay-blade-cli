@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.gradle.GradleExec;
 import com.liferay.blade.cli.gradle.GradleTooling;
@@ -53,6 +55,7 @@ import java.util.stream.Stream;
  * @author Christopher Bryan Boyd
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class InstallExtensionCommand extends BaseCommand<InstallExtensionArgs> {
 
 	public InstallExtensionCommand() {

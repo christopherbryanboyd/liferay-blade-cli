@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
 import aQute.bnd.version.Version;
 
 import com.liferay.blade.cli.BladeCLI;
@@ -47,6 +48,7 @@ import org.jsoup.select.Elements;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class UpdateCommand extends BaseCommand<UpdateArgs> {
 
 	public static boolean equal(String currentVersion, String updateVersion) {

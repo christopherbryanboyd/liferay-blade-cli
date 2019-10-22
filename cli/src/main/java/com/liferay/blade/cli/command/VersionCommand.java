@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 
 import java.io.IOException;
@@ -33,6 +35,7 @@ import org.osgi.framework.Constants;
 /**
  * @author Christopher Boyd
  */
+@ServiceProvider(BaseCommand.class)
 public class VersionCommand extends BaseCommand<VersionArgs> {
 
 	public static String getBladeCLIVersion() throws IOException {

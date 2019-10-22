@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.util.BladeUtil;
 import com.liferay.gogo.shell.client.GogoShellClient;
 
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class ShellCommand extends BaseCommand<ShellArgs> {
 
 	public ShellCommand() {

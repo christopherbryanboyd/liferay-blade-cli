@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli.gradle;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
 import aQute.bnd.version.Version;
 
 import com.liferay.blade.cli.BladeCLI;
@@ -34,6 +35,7 @@ import java.util.regex.Pattern;
 /**
  * @author Christopher Bryan Boyd
  */
+@ServiceProvider(WorkspaceProvider.class)
 public class GradleWorkspaceProvider implements WorkspaceProvider {
 
 	public static final Pattern patternWorkspacePlugin = Pattern.compile(

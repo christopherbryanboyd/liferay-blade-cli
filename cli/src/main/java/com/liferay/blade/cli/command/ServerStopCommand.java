@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.util.BladeUtil;
 
@@ -30,6 +32,7 @@ import java.util.List;
  * @author David Truong
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class ServerStopCommand extends BaseCommand<ServerStopArgs> {
 
 	public ServerStopCommand() {

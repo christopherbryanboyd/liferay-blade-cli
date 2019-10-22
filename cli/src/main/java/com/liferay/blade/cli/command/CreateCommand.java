@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.BladeSettings;
 import com.liferay.blade.cli.WorkspaceConstants;
@@ -49,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author Christopher Bryan Boyd
  * @author Charles Wu
  */
+@ServiceProvider(BaseCommand.class)
 public class CreateCommand extends BaseCommand<CreateArgs> {
 
 	public CreateCommand() {

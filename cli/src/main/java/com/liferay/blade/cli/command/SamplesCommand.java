@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.BladeSettings;
 import com.liferay.blade.cli.WorkspaceProvider;
@@ -42,6 +44,7 @@ import java.util.stream.Stream;
 /**
  * @author David Truong
  */
+@ServiceProvider(BaseCommand.class)
 public class SamplesCommand extends BaseCommand<SamplesArgs> {
 
 	public SamplesCommand() {

@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.util.BladeUtil;
 
@@ -34,6 +36,7 @@ import java.util.Optional;
  * @author Simon Jiang
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class ServerRunCommand extends BaseCommand<ServerRunArgs> {
 
 	public ServerRunCommand() {

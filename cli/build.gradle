@@ -30,6 +30,7 @@ task createToolingZip(type:Zip)
 task createWrapperZip(type:Zip)
 task downloadPortal(type: Download)
 task unzipPortal(type: Copy)
+task unzipServiceFiles(type: Copy)
 
 configurations {
 	bladeExtensions {
@@ -222,7 +223,7 @@ sourceSets {
 }
 
 test {
-	dependsOn jar, unzipPortal
+	dependsOn jar, unzipServiceFiles, unzipPortal
 
 	systemProperty "bladeJarPath", jar.archivePath
 	systemProperty "buildDir", "${buildDir}"
@@ -272,6 +273,12 @@ unzipPortal {
 	dependsOn downloadPortal
 	from zipTree(downloadPortal.dest)
 	into buildDir
+}
+
+unzipServiceFiles {
+	from zipTree("${buildDir}/libs/blade.jar")
+	into "$buildDir/classes/java/main/"
+	include 'META-INF/services/**'
 }
 
 version = "3.8.1-SNAPSHOT"

@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.Objects;
 /**
  * @author Christopher Bryan Boyd
  */
+@ServiceProvider(BaseCommand.class)
 public class UninstallExtensionCommand extends BaseCommand<UninstallExtensionArgs> {
 
 	public UninstallExtensionCommand() {

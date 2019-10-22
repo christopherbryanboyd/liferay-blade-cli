@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.properties.locator.PropertiesLocator;
 import com.liferay.properties.locator.PropertiesLocatorArgs;
@@ -27,6 +29,7 @@ import java.util.Collections;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class UpgradePropsCommand extends BaseCommand<UpgradePropsArgs> {
 
 	public UpgradePropsCommand() {

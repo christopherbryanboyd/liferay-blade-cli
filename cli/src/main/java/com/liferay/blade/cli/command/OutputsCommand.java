@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.gradle.GradleTooling;
 import com.liferay.blade.gradle.tooling.ProjectInfo;
@@ -30,6 +32,7 @@ import java.util.Set;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class OutputsCommand extends BaseCommand<OutputsArgs> {
 
 	public OutputsCommand() {

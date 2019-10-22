@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.WorkspaceConstants;
 import com.liferay.blade.cli.WorkspaceProvider;
@@ -61,6 +63,7 @@ import org.w3c.dom.NodeList;
  * @author Gregory Amerson
  * @author Terry Jia
  */
+@ServiceProvider(BaseCommand.class)
 public class ConvertCommand extends BaseCommand<ConvertArgs> implements FilesSupport {
 
 	public ConvertCommand() {

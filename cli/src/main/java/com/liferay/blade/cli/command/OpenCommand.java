@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.jmx.IDEConnector;
 
@@ -26,6 +28,7 @@ import java.util.Collections;
 /**
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class OpenCommand extends BaseCommand<OpenArgs> {
 
 	public OpenCommand() {

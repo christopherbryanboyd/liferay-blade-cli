@@ -16,6 +16,8 @@
 
 package com.liferay.blade.cli.command;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 import com.liferay.blade.cli.BladeCLI;
 import com.liferay.blade.cli.gradle.GradleExec;
 
@@ -27,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author David Truong
  * @author Gregory Amerson
  */
+@ServiceProvider(BaseCommand.class)
 public class GradleWrapperCommand extends BaseCommand<GradleWrapperArgs> {
 
 	public GradleWrapperCommand() {
