@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli.command;
 
+import com.liferay.blade.cli.BladeTestResults;
 import com.liferay.blade.cli.TestUtil;
 
 import java.io.File;
@@ -140,10 +141,11 @@ public class DeployCommandTest {
 		Files.write(
 			projectDirectoryPath.resolve("build.gradle"), lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
 
-		args = new String[] {"--base", projectDirectoryPath.toString(), "deploy"};
+		args = new String[] {"--base", projectDirectoryPath.toString(), "deploy", "--trace"};
 
-		TestUtil.runBlade(_rootDir, _extensionsDir, args);
-
+		BladeTestResults results = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+		
+		Assert.fail(results.getOutput() + System.lineSeparator() + "---" + System.lineSeparator() + results.getErrors());
 		String[] deployDirectoryList = deployDirectory.list();
 
 		int filesCount = deployDirectoryList.length;
