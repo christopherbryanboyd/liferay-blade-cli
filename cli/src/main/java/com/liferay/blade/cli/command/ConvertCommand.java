@@ -61,6 +61,7 @@ import org.w3c.dom.NodeList;
  * @author Gregory Amerson
  * @author Terry Jia
  * @author CI Test
+ * @author CI Test2
  */
 public class ConvertCommand extends BaseCommand<ConvertArgs> implements FilesSupport {
 
