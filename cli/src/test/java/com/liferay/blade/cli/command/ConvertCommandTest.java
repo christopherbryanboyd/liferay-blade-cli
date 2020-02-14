@@ -16,6 +16,7 @@
 
 package com.liferay.blade.cli.command;
 
+import com.liferay.blade.cli.BladeTestResults;
 import com.liferay.blade.cli.TestUtil;
 import com.liferay.blade.cli.util.FileUtil;
 
@@ -63,7 +64,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkPath);
 
-		String[] args = {"--base", projectPath.toString(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectPath.toString(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -103,7 +104,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkPath);
 
-		String[] args = {"--base", projectPath.toString(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectPath.toString(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -130,6 +131,41 @@ public class ConvertCommandTest {
 	}
 
 	@Test
+	public void testFindPluginsSdkPlugin() throws Exception {
+		Path rootPath = _rootDir.toPath();
+
+		Path testPath = rootPath.resolve("build/testPluginsSdkWithMetadata");
+
+		Files.createDirectories(testPath);
+
+		FileUtil.unzip(new File("test-resources/projects/invalid-plugins-sdk-path.zip"), testPath.toFile());
+
+		Assert.assertTrue(Files.exists(testPath));
+
+		Path pluginsSdkPath = testPath.resolve("invalid-plugins-sdk-path");
+
+		Assert.assertTrue(Files.exists(pluginsSdkPath));
+
+		Path workspacePath = testPath.resolve("workspace");
+
+		Files.createDirectories(workspacePath);
+
+		String[] args = {"--base", workspacePath.toString(), "init", "-v", "7.3"};
+
+		TestUtil.runBlade(_rootDir, _extensionsDir, args);
+
+		args = new String[] {
+			"--base", workspacePath.toString(), "convert", "-s", pluginsSdkPath.toString(), "tasks-portlet"
+		};
+
+		BladeTestResults bladeTestResults = TestUtil.runBlade(_rootDir, _extensionsDir, false, args);
+
+		String errors = bladeTestResults.getErrors();
+
+		Assert.assertTrue(errors, errors.contains("pluginsSdkDir is not a valid Plugins SDK"));
+	}
+
+	@Test
 	public void testMoveLayouttplToWars() throws Exception {
 		File testdir = new File(temporaryFolder.getRoot(), "build/testMoveLayouttplToWars1");
 
@@ -143,7 +179,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir.toPath());
 
-		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -182,7 +218,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir.toPath());
 
-		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -231,7 +267,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir);
 
-		String[] args = {"--base", projectDir.toString(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.toString(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -276,7 +312,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir);
 
-		String[] args = {"--base", projectDir.toString(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.toString(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -319,7 +355,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir.toPath());
 
-		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -402,7 +438,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir.toPath());
 
-		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -481,8 +517,8 @@ public class ConvertCommandTest {
 
 		_contains(
 			new File(projectDir, "wars/sample-dao-portlet/build.gradle"),
-			".*compile group: 'c3p0', name: 'c3p0', version: '0.9.0.4'.*",
-			".*compile group: 'mysql', name: 'mysql-connector-java', version: '5.0.7'.*");
+			".*compile group: \"c3p0\", name: \"c3p0\", version: \"0.9.0.4\".*",
+			".*compile group: \"mysql\", name: \"mysql-connector-java\", version: \"5.0.7\".*");
 
 		args = new String[] {"--base", projectDir.getPath(), "convert", "sample-tapestry-portlet"};
 
@@ -490,11 +526,11 @@ public class ConvertCommandTest {
 
 		_contains(
 			new File(projectDir, "wars/sample-tapestry-portlet/build.gradle"),
-			".*compile group: 'hivemind', name: 'hivemind', version: '1.1'.*",
-			".*compile group: 'hivemind', name: 'hivemind-lib', version: '1.1'.*",
-			".*compile group: 'org.apache.tapestry', name: 'tapestry-annotations', version: '4.1'.*",
-			".*compile group: 'org.apache.tapestry', name: 'tapestry-framework', version: '4.1'.*",
-			".*compile group: 'org.apache.tapestry', name: 'tapestry-portlet', version: '4.1'.*");
+			".*compile group: \"hivemind\", name: \"hivemind\", version: \"1.1\".*",
+			".*compile group: \"hivemind\", name: \"hivemind-lib\", version: \"1.1\".*",
+			".*compile group: \"org.apache.tapestry\", name: \"tapestry-annotations\", version: \"4.1\".*",
+			".*compile group: \"org.apache.tapestry\", name: \"tapestry-framework\", version: \"4.1\".*",
+			".*compile group: \"org.apache.tapestry\", name: \"tapestry-portlet\", version: \"4.1\".*");
 
 		File ivmXmlFile = new File(projectDir, "wars/sample-tapestry-portlet/ivy.xml");
 
@@ -511,11 +547,11 @@ public class ConvertCommandTest {
 
 		_contains(
 			new File(projectDir, "wars/sample-hibernate-portlet/build.gradle"),
-			".*compile group: 'commons-collections', name: 'commons-collections', version: '3.2.2'.*",
-			".*compile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.1'.*",
-			".*compile group: 'dom4j', name: 'dom4j', version: '1.6.1'.*",
-			".*compile group: 'javax.xml.soap', name: 'saaj-api', version: '1.3'.*",
-			".*compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'.*");
+			".*compile group: \"commons-collections\", name: \"commons-collections\", version: \"3.2.2\".*",
+			".*compile group: \"commons-httpclient\", name: \"commons-httpclient\", version: \"3.1\".*",
+			".*compile group: \"dom4j\", name: \"dom4j\", version: \"1.6.1\".*",
+			".*compile group: \"javax.xml.soap\", name: \"saaj-api\", version: \"1.3\".*",
+			".*compile group: \"org.slf4j\", name: \"slf4j-api\", version: \"1.7.2\".*");
 
 		_notContains(
 			new File(projectDir, "wars/sample-hibernate-portlet/build.gradle"), ".*antlr2.*", ".*hibernate3.*",
@@ -538,7 +574,7 @@ public class ConvertCommandTest {
 
 		File workspaceParent = new File(_rootDir, "workspace-parent");
 
-		String[] args = {"--base", workspaceParent.getPath(), "init", "ws", "-v", "7.2"};
+		String[] args = {"--base", workspaceParent.getPath(), "init", "ws", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
@@ -619,7 +655,7 @@ public class ConvertCommandTest {
 
 		FileUtil.deleteDirIfExists(pluginsSdkDir.toPath());
 
-		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.2"};
+		String[] args = {"--base", projectDir.getPath(), "init", "-u", "-v", "7.3"};
 
 		TestUtil.runBlade(_rootDir, _extensionsDir, args);
 
